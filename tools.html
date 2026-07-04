@@ -279,6 +279,7 @@
       <button class="tab-link" data-target="dataTab">資料轉換器</button>
       <!-- 新增圖像暫存標籤 -->
       <button class="tab-link" data-target="imageTab">圖像暫存</button>
+      <button class="tab-link" data-target="timeTab">時間轉換</button>
       <!-- 便條貼標籤 -->
       <button class="tab-link" data-target="noteTab">便條貼</button>
     </div>
@@ -360,6 +361,36 @@
     </div>
 
     <!-- 便條貼功能 -->
+
+    <!-- 時間轉換：印度 <-> 北京 -->
+    <div id="timeTab" class="tab-content">
+      <p>貼上時間後選擇方向，可支援多筆、多種格式、可沒有秒。</p>
+      <div class="form-group">
+        <label>
+          <input type="radio" name="timeDirection" value="indiaToBeijing" checked>
+          印度時間 → 北京時間（+2小時30分）
+        </label>
+        <label style="margin-left: 16px;">
+          <input type="radio" name="timeDirection" value="beijingToIndia">
+          北京時間 → 印度時間（-2小時30分）
+        </label>
+      </div>
+
+      <textarea id="timeInputArea" placeholder="貼上時間，例如：
+2026-02-05 20:48:31
+2026-02-05 20:48
+2026/02/05 20:48:31
+2026/2/5 20:48
+2026-02-05"></textarea>
+
+      <button id="timeConvertBtn">轉換時間</button>
+      <button id="timeCopyBtn">複製結果</button>
+      <button id="timeClearBtn">清除</button>
+
+      <p>結果：</p>
+      <textarea id="timeOutputArea" readonly placeholder="轉換後結果會顯示在此"></textarea>
+    </div>
+
     <div id="noteTab" class="tab-content">
       <div class="note-tabs">
         <button class="note-tab-link active" data-target="temporary">臨時便條</button>
@@ -951,6 +982,116 @@
       }
 
       // 初始化便條貼功能
+
+      /* 時間轉換：印度 <-> 北京 */
+      function pad2(num) {
+        return String(num).padStart(2, '0');
+      }
+
+      function formatDateTime(date, hasTime, hasSeconds) {
+        const y = date.getFullYear();
+        const m = pad2(date.getMonth() + 1);
+        const d = pad2(date.getDate());
+
+        if (!hasTime) {
+          return `${y}-${m}-${d}`;
+        }
+
+        const hh = pad2(date.getHours());
+        const mm = pad2(date.getMinutes());
+
+        if (!hasSeconds) {
+          return `${y}-${m}-${d} ${hh}:${mm}`;
+        }
+
+        const ss = pad2(date.getSeconds());
+        return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+      }
+
+      function parseFlexibleTime(line) {
+        const raw = String(line || '').trim();
+        if (!raw) return null;
+
+        // 支援：
+        // 2026-02-05 20:48:31
+        // 2026-02-05 20:48
+        // 2026/2/5 20:48
+        // 2026.2.5 20:48:31
+        // 2026-02-05
+        const match = raw.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[ T　]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+
+        if (!match) return null;
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const hasTime = match[4] !== undefined;
+        const hour = hasTime ? Number(match[4]) : 0;
+        const minute = hasTime ? Number(match[5]) : 0;
+        const hasSeconds = match[6] !== undefined;
+        const second = hasSeconds ? Number(match[6]) : 0;
+
+        if (
+          !year || month < 1 || month > 12 || day < 1 || day > 31 ||
+          hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59
+        ) {
+          return null;
+        }
+
+        return {
+          raw,
+          date: new Date(year, month - 1, day, hour, minute, second),
+          hasTime,
+          hasSeconds
+        };
+      }
+
+      function convertSingleTime(line, direction) {
+        const parsed = parseFlexibleTime(line);
+        if (!parsed) return line.trim() ? `無法解析：${line}` : '';
+
+        const offsetMinutes = direction === 'indiaToBeijing' ? 150 : -150;
+        const converted = new Date(parsed.date.getTime() + offsetMinutes * 60 * 1000);
+
+        const fromLabel = direction === 'indiaToBeijing' ? '印度' : '北京';
+        const toLabel = direction === 'indiaToBeijing' ? '北京' : '印度';
+
+        return `${fromLabel} ${parsed.raw} -> ${toLabel} ${formatDateTime(converted, parsed.hasTime, parsed.hasSeconds)}`;
+      }
+
+      const timeInputArea = document.getElementById('timeInputArea');
+      const timeOutputArea = document.getElementById('timeOutputArea');
+      const timeConvertBtn = document.getElementById('timeConvertBtn');
+      const timeCopyBtn = document.getElementById('timeCopyBtn');
+      const timeClearBtn = document.getElementById('timeClearBtn');
+
+      if (timeConvertBtn && timeInputArea && timeOutputArea) {
+        timeConvertBtn.addEventListener('click', function() {
+          const direction = document.querySelector('input[name="timeDirection"]:checked')?.value || 'indiaToBeijing';
+          const lines = timeInputArea.value.split(/\n+/);
+          const result = lines
+            .map(function(line) { return convertSingleTime(line, direction); })
+            .filter(Boolean)
+            .join('\n');
+
+          timeOutputArea.value = result;
+        });
+      }
+
+      if (timeCopyBtn && timeOutputArea) {
+        timeCopyBtn.addEventListener('click', function() {
+          copyToClipboard(timeOutputArea.value || '');
+        });
+      }
+
+      if (timeClearBtn && timeInputArea && timeOutputArea) {
+        timeClearBtn.addEventListener('click', function() {
+          timeInputArea.value = '';
+          timeOutputArea.value = '';
+        });
+      }
+
+
       loadNotes();
     })();
   </script>

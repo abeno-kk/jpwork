@@ -1,4 +1,14 @@
 const STORAGE_KEY = 'local-dashboard-app-v1';
+const STORAGE_BACKUP_KEY = 'local-dashboard-app-v1-backup';
+const STORAGE_FALLBACK_KEYS = [
+  'local-dashboard-app-v1',
+  'local-dashboard-app',
+  'dashboardState',
+  'db_data',
+  'appState',
+  'dashboardData',
+];
+
 const DEFAULT_CHANNEL_COLUMNS = [
   { id: 'source', label: '來源', type: 'source' },
   { id: 'name', label: '渠道名稱', type: 'text' },
@@ -75,55 +85,71 @@ const CHANNEL_SUMMARY_COLUMNS = [
     aliases: ['渠道', '應用渠道', '应用渠道', '渠道名稱'],
   },
   {
+    id: 'packageName',
+    label: '包名稱',
+    index: 3,
+    aliases: ['包名稱', '包名称'],
+  },
+  {
     id: 'version',
     label: '版本',
-    index: 3,
-    // 版本可能由包類型2與 W2A包組合而來
-    // 加入包名稱作為版本的一部分，並允許串接多個來源
-    aliases: ['版本', '包類型2', 'W2A包', '包名稱'],
-    joinAliases: true,
+    index: 4,
+    // 版本欄只抓「版本」，不要再把包名稱或包類型串進來，避免欄位內容黏在一起。
+    aliases: ['版本'],
+  },
+  {
+    id: 'firebase',
+    label: 'firebase',
+    index: 5,
+    aliases: ['firebase', 'Firebase'],
   },
   {
     id: 'yesterdayNew',
     label: '昨日新增',
-    index: 4,
+    index: 6,
     aliases: ['昨日新增'],
   },
   {
     id: 'yesterdayDau',
     label: '昨日DAU',
-    index: 5,
-    aliases: ['昨日DAU', '昨日DAU'],
+    index: 7,
+    aliases: ['昨日DAU'],
   },
   {
     id: 'yesterdayRecharge',
     label: '昨日充值',
-    index: 6,
+    index: 8,
     aliases: ['昨日充值'],
   },
   {
     id: 'versionChecked',
     label: '版本確認',
-    index: 7,
-    aliases: ['版本確認'],
+    index: 9,
+    aliases: ['版本確認', '版本确认'],
   },
   {
     id: 'loginB',
     label: '登入B面',
-    index: 8,
+    index: 10,
     aliases: ['登入B面', '登入B'],
   },
   {
     id: 'rechargeCheck',
     label: '拉充值',
-    index: 9,
+    index: 11,
     aliases: ['拉充值'],
   },
   {
     id: 'gamePlay',
     label: '遊戲遊玩',
-    index: 10,
+    index: 12,
     aliases: ['遊戲遊玩'],
+  },
+  {
+    id: 'cdnTest',
+    label: 'CDN測試',
+    index: 13,
+    aliases: ['CDN測試', 'CDN测试'],
   },
 ];
 
@@ -133,15 +159,6 @@ const CHANNEL_SUMMARY_NUMERIC_COLUMNS = new Set([
   'yesterdayDau',
   'yesterdayRecharge',
 ]);
-const DEFAULT_CLOUD_SYNC = {
-  enabled: false,
-  url: '',
-  lastPulledAt: 0,
-  lastPushedAt: 0,
-  lastRemoteUpdatedAt: '',
-};
-
-let cloudSyncPushTimer = 0;
 
 const state = {
   view: 'tasks',
@@ -173,6 +190,7 @@ const state = {
     channel: '',
     version: '',
     versionChecked: '',
+    packageName: '',
     sortKey: '',
     sortDirection: 'asc',
   },
@@ -189,16 +207,16 @@ const state = {
     sortKey: '',
     sortDirection: 'asc',
   },
-  cloudSync: {
-    busy: false,
-    error: '',
-    message: '',
-  },
+  // 儲存目前勾選的渠道 ID，用於計算最新金額的總和（不會被持久化）
+  selectedChannelIds: new Set(),
 };
 
 const els = {
   pageTitle: document.getElementById('page-title'),
   saveStatus: document.getElementById('save-status'),
+  dataBackupExportBtn: document.getElementById('data-backup-export-btn'),
+  dataBackupImportBtn: document.getElementById('data-backup-import-btn'),
+  dataBackupFile: document.getElementById('data-backup-file'),
   taskTableHead: document.getElementById('task-table-head'),
   taskBody: document.getElementById('task-table-body'),
   taskArchiveTableHead: document.getElementById('task-archive-table-head'),
@@ -219,6 +237,12 @@ const els = {
   taskTotalCount: document.getElementById('task-total-count'),
   taskOpenCount: document.getElementById('task-open-count'),
   channelTotalCount: document.getElementById('channel-total-count'),
+  // 顯示勾選加總的元素們
+  channelSelectedSum: document.getElementById('channel-selected-sum'),
+  channelSelectedSumPill: document.getElementById('channel-selected-sum-pill'),
+  channelHiddenCount: document.getElementById('channel-hidden-count'),
+  hideSelectedChannelsBtn: document.getElementById('hide-selected-channels-btn'),
+  restoreHiddenChannelsBtn: document.getElementById('restore-hidden-channels-btn'),
   channelCaptureBtn: document.getElementById('channel-capture-btn'),
   taskFieldSettingsBtn: document.getElementById('task-field-settings-btn'),
   channelFieldSettingsBtn: document.getElementById('channel-field-settings-btn'),
@@ -232,6 +256,9 @@ const els = {
   channelHistoryClearBtn: document.getElementById('channel-history-clear-btn'),
   deleteHistoryBatchBtn: document.getElementById('delete-history-batch-btn'),
   channelSummaryCount: document.getElementById('channel-summary-count'),
+  channelSummaryYesterdayNewTotal: document.getElementById('channel-summary-yesterday-new-total'),
+  channelSummaryYesterdayDauTotal: document.getElementById('channel-summary-yesterday-dau-total'),
+  channelSummaryYesterdayRechargeTotal: document.getElementById('channel-summary-yesterday-recharge-total'),
   channelSummarySyncStatus: document.getElementById('channel-summary-sync-status'),
   channelSummaryRefreshBtn: document.getElementById('channel-summary-refresh-btn'),
   channelSummarySyncMode: document.getElementById('channel-summary-sync-mode'),
@@ -239,6 +266,7 @@ const els = {
   channelSummarySyncSaveBtn: document.getElementById('channel-summary-sync-save-btn'),
   channelSummarySearch: document.getElementById('channel-summary-search'),
   channelSummaryChannelFilter: document.getElementById('channel-summary-channel-filter'),
+  channelSummaryPackageFilter: document.getElementById('channel-summary-package-filter'),
   channelSummaryVersionFilter: document.getElementById('channel-summary-version-filter'),
   channelSummaryConfirmFilter: document.getElementById('channel-summary-confirm-filter'),
   channelSummaryClearBtn: document.getElementById('channel-summary-clear-btn'),
@@ -248,7 +276,9 @@ const els = {
   channelSummaryTableBody: document.getElementById('channel-summary-table-body'),
   channelSummaryFieldSettingsBtn: document.getElementById('channel-summary-field-settings-btn'),
   channelSourceList: document.getElementById('channel-source-list'),
-  channelBatchNote: document.getElementById('channel-batch-note'),
+  channelBatchNoteEditor: document.getElementById('channel-batch-note-editor'),
+  channelNotePreview: document.getElementById('channel-note-preview'),
+  channelNoteCollapseBtn: document.getElementById('channel-note-collapse-btn'),
   channelBatchTime: document.getElementById('channel-batch-time'),
   channelBatchTimeDisplay: document.getElementById('channel-batch-time-display'),
   applyBatchTimeBtn: document.getElementById('apply-batch-time-btn'),
@@ -272,35 +302,145 @@ const els = {
   updateListRefreshBtn: document.getElementById('update-list-refresh-btn'),
   updateListSearch: document.getElementById('update-list-search'),
   updateListClearBtn: document.getElementById('update-list-clear-btn'),
+  updateListSyncMode: document.getElementById('update-list-sync-mode'),
+  updateListSyncUrl: document.getElementById('update-list-sync-url'),
+  updateListSyncSaveBtn: document.getElementById('update-list-sync-save-btn'),
   updateListCount: document.getElementById('update-list-count'),
   updateListSyncStatus: document.getElementById('update-list-sync-status'),
   updateListMessage: document.getElementById('update-list-message'),
-  cloudSyncUrl: document.getElementById('cloud-sync-url'),
-  cloudSyncEnabled: document.getElementById('cloud-sync-enabled'),
-  cloudSyncStatus: document.getElementById('cloud-sync-status'),
-  cloudSyncSaveBtn: document.getElementById('cloud-sync-save-btn'),
-  cloudSyncPullBtn: document.getElementById('cloud-sync-pull-btn'),
-  cloudSyncPushBtn: document.getElementById('cloud-sync-push-btn'),
 };
 
-function loadState() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return createDefaultState();
-
+function parseStoredState(raw) {
+  if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw);
-    return normalizeState(parsed);
+    return JSON.parse(raw);
   } catch (error) {
-    return createDefaultState();
+    return null;
   }
 }
+
+function estimateStateScore(candidate) {
+  if (!candidate || typeof candidate !== 'object') return -1;
+  const tasks = Array.isArray(candidate.tasks) ? candidate.tasks.length : 0;
+  const channels = Array.isArray(candidate.channels) ? candidate.channels.length : 0;
+  const taskColumns = Array.isArray(candidate.taskColumns) ? candidate.taskColumns.length : 0;
+  const channelColumns = Array.isArray(candidate.channelColumns) ? candidate.channelColumns.length : 0;
+  return tasks * 10 + channels * 10 + taskColumns + channelColumns;
+}
+
+function findBestStoredState() {
+  const keys = Array.from(new Set([
+    STORAGE_KEY,
+    STORAGE_BACKUP_KEY,
+    ...STORAGE_FALLBACK_KEYS,
+    ...Object.keys(localStorage),
+  ]));
+
+  let best = null;
+  let bestScore = -1;
+
+  keys.forEach((key) => {
+    const parsed = parseStoredState(localStorage.getItem(key));
+    const score = estimateStateScore(parsed);
+    if (score > bestScore) {
+      best = parsed;
+      bestScore = score;
+    }
+  });
+
+  return best;
+}
+
+function loadState() {
+  const primary = parseStoredState(localStorage.getItem(STORAGE_KEY));
+  const primaryScore = estimateStateScore(primary);
+
+  if (primary && primaryScore >= 0) {
+    if (primaryScore === 0) {
+      const recovered = findBestStoredState();
+      const recoveredScore = estimateStateScore(recovered);
+      if (recovered && recoveredScore > primaryScore) {
+        const normalized = normalizeState(recovered);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+          localStorage.setItem(STORAGE_BACKUP_KEY, JSON.stringify(normalized));
+        } catch (error) {}
+        return normalized;
+      }
+    }
+    return normalizeState(primary);
+  }
+
+  const recovered = findBestStoredState();
+  if (recovered) {
+    const normalized = normalizeState(recovered);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      localStorage.setItem(STORAGE_BACKUP_KEY, JSON.stringify(normalized));
+    } catch (error) {}
+    return normalized;
+  }
+
+  return createDefaultState();
+}
+
+
+function normalizeDialogDb(input) {
+  const source = input && typeof input === 'object' ? input : {};
+  const defaults = {
+    categories: ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'],
+    templates: [],
+    selectedCategory: '全部',
+    selectedId: '',
+    recentIds: [],
+  };
+
+  const categories = Array.isArray(source.categories)
+    ? [...new Set(source.categories.map((item) => String(item || '').trim()).filter(Boolean))]
+    : defaults.categories;
+
+  const templates = Array.isArray(source.templates)
+    ? source.templates.map((item) => ({
+        id: String(item?.id || ('dlg_' + Date.now() + '_' + Math.random().toString(16).slice(2))),
+        title: String(item?.title || ''),
+        category: String(item?.category || '未分類'),
+        tags: Array.isArray(item?.tags)
+          ? item.tags.map((tag) => String(tag || '').trim()).filter(Boolean)
+          : String(item?.tags || '').split(/[,\s，]+/).map((tag) => tag.trim()).filter(Boolean),
+        zh: String(item?.zh || ''),
+        en: String(item?.en || ''),
+        hi: String(item?.hi || ''),
+        note: String(item?.note || ''),
+        favorite: Boolean(item?.favorite),
+        createdAt: String(item?.createdAt || ''),
+        updatedAt: String(item?.updatedAt || ''),
+      }))
+    : [];
+
+  return {
+    categories: categories.length ? categories : defaults.categories,
+    templates,
+    selectedCategory: String(source.selectedCategory || '全部'),
+    selectedId: String(source.selectedId || ''),
+    recentIds: Array.isArray(source.recentIds) ? source.recentIds.map((id) => String(id)) : [],
+  };
+}
+
 
 function createDefaultState() {
   return {
     tasks: [],
     channels: [],
+    // 永久備註：不跟批次時間綁定，新增批次也會保留
+    channelPermanentNote: '',
+    // 永久批次備註：只保留上方批次備註，不自動帶入每列備註
+    channelPermanentRowNotes: {},
     channelBatchNotes: {},
     channelSummarySync: {
+      mode: 'apps-script',
+      url: '',
+    },
+    updateListSync: {
       mode: 'apps-script',
       url: '',
     },
@@ -310,7 +450,10 @@ function createDefaultState() {
     dropdownOptions: structuredClone(DEFAULT_DROPDOWN_OPTIONS),
     // hiddenColumns stores arrays of hidden column IDs for each table type
     hiddenColumns: { tasks: [], channels: [], channelSummary: [] },
-    cloudSync: structuredClone(DEFAULT_CLOUD_SYNC),
+    hiddenChannelRows: [],
+    // 隱藏渠道名稱：同名渠道在新增批次後也會自動隱藏
+    hiddenChannelKeys: [],
+    dialogDb: normalizeDialogDb({}),
   };
 }
 
@@ -319,24 +462,19 @@ function normalizeState(input) {
   return {
     tasks: Array.isArray(input.tasks) ? input.tasks.map(normalizeTask) : [],
     channels: normalizedChannels,
+    channelPermanentNote: normalizeChannelPermanentNote(input),
+    channelPermanentRowNotes: normalizeChannelPermanentRowNotes(input.channelPermanentRowNotes, normalizedChannels),
     channelBatchNotes: normalizeChannelBatchNotes(input.channelBatchNotes),
     channelSummarySync: normalizeChannelSummarySync(input.channelSummarySync),
+    updateListSync: normalizeChannelSummarySync(input.updateListSync || input.channelSummarySync),
     taskColumns: normalizeTaskColumns(input.taskColumns),
     channelColumns: normalizeChannelColumns(input.channelColumns),
     columnWidths: input.columnWidths && typeof input.columnWidths === 'object' ? { ...input.columnWidths } : {},
     dropdownOptions: normalizeDropdownOptions(input.dropdownOptions, normalizedChannels),
     hiddenColumns: normalizeHiddenColumns(input.hiddenColumns),
-    cloudSync: normalizeCloudSync(input.cloudSync),
-  };
-}
-
-function normalizeCloudSync(config) {
-  return {
-    enabled: Boolean(config?.enabled),
-    url: String(config?.url || '').trim(),
-    lastPulledAt: Number(config?.lastPulledAt || 0),
-    lastPushedAt: Number(config?.lastPushedAt || 0),
-    lastRemoteUpdatedAt: String(config?.lastRemoteUpdatedAt || ''),
+    hiddenChannelRows: Array.isArray(input.hiddenChannelRows) ? [...input.hiddenChannelRows] : [],
+    hiddenChannelKeys: Array.isArray(input.hiddenChannelKeys) ? [...new Set(input.hiddenChannelKeys.map((item) => String(item).trim().toLowerCase()).filter(Boolean))] : [],
+    dialogDb: normalizeDialogDb(input.dialogDb),
   };
 }
 
@@ -368,6 +506,44 @@ function normalizeChannelBatchNotes(notes) {
       .map(([key, value]) => [String(key).trim(), String(value ?? '')])
       .filter(([key]) => Boolean(key))
   );
+}
+
+function normalizeChannelPermanentNote(input) {
+  if (typeof input?.channelPermanentNote === 'string') return input.channelPermanentNote;
+  // 舊版資料只有批次備註時，取最新一筆非空備註升級成永久備註
+  const notes = input?.channelBatchNotes;
+  if (notes && typeof notes === 'object') {
+    const latest = Object.entries(notes)
+      .map(([key, value]) => [String(key).trim(), String(value ?? '')])
+      .filter(([key, value]) => key && value.trim())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .at(-1);
+    return latest ? latest[1] : '';
+  }
+  return '';
+}
+
+function getChannelPermanentKey(channel = {}) {
+  // 以「渠道名稱」作為永久備註主鍵；名稱相同就自動沿用備註
+  return String(channel.name || '').trim().toLowerCase();
+}
+
+function normalizeChannelPermanentRowNotes(notes, channels = []) {
+  const result = {};
+  if (notes && typeof notes === 'object') {
+    Object.entries(notes).forEach(([key, value]) => {
+      const k = String(key).trim().toLowerCase();
+      const v = String(value ?? '');
+      if (k && v.trim()) result[k] = v;
+    });
+  }
+  // 舊資料升級：既有渠道列備註也寫入永久備註表
+  channels.forEach((channel) => {
+    const key = getChannelPermanentKey(channel);
+    const note = String(channel.note || '');
+    if (key && note.trim() && !result[key]) result[key] = note;
+  });
+  return result;
 }
 
 function normalizeDropdownOptions(options, channels = []) {
@@ -468,15 +644,46 @@ function normalizeChannelColumns(columns) {
   return normalized;
 }
 
-function saveState(options = {}) {
+function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+  try {
+    localStorage.setItem(STORAGE_BACKUP_KEY, JSON.stringify(state.data));
+    localStorage.setItem(`${STORAGE_BACKUP_KEY}-ts`, new Date().toISOString());
+  } catch (error) {}
   els.saveStatus.textContent = `已儲存 ${new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
   els.saveStatus.classList.remove('flash');
   void els.saveStatus.offsetWidth;
   els.saveStatus.classList.add('flash');
-  if (!options.skipCloudSync) {
-    scheduleCloudSyncPush();
-  }
+}
+
+
+function exportDashboardBackup() {
+  const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  a.href = URL.createObjectURL(blob);
+  a.download = `dashboard-backup-${ts}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function importDashboardBackup(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || '{}'));
+      state.data = normalizeState(parsed);
+      saveState();
+      render();
+      alert('備份已匯入');
+    } catch (error) {
+      alert('備份檔格式錯誤');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
 function render() {
@@ -499,197 +706,7 @@ function render() {
   renderUpdateListView();
   renderChannelHistoryTable();
   renderSuggestionLists();
-  renderCloudSyncControls();
   updateCaptureFit();
-}
-
-function getCloudSyncConfig() {
-  state.data.cloudSync = normalizeCloudSync(state.data.cloudSync);
-  return state.data.cloudSync;
-}
-
-function renderCloudSyncControls() {
-  if (!els.cloudSyncStatus) return;
-  const config = getCloudSyncConfig();
-
-  if (els.cloudSyncUrl && document.activeElement !== els.cloudSyncUrl) {
-    els.cloudSyncUrl.value = config.url;
-  }
-  if (els.cloudSyncEnabled && document.activeElement !== els.cloudSyncEnabled) {
-    els.cloudSyncEnabled.checked = config.enabled;
-  }
-
-  els.cloudSyncStatus.classList.toggle('is-error', Boolean(state.cloudSync.error));
-  if (state.cloudSync.busy) {
-    els.cloudSyncStatus.textContent = '雲端同步中';
-  } else if (state.cloudSync.error) {
-    els.cloudSyncStatus.textContent = state.cloudSync.error;
-  } else if (state.cloudSync.message) {
-    els.cloudSyncStatus.textContent = state.cloudSync.message;
-  } else if (!config.enabled) {
-    els.cloudSyncStatus.textContent = '未啟用';
-  } else if (!config.url) {
-    els.cloudSyncStatus.textContent = '尚未設定網址';
-  } else if (config.lastPushedAt) {
-    els.cloudSyncStatus.textContent = `已同步 ${new Date(config.lastPushedAt).toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
-  } else {
-    els.cloudSyncStatus.textContent = '可同步';
-  }
-}
-
-function setCloudSyncMessage(message, isError = false) {
-  state.cloudSync.message = isError ? '' : message;
-  state.cloudSync.error = isError ? message : '';
-  renderCloudSyncControls();
-}
-
-function scheduleCloudSyncPush() {
-  const config = getCloudSyncConfig();
-  if (!config.enabled || !config.url) return;
-  window.clearTimeout(cloudSyncPushTimer);
-  setCloudSyncMessage('等待雲端同步');
-  cloudSyncPushTimer = window.setTimeout(() => {
-    void pushCloudState();
-  }, 900);
-}
-
-function buildCloudSyncPayload() {
-  const data = structuredClone(state.data);
-  data.cloudSync = {
-    ...normalizeCloudSync(data.cloudSync),
-    url: '',
-  };
-  return {
-    action: 'save',
-    version: 1,
-    savedAt: new Date().toISOString(),
-    data,
-  };
-}
-
-async function pushCloudState() {
-  const config = getCloudSyncConfig();
-  if (!config.url) {
-    setCloudSyncMessage('請先貼上 Apps Script 網址', true);
-    return;
-  }
-
-  state.cloudSync.busy = true;
-  setCloudSyncMessage('雲端同步中');
-
-  try {
-    await fetch(config.url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(buildCloudSyncPayload()),
-    });
-    state.data.cloudSync = {
-      ...config,
-      lastPushedAt: Date.now(),
-    };
-    saveState({ skipCloudSync: true });
-    setCloudSyncMessage('已送出雲端保存');
-  } catch (error) {
-    setCloudSyncMessage('雲端保存失敗，已保留本機資料', true);
-  } finally {
-    state.cloudSync.busy = false;
-    renderCloudSyncControls();
-  }
-}
-
-function loadCloudStateJsonp(url) {
-  return new Promise((resolve, reject) => {
-    const callbackName = `__dashboardCloudSync_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const separator = url.includes('?') ? '&' : '?';
-    const script = document.createElement('script');
-    const timeout = window.setTimeout(() => {
-      cleanup();
-      reject(new Error('雲端讀取逾時，請確認 Apps Script 已部署為 Web App。'));
-    }, 12000);
-
-    function cleanup() {
-      window.clearTimeout(timeout);
-      delete window[callbackName];
-      script.remove();
-    }
-
-    window[callbackName] = (payload) => {
-      cleanup();
-      resolve(payload);
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error('無法連線雲端同步 API，請確認網址是 /exec 結尾。'));
-    };
-
-    script.src = `${url}${separator}action=load&callback=${encodeURIComponent(callbackName)}`;
-    document.body.appendChild(script);
-  });
-}
-
-function isDashboardStateData(value) {
-  if (!value || typeof value !== 'object') return false;
-  return Array.isArray(value.tasks)
-    && Array.isArray(value.channels)
-    && Array.isArray(value.taskColumns)
-    && Array.isArray(value.channelColumns)
-    && value.dropdownOptions
-    && typeof value.dropdownOptions === 'object';
-}
-
-async function pullCloudState() {
-  const config = getCloudSyncConfig();
-  if (!config.url) {
-    setCloudSyncMessage('請先貼上 Apps Script 網址', true);
-    return;
-  }
-
-  state.cloudSync.busy = true;
-  setCloudSyncMessage('下載雲端資料中');
-
-  try {
-    const payload = await loadCloudStateJsonp(config.url);
-    if (payload?.ok === false) {
-      throw new Error(payload.error || '雲端同步 API 回傳錯誤。');
-    }
-    const remoteData = payload?.data || payload?.state;
-    if (!remoteData || typeof remoteData !== 'object') {
-      throw new Error('雲端尚未有資料，請先在主要電腦按「上傳本機資料」。');
-    }
-    if (!isDashboardStateData(remoteData)) {
-      throw new Error('雲端目前不是完整儀表板資料，請回主要電腦重新按「上傳本機資料」。');
-    }
-    const nextData = normalizeState(remoteData);
-    nextData.cloudSync = {
-      ...config,
-      enabled: true,
-      lastPulledAt: Date.now(),
-      lastRemoteUpdatedAt: String(payload.updatedAt || ''),
-    };
-    state.data = nextData;
-    saveState({ skipCloudSync: true });
-    state.cloudSync.busy = false;
-    setCloudSyncMessage('已下載雲端資料');
-    render();
-  } catch (error) {
-    state.cloudSync.busy = false;
-    setCloudSyncMessage(error?.message || '下載雲端資料失敗', true);
-  }
-}
-
-function saveCloudSyncSettings() {
-  const previous = getCloudSyncConfig();
-  state.data.cloudSync = normalizeCloudSync({
-    ...previous,
-    enabled: Boolean(els.cloudSyncEnabled?.checked),
-    url: String(els.cloudSyncUrl?.value || '').trim(),
-  });
-  saveState({ skipCloudSync: true });
-  setCloudSyncMessage(state.data.cloudSync.enabled ? '同步設定已儲存' : '雲端同步未啟用');
 }
 
 function renderNavigation() {
@@ -700,9 +717,11 @@ function renderNavigation() {
 
   const activeGroup = state.view === 'tasks' || state.view === 'task-archive'
     ? 'tasks'
-    : state.view === 'channels' || state.view === 'channel-history'
-      ? 'channels'
-      : '';
+    : state.view === 'channel-summary' || state.view === 'update-list'
+      ? 'channel-summary-group'
+      : state.view === 'channels' || state.view === 'channel-history'
+        ? 'channels'
+        : '';
 
   if (activeGroup) {
     state.navGroups[activeGroup] = true;
@@ -1035,7 +1054,7 @@ function parseUpdateListResponse(response) {
  * @returns {Promise<{headers: string[], rows: object[]}>} 返回標題與資料陣列
  */
 function loadUpdateListRows() {
-  const syncConfig = state.data.channelSummarySync || { mode: 'apps-script', url: '' };
+  const syncConfig = state.data.updateListSync || state.data.channelSummarySync || { mode: 'apps-script', url: '' };
   // 直接讀取公開 CSV
   if (syncConfig.mode === 'public-csv') {
     if (!syncConfig.url) {
@@ -1089,7 +1108,20 @@ function loadUpdateListRows() {
         reject(new Error('Apps Script API 無法連線，請確認已部署為網頁應用程式，並使用最新 exec 網址。'));
       };
 
-      script.src = `${syncConfig.url}${separator}callback=${encodeURIComponent(callbackName)}`;
+      let requestUrl = syncConfig.url;
+      // 允許使用同一支 Apps Script：不管原網址有沒有 type，都強制更新列表讀 type=updates
+      try {
+        const parsedUrl = new URL(syncConfig.url, window.location.href);
+        parsedUrl.searchParams.set('type', 'updates');
+        parsedUrl.searchParams.set('callback', callbackName);
+        requestUrl = parsedUrl.toString();
+      } catch (error) {
+        const params = new URLSearchParams();
+        params.set('type', 'updates');
+        params.set('callback', callbackName);
+        requestUrl = `${syncConfig.url}${separator}${params.toString()}`;
+      }
+      script.src = requestUrl;
       document.body.appendChild(script);
     });
   }
@@ -1262,6 +1294,7 @@ function getFilteredChannelSummaryRows() {
   const search = state.channelSummary.search.trim().toLowerCase();
   const filteredRows = state.channelSummary.rows.filter((row) => {
     if (state.channelSummary.channel && row.channel !== state.channelSummary.channel) return false;
+    if (state.channelSummary.packageName && row.packageName !== state.channelSummary.packageName) return false;
     if (state.channelSummary.version && row.version !== state.channelSummary.version) return false;
     if (state.channelSummary.versionChecked && row.versionChecked !== state.channelSummary.versionChecked) return false;
     if (!search) return true;
@@ -1342,12 +1375,41 @@ function compareUpdateListRows(rowA, rowB) {
   return sortDirection === 'asc' ? cmp : -cmp;
 }
 
+function getRowCellUrl(row, header) {
+  const explicit = String(row[`${header}_url`] || row[`${header}Url`] || '').trim();
+  if (explicit) return explicit;
+  const value = String(row[header] || '').trim();
+  if (/^https?:\/\//i.test(value)) return value;
+  return '';
+}
+
+function toNumericValue(value) {
+  const cleaned = String(value ?? '').replace(/,/g, '').trim();
+  const number = Number(cleaned);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function formatSummaryNumber(value) {
+  return Number(value || 0).toLocaleString('en-US');
+}
+
+function updateChannelSummaryTotals(rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  const totalNew = list.reduce((sum, row) => sum + toNumericValue(row.yesterdayNew), 0);
+  const totalDau = list.reduce((sum, row) => sum + toNumericValue(row.yesterdayDau), 0);
+  const totalRecharge = list.reduce((sum, row) => sum + toNumericValue(row.yesterdayRecharge), 0);
+  if (els.channelSummaryYesterdayNewTotal) els.channelSummaryYesterdayNewTotal.textContent = formatSummaryNumber(totalNew);
+  if (els.channelSummaryYesterdayDauTotal) els.channelSummaryYesterdayDauTotal.textContent = formatSummaryNumber(totalDau);
+  if (els.channelSummaryYesterdayRechargeTotal) els.channelSummaryYesterdayRechargeTotal.textContent = formatSummaryNumber(totalRecharge);
+}
+
 // 渲染更新列表的表頭
 function renderUpdateListHead() {
   if (!els.updateListTableHead) return;
   const tr = document.createElement('tr');
   // 使用 state.updateList.headers 動態渲染欄位
-  const headers = Array.isArray(state.updateList.headers) ? state.updateList.headers : [];
+  const headers = (Array.isArray(state.updateList.headers) ? state.updateList.headers : [])
+    .filter((header) => !String(header).endsWith('_url'));
   headers.forEach((header) => {
     // 不考慮 channelSummary 隱藏欄位設定，以免漏顯更新記錄欄位
     const th = document.createElement('th');
@@ -1378,6 +1440,13 @@ function renderUpdateListView() {
 
   renderUpdateListHead();
 
+  if (els.updateListSyncMode) {
+    els.updateListSyncMode.value = state.data.updateListSync?.mode || 'apps-script';
+  }
+  if (els.updateListSyncUrl) {
+    els.updateListSyncUrl.value = state.data.updateListSync?.url || '';
+  }
+
   // 更新同步狀態文字
   if (state.updateList.loading) {
     els.updateListSyncStatus.textContent = '同步中';
@@ -1406,12 +1475,25 @@ function renderUpdateListView() {
   }
 
   els.updateListTableBody.innerHTML = '';
-  const headers = Array.isArray(state.updateList.headers) ? state.updateList.headers : [];
+  const headers = (Array.isArray(state.updateList.headers) ? state.updateList.headers : [])
+    .filter((header) => !String(header).endsWith('_url'));
   filteredRows.forEach((row) => {
     const tr = document.createElement('tr');
     headers.forEach((header) => {
       const td = document.createElement('td');
-      td.textContent = row[header] || '';
+      const value = row[header] || '';
+      const url = getRowCellUrl(row, header);
+      if (url) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = 'sheet-link';
+        link.textContent = String(value || '連結').trim() || '連結';
+        td.appendChild(link);
+      } else {
+        td.textContent = value;
+      }
       tr.appendChild(td);
     });
     els.updateListTableBody.appendChild(tr);
@@ -1440,6 +1522,8 @@ function refreshUpdateList() {
     });
 }
 
+
+
 function renderChannelSummaryView() {
   if (!els.channelSummaryTableHead || !els.channelSummaryTableBody) return;
 
@@ -1455,6 +1539,7 @@ function renderChannelSummaryView() {
   const message = els.channelSummaryMessage;
   const filteredRows = getFilteredChannelSummaryRows();
   els.channelSummaryCount.textContent = String(filteredRows.length);
+  updateChannelSummaryTotals(filteredRows);
 
   if (state.channelSummary.loading) {
     els.channelSummarySyncStatus.textContent = '同步中';
@@ -1531,10 +1616,14 @@ function syncChannelSummaryFilters() {
   if (!els.channelSummaryChannelFilter || !els.channelSummaryVersionFilter || !els.channelSummaryConfirmFilter) return;
 
   const channels = [...new Set(state.channelSummary.rows.map((row) => row.channel).filter(Boolean))];
+  const packageNames = [...new Set(state.channelSummary.rows.map((row) => row.packageName).filter(Boolean))];
   const versions = [...new Set(state.channelSummary.rows.map((row) => row.version).filter(Boolean))];
   const checks = [...new Set(state.channelSummary.rows.map((row) => row.versionChecked).filter(Boolean))];
 
   fillSelectOptions(els.channelSummaryChannelFilter, '全部渠道', channels, state.channelSummary.channel);
+  if (els.channelSummaryPackageFilter) {
+    fillSelectOptions(els.channelSummaryPackageFilter, '全部包名稱', packageNames, state.channelSummary.packageName);
+  }
   fillSelectOptions(els.channelSummaryVersionFilter, '全部版本', versions, state.channelSummary.version);
   fillSelectOptions(els.channelSummaryConfirmFilter, '全部確認狀態', checks, state.channelSummary.versionChecked);
   els.channelSummarySearch.value = state.channelSummary.search;
@@ -1951,8 +2040,23 @@ function renderChannelTable() {
   const currentBatchChannels = currentBatchTime
     ? allChannels.filter((channel) => String(channel.updatedAt || '').trim() === currentBatchTime)
     : allChannels;
-  const channels = currentBatchChannels;
+  const hiddenIds = new Set(state.data.hiddenChannelRows || []);
+  const hiddenKeys = getEffectiveHiddenChannelKeySet();
+  const channels = currentBatchChannels.filter((channel) => {
+    const key = getChannelPermanentKey(channel);
+    return !hiddenIds.has(channel.id) && !(key && hiddenKeys.has(key));
+  });
+  const hiddenCount = getHiddenChannelCount();
   els.channelTotalCount.textContent = String(allChannels.length);
+  if (els.channelHiddenCount) {
+    els.channelHiddenCount.textContent = String(hiddenCount);
+  }
+  if (els.restoreHiddenChannelsBtn) {
+    els.restoreHiddenChannelsBtn.disabled = !hiddenCount;
+  }
+  if (els.hideSelectedChannelsBtn) {
+    els.hideSelectedChannelsBtn.disabled = !(state.selectedChannelIds && state.selectedChannelIds.size);
+  }
   if (els.capturePageIndicator) {
     els.capturePageIndicator.textContent = '';
   }
@@ -1965,14 +2069,15 @@ function renderChannelTable() {
 
   if (!channels.length) {
     const row = document.createElement('tr');
-    row.innerHTML = `<td colspan="${visibleColumns.length + (state.captureMode ? 0 : 1)}">目前沒有渠道資料，按「新增紀錄」即可開始。</td>`;
+    // 顯示空白訊息的欄位寬度：若非截圖模式，還需要為勾選欄與操作欄預留欄位
+    row.innerHTML = `<td colspan="${visibleColumns.length + (state.captureMode ? 0 : 2)}">目前沒有渠道資料，按「新增紀錄」即可開始。</td>`;
     els.channelBody.appendChild(row);
     renderChannelHead();
     return;
   }
 
   renderChannelHead();
-  channels.forEach((channel) => {
+    channels.forEach((channel) => {
     const tr = document.createElement('tr');
     tr.dataset.id = channel.id;
     tr.dataset.rowId = channel.id;
@@ -1980,6 +2085,19 @@ function renderChannelTable() {
     tr.className = 'draggable-row';
     tr.draggable = true;
     attachRowDragEvents(tr);
+    // 勾選欄：非截圖模式下加入勾選框，可計算金額加總
+    if (!state.captureMode) {
+      const selectTd = document.createElement('td');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'channel-select-checkbox';
+      // 若此渠道已被勾選，維持勾選狀態
+      if (state.selectedChannelIds && state.selectedChannelIds.has(channel.id)) {
+        checkbox.checked = true;
+      }
+      selectTd.appendChild(checkbox);
+      tr.appendChild(selectTd);
+    }
     visibleColumns.forEach((column) => {
       const td = document.createElement('td');
       td.appendChild(buildChannelCell(column, channel));
@@ -1994,11 +2112,22 @@ function renderChannelTable() {
     applyChannelBadges(tr, channel);
     els.channelBody.appendChild(tr);
   });
+  // 每次重繪表格後更新勾選加總
+  updateSelectedChannelSum();
 }
 
 function renderChannelHead() {
   const tr = document.createElement('tr');
   const visibleColumns = getVisibleColumns('channels');
+  // 第一欄：勾選列，不在截圖模式下才顯示
+  if (!state.captureMode) {
+    const selectTh = document.createElement('th');
+    selectTh.textContent = '';
+    selectTh.className = 'channel-select-header';
+    applyStoredColumnWidth(selectTh, 'channel:select');
+    attachResizeHandle(selectTh, 'channel:select');
+    tr.appendChild(selectTh);
+  }
   visibleColumns.forEach((column) => {
     const th = document.createElement('th');
     th.draggable = true;
@@ -2011,6 +2140,7 @@ function renderChannelHead() {
     attachResizeHandle(th, `channel:${column.id}`);
     tr.appendChild(th);
   });
+  // 操作欄：非截圖模式下顯示
   if (!state.captureMode) {
     const actionTh = document.createElement('th');
     actionTh.textContent = '操作';
@@ -2321,6 +2451,7 @@ function buildChannelCell(column, channel) {
   const input = document.createElement('input');
   input.type = 'text';
   input.dataset.field = column.id;
+  // 每列備註只顯示該批次自己的內容；新增批次不自動帶入舊備註
   input.value = readChannelField(channel, column.id);
   input.placeholder = column.label;
   return input;
@@ -2341,8 +2472,11 @@ function applyChannelBadges(row, channel) {
   const visibleColumns = getVisibleColumns('channels');
   const resultIndex = visibleColumns.findIndex((column) => column.id === 'result');
   const statusIndex = visibleColumns.findIndex((column) => column.id === 'status');
-  const resultCell = resultIndex >= 0 ? row.children[resultIndex] : null;
-  const statusCell = statusIndex >= 0 ? row.children[statusIndex] : null;
+  // 非截圖模式最前面有一欄 checkbox，因此實際欄位 index 需要往後補 1，
+  // 避免把「處理結果」的色系套到「最新金額」、把「狀態」的色系套到「來源」。
+  const columnOffset = state.captureMode ? 0 : 1;
+  const resultCell = resultIndex >= 0 ? row.children[resultIndex + columnOffset] : null;
+  const statusCell = statusIndex >= 0 ? row.children[statusIndex + columnOffset] : null;
   const resultSelect = resultCell?.querySelector('select[data-field="result"]') || null;
   const statusSelect = statusCell?.querySelector('select[data-field="status"]') || null;
 
@@ -2421,11 +2555,11 @@ function duplicateChannelBatch() {
     id: crypto.randomUUID(),
     updatedAt: nextBatchTime,
     amount: '',
+    // 新增批次時不要帶入上一批每列備註
     note: '',
   }));
 
   state.data.channels.unshift(...duplicatedRows);
-  state.data.channelBatchNotes[nextBatchTime] = '';
   els.channelBatchTime.value = nextBatchTime;
   state.historyBatchTime = sourceRows[0]?.updatedAt || '';
   saveState();
@@ -2480,6 +2614,15 @@ function deleteChannel(id) {
     index: state.data.channels.findIndex((item) => item.id === id),
   };
   state.data.channels = state.data.channels.filter((item) => item.id !== id);
+
+  // 若刪除的渠道被勾選，從集合中移除並更新加總
+  if (state.selectedChannelIds) {
+    state.selectedChannelIds.delete(id);
+  }
+  if (Array.isArray(state.data.hiddenChannelRows)) {
+    state.data.hiddenChannelRows = state.data.hiddenChannelRows.filter((hiddenId) => hiddenId !== id);
+  }
+  updateSelectedChannelSum();
   saveState();
   render();
 }
@@ -2541,22 +2684,237 @@ function updateTaskHistory(id, dateKey, value) {
   render();
 }
 
+
+function getPermanentChannelRowNote(channel) {
+  const key = getChannelPermanentKey(channel);
+  if (!key) return channel?.note || '';
+  return state.data.channelPermanentRowNotes?.[key] || channel?.note || '';
+}
+
+function savePermanentChannelRowNote(channel, value) {
+  const key = getChannelPermanentKey(channel);
+  if (!key) return;
+  if (!state.data.channelPermanentRowNotes || typeof state.data.channelPermanentRowNotes !== 'object') {
+    state.data.channelPermanentRowNotes = {};
+  }
+  const nextValue = String(value ?? '');
+  if (nextValue.trim()) {
+    state.data.channelPermanentRowNotes[key] = nextValue;
+  } else {
+    delete state.data.channelPermanentRowNotes[key];
+  }
+}
+
+function applyPermanentChannelRowNotes() {
+  // 舊版曾經把每列備註永久化；新版不再自動寫回每列，避免新增批次出現舊備註。
+}
+
 function updateChannel(id, field, value) {
   const channel = state.data.channels.find((item) => item.id === id);
   if (!channel) return;
+
+  const oldPermanentKey = getChannelPermanentKey(channel);
 
   if (field in channel && field !== 'extras') {
     channel[field] = value;
   } else {
     channel.extras[field] = value;
   }
+
+  // 每列備註跟批次資料走，不寫入永久備註，避免新增批次自動帶出舊備註
+
   maybeAddDropdownValueByField(field, value);
   if (field !== 'updatedAt') {
     channel.updatedAt = els.channelBatchTime.value || channel.updatedAt || toDateTimeLocalValue(new Date());
   }
   saveState();
   render();
+
+  // 若渠道資料有更新，可能影響勾選金額總和，故重新計算
+  updateSelectedChannelSum();
 }
+
+function getEffectiveHiddenChannelKeySet() {
+  const hiddenIds = new Set(state.data.hiddenChannelRows || []);
+  const hiddenKeys = new Set(state.data.hiddenChannelKeys || []);
+  state.data.channels.forEach((channel) => {
+    if (hiddenIds.has(channel.id)) {
+      const key = getChannelPermanentKey(channel);
+      if (key) hiddenKeys.add(key);
+    }
+  });
+  return hiddenKeys;
+}
+
+
+function getHiddenChannelEntries() {
+  const entries = [];
+  const seen = new Set();
+
+  const pushEntry = (key, id = '') => {
+    const normalizedKey = String(key || '').trim().toLowerCase();
+    const normalizedId = String(id || '').trim();
+    const entryKey = normalizedKey || normalizedId;
+    if (!entryKey || seen.has(entryKey)) return;
+
+    const channel = state.data.channels.find((item) => {
+      const itemKey = getChannelPermanentKey(item);
+      return (normalizedKey && itemKey === normalizedKey) || (normalizedId && item.id === normalizedId);
+    });
+
+    seen.add(entryKey);
+    entries.push({
+      key: normalizedKey,
+      id: normalizedId,
+      name: channel?.name || normalizedKey || normalizedId || '未命名渠道',
+    });
+  };
+
+  (state.data.hiddenChannelKeys || []).forEach((key) => pushEntry(key, ''));
+  (state.data.hiddenChannelRows || []).forEach((id) => {
+    const channel = state.data.channels.find((item) => item.id === id);
+    pushEntry(getChannelPermanentKey(channel), id);
+  });
+
+  return entries;
+}
+
+function removeHiddenChannelEntry(entry) {
+  const key = String(entry?.key || '').trim().toLowerCase();
+  const id = String(entry?.id || '').trim();
+
+  if (Array.isArray(state.data.hiddenChannelKeys)) {
+    state.data.hiddenChannelKeys = state.data.hiddenChannelKeys.filter((item) => String(item).trim().toLowerCase() !== key);
+  }
+
+  if (Array.isArray(state.data.hiddenChannelRows)) {
+    state.data.hiddenChannelRows = state.data.hiddenChannelRows.filter((hiddenId) => {
+      if (id && hiddenId === id) return false;
+      const channel = state.data.channels.find((item) => item.id === hiddenId);
+      return getChannelPermanentKey(channel) !== key;
+    });
+  }
+}
+
+
+function getHiddenChannelCount() {
+  return getHiddenChannelEntries().length;
+}
+
+// 更新勾選的渠道 ID 並重新計算最新金額加總
+function updateSelectedChannel(id, selected) {
+  if (!state.selectedChannelIds) {
+    state.selectedChannelIds = new Set();
+  }
+  if (selected) {
+    state.selectedChannelIds.add(id);
+  } else {
+    state.selectedChannelIds.delete(id);
+  }
+  updateSelectedChannelSum();
+}
+
+// 重新計算勾選的渠道最新金額加總並更新 UI
+function updateSelectedChannelSum() {
+  let sum = 0;
+  if (state.selectedChannelIds && state.selectedChannelIds.size) {
+    for (const cid of state.selectedChannelIds) {
+      const channel = state.data.channels.find((item) => item.id === cid);
+      if (channel) {
+        // 將字串轉成數字，移除逗號
+        const num = parseFloat(String(channel.amount || '').replace(/,/g, ''));
+        if (!isNaN(num)) sum += num;
+      }
+    }
+  }
+  if (els.channelSelectedSum) {
+    els.channelSelectedSum.textContent = sum ? sum.toLocaleString() : '0';
+  }
+  if (els.hideSelectedChannelsBtn) {
+    els.hideSelectedChannelsBtn.disabled = !(state.selectedChannelIds && state.selectedChannelIds.size);
+  }
+  const hiddenCount = getHiddenChannelCount();
+  if (els.channelHiddenCount) {
+    els.channelHiddenCount.textContent = String(hiddenCount);
+  }
+  if (els.restoreHiddenChannelsBtn) {
+    els.restoreHiddenChannelsBtn.disabled = !hiddenCount;
+  }
+}
+
+// 將目前勾選的渠道列隱藏；資料仍保留，只是不顯示在表格與截圖模式中
+function hideSelectedChannels() {
+  if (!state.selectedChannelIds || !state.selectedChannelIds.size) return;
+  if (!Array.isArray(state.data.hiddenChannelRows)) {
+    state.data.hiddenChannelRows = [];
+  }
+  if (!Array.isArray(state.data.hiddenChannelKeys)) {
+    state.data.hiddenChannelKeys = [];
+  }
+
+  const existingIds = new Set(state.data.hiddenChannelRows);
+  const existingKeys = new Set(state.data.hiddenChannelKeys);
+  state.selectedChannelIds.forEach((id) => {
+    existingIds.add(id);
+    const channel = state.data.channels.find((item) => item.id === id);
+    const key = getChannelPermanentKey(channel);
+    if (key) existingKeys.add(key);
+  });
+  state.data.hiddenChannelRows = [...existingIds];
+  state.data.hiddenChannelKeys = [...existingKeys];
+  state.selectedChannelIds.clear();
+  saveState();
+  render();
+}
+
+// 恢復已隱藏渠道列：可選擇恢復，不再全部恢復
+function restoreHiddenChannels() {
+  const entries = getHiddenChannelEntries();
+
+  if (!entries.length) {
+    window.alert('目前沒有已隱藏的渠道。');
+    return;
+  }
+
+  const message = [
+    '請輸入要恢復的編號，多筆可用逗號或空白分隔。',
+    '輸入 all 可全部恢復。',
+    '',
+    ...entries.map((entry, index) => `${index + 1}. ${entry.name}`),
+  ].join('\n');
+
+  const answer = window.prompt(message, '1');
+  if (answer === null) return;
+
+  const text = String(answer).trim().toLowerCase();
+  let selectedIndexes = [];
+
+  if (text === 'all' || text === '全部') {
+    selectedIndexes = entries.map((_, index) => index);
+  } else {
+    selectedIndexes = text
+      .split(/[\s,，]+/)
+      .map((item) => Number(item) - 1)
+      .filter((index) => Number.isInteger(index) && index >= 0 && index < entries.length);
+  }
+
+  selectedIndexes = [...new Set(selectedIndexes)];
+
+  if (!selectedIndexes.length) {
+    window.alert('沒有選到任何有效編號。');
+    return;
+  }
+
+  selectedIndexes.forEach((index) => removeHiddenChannelEntry(entries[index]));
+
+  if (state.selectedChannelIds) {
+    state.selectedChannelIds.clear();
+  }
+
+  saveState();
+  render();
+}
+
 
 function maybeAddDropdownValueByField(field, value) {
   const next = String(value || '').trim();
@@ -2591,24 +2949,38 @@ function syncChannelBatchTime() {
   els.channelBatchTimeDisplay.textContent = `本次處理時間 ${formatBatchDisplay(value)}`;
 }
 
+
+
+function toggleChannelNoteCollapse() {
+  if (!els.channelNotePreview) return;
+  const collapsed = els.channelNotePreview.dataset.collapsed === '1';
+  els.channelNotePreview.dataset.collapsed = collapsed ? '0' : '1';
+  renderChannelNotePreview();
+}
+
+
+
+
+
+function toggleChannelNoteCollapse() {
+  if (!els.channelNotePreview) return;
+  const collapsed = els.channelNotePreview.dataset.collapsed === '1';
+  els.channelNotePreview.dataset.collapsed = collapsed ? '0' : '1';
+  renderChannelNotePreview();
+}
+
+
 function syncChannelBatchNote() {
-  if (!els.channelBatchNote) return;
-  const batchTime = String(els.channelBatchTime.value || '').trim();
-  els.channelBatchNote.value = batchTime ? (state.data.channelBatchNotes?.[batchTime] || '') : '';
+  if (!els.channelBatchNoteEditor) return;
+  const nextValue = state.data.channelPermanentNote || '';
+  if (els.channelBatchNoteEditor.innerText.trim() !== nextValue.trim()) {
+    els.channelBatchNoteEditor.innerText = nextValue;
+  }
+  
 }
 
 function updateChannelBatchNote(value) {
-  const batchTime = String(els.channelBatchTime.value || '').trim();
-  if (!batchTime) return;
-  if (!state.data.channelBatchNotes || typeof state.data.channelBatchNotes !== 'object') {
-    state.data.channelBatchNotes = {};
-  }
-  const nextValue = String(value ?? '');
-  if (nextValue.trim()) {
-    state.data.channelBatchNotes[batchTime] = nextValue;
-  } else {
-    delete state.data.channelBatchNotes[batchTime];
-  }
+  state.data.channelPermanentNote = String(value ?? '');
   saveState();
 }
 
@@ -2778,7 +3150,7 @@ function getChannelDisplayValue(column, channel) {
   if (column.id === 'amount') return channel.amount || '';
   if (column.id === 'result') return channel.result || '';
   if (column.id === 'status') return channel.status || '-';
-  if (column.id === 'note') return channel.note || '';
+  if (column.id === 'note') return getPermanentChannelRowNote(channel);
   return readChannelField(channel, column.id) || '';
 }
 
@@ -3362,15 +3734,6 @@ document.getElementById('seed-demo-btn').addEventListener('click', seedDemoData)
 document.getElementById('export-btn').addEventListener('click', exportJson);
 document.getElementById('reset-btn').addEventListener('click', resetData);
 els.importInput.addEventListener('change', (event) => importJson(event.target.files[0]));
-els.cloudSyncSaveBtn?.addEventListener('click', saveCloudSyncSettings);
-els.cloudSyncPullBtn?.addEventListener('click', () => {
-  saveCloudSyncSettings();
-  void pullCloudState();
-});
-els.cloudSyncPushBtn?.addEventListener('click', () => {
-  saveCloudSyncSettings();
-  void pushCloudState();
-});
 
 els.taskBody.addEventListener('change', (event) => {
   const row = event.target.closest('tr');
@@ -3458,6 +3821,12 @@ els.channelBody.addEventListener('change', (event) => {
   const row = event.target.closest('tr');
   if (!row) return;
 
+  // 如果操作的是勾選框，更新勾選狀態並重新計算加總
+  if (event.target.classList.contains('channel-select-checkbox')) {
+    updateSelectedChannel(row.dataset.id, event.target.checked);
+    return;
+  }
+
   const id = row.dataset.id;
   const field = event.target.dataset.field;
   if (!field) return;
@@ -3502,6 +3871,12 @@ document.getElementById('undo-btn').addEventListener('click', undoDelete);
 document.getElementById('dismiss-undo-btn').addEventListener('click', clearUndoBanner);
 els.taskFieldSettingsBtn.addEventListener('click', () => openFieldSettings('tasks'));
 els.channelFieldSettingsBtn.addEventListener('click', () => openFieldSettings('channels'));
+if (els.hideSelectedChannelsBtn) {
+  els.hideSelectedChannelsBtn.addEventListener('click', hideSelectedChannels);
+}
+if (els.restoreHiddenChannelsBtn) {
+  els.restoreHiddenChannelsBtn.addEventListener('click', restoreHiddenChannels);
+}
 // Field settings button for channel summary view
 els.channelSummaryFieldSettingsBtn?.addEventListener('click', () => openFieldSettings('channelSummary'));
 els.channelCaptureBtn.addEventListener('click', toggleCaptureMode);
@@ -3584,8 +3959,16 @@ els.channelBatchTime.addEventListener('change', () => {
   syncChannelBatchNote();
   render();
 });
-els.channelBatchNote?.addEventListener('input', () => {
-  updateChannelBatchNote(els.channelBatchNote.value || '');
+els.channelBatchNoteEditor?.addEventListener('input', () => {
+  updateChannelBatchNote(els.channelBatchNoteEditor.innerText || '');
+});
+
+els.channelNoteCollapseBtn?.addEventListener('click', () => {
+  const editor = els.channelBatchNoteEditor;
+  if (!editor) return;
+  editor.classList.toggle('collapsed');
+  els.channelNoteCollapseBtn.textContent =
+    editor.classList.contains('collapsed') ? '展開' : '收合';
 });
 els.applyBatchTimeBtn.addEventListener('click', applyBatchTimeToAllChannels);
 els.channelHistoryBatchSelect.addEventListener('change', () => {
@@ -3627,6 +4010,10 @@ els.channelSummaryChannelFilter?.addEventListener('change', () => {
   state.channelSummary.channel = els.channelSummaryChannelFilter.value || '';
   renderChannelSummaryView();
 });
+els.channelSummaryPackageFilter?.addEventListener('change', () => {
+  state.channelSummary.packageName = els.channelSummaryPackageFilter.value || '';
+  renderChannelSummaryView();
+});
 els.channelSummaryVersionFilter?.addEventListener('change', () => {
   state.channelSummary.version = els.channelSummaryVersionFilter.value || '';
   renderChannelSummaryView();
@@ -3638,6 +4025,7 @@ els.channelSummaryConfirmFilter?.addEventListener('change', () => {
 els.channelSummaryClearBtn?.addEventListener('click', () => {
   state.channelSummary.search = '';
   state.channelSummary.channel = '';
+  state.channelSummary.packageName = '';
   state.channelSummary.version = '';
   state.channelSummary.versionChecked = '';
   renderChannelSummaryView();
@@ -3660,6 +4048,18 @@ els.channelSummaryTableHead?.addEventListener('click', (event) => {
 });
 // 更新列表：重新整理、搜尋、排序與清除條件
 els.updateListRefreshBtn?.addEventListener('click', () => {
+  void refreshUpdateList();
+});
+els.updateListSyncSaveBtn?.addEventListener('click', () => {
+  state.data.updateListSync = {
+    mode: els.updateListSyncMode?.value || 'apps-script',
+    url: String(els.updateListSyncUrl?.value || '').trim(),
+  };
+  saveState();
+  state.updateList.headers = [];
+  state.updateList.rows = [];
+  state.updateList.error = '';
+  state.updateList.lastFetchedAt = 0;
   void refreshUpdateList();
 });
 els.updateListSearch?.addEventListener('input', () => {
@@ -3706,7 +4106,809 @@ window.setInterval(() => {
   }
 }, 60000);
 
+
+els.dataBackupExportBtn?.addEventListener('click', exportDashboardBackup);
+els.dataBackupImportBtn?.addEventListener('click', () => els.dataBackupFile?.click());
+els.dataBackupFile?.addEventListener('change', (event) => {
+  const file = event.target.files?.[0];
+  importDashboardBackup(file);
+  event.target.value = '';
+});
+
 render();
-if (getCloudSyncConfig().enabled && getCloudSyncConfig().url) {
-  void pullCloudState();
+
+
+
+function persistDialogDbRootFix() {
+  try {
+    if (typeof state !== 'undefined' && state.data && state.data.dialogDb) {
+      localStorage.setItem('local-dashboard-app-v1', JSON.stringify(state.data));
+      localStorage.setItem('local-dashboard-app-v1-backup', JSON.stringify(state.data));
+      localStorage.setItem('dialogDbRootFixBackup', JSON.stringify(state.data.dialogDb));
+    }
+  } catch (error) {
+    console.error('dialogDb persist failed', error);
+  }
 }
+
+/* 對話資料庫：分類 / 多語言 / TAG / 收藏 / 最近使用 */
+(function () {
+  function ensureDialogState() {
+    state.data.dialogDb = state.data.dialogDb || {
+      categories: ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'],
+      templates: [],
+      selectedCategory: '全部',
+      selectedId: '',
+      recentIds: [],
+    };
+  }
+
+  function safeText(value) {
+    return String(value ?? '');
+  }
+
+  function uidDialog() {
+    return 'dlg_' + Date.now() + '_' + Math.random().toString(16).slice(2);
+  }
+
+  function copyDialogText(text) {
+    const value = safeText(text);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value);
+    } else {
+      const temp = document.createElement('textarea');
+      temp.value = value;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+    }
+  }
+
+  function getDialogEls() {
+    return {
+      categoryList: document.getElementById('dialog-category-list'),
+      templateList: document.getElementById('dialog-template-list'),
+      search: document.getElementById('dialog-search'),
+      title: document.getElementById('dialog-title'),
+      category: document.getElementById('dialog-category-input'),
+      tags: document.getElementById('dialog-tags'),
+      zh: document.getElementById('dialog-zh'),
+      en: document.getElementById('dialog-en'),
+      hi: document.getElementById('dialog-hi'),
+      note: document.getElementById('dialog-note'),
+      categoryCount: document.getElementById('dialog-category-count'),
+      templateCount: document.getElementById('dialog-template-count'),
+    };
+  }
+
+  
+  function renderDialogCategorySelect(selectedValue = '') {
+    ensureDialogState();
+    const select = document.getElementById('dialog-category-input');
+    if (!select) return;
+
+    const categories = [...new Set([...(state.data.dialogDb.categories || []), '未分類'])];
+    const currentValue = selectedValue || select.value || '';
+
+    select.innerHTML = categories.map((cat) => {
+      const selected = cat === currentValue ? 'selected' : '';
+      return `<option value="${cat}" ${selected}>${cat}</option>`;
+    }).join('');
+
+    if (currentValue && !categories.includes(currentValue)) {
+      const option = document.createElement('option');
+      option.value = currentValue;
+      option.textContent = currentValue;
+      option.selected = true;
+      select.appendChild(option);
+    }
+  }
+
+
+  function getSelectedDialogTemplate() {
+    ensureDialogState();
+    return state.data.dialogDb.templates.find((item) => item.id === state.data.dialogDb.selectedId) || null;
+  }
+
+  function setDialogRecent(id) {
+    ensureDialogState();
+    state.data.dialogDb.recentIds = [id, ...(state.data.dialogDb.recentIds || []).filter((item) => item !== id)].slice(0, 20);
+    saveState();
+  }
+
+  function selectDialogTemplate(id) {
+    ensureDialogState();
+    state.data.dialogDb.selectedId = id;
+    setDialogRecent(id);
+    saveState();
+    renderDialogDb();
+  }
+
+  function fillDialogEditor(item) {
+    const els = getDialogEls();
+    if (!els.title) return;
+
+    els.title.value = item?.title || '';
+    renderDialogCategorySelect(item?.category || state.data.dialogDb.selectedCategory || '未分類');
+    els.category.value = item?.category || state.data.dialogDb.selectedCategory || '未分類';
+    els.tags.value = (item?.tags || []).join(', ');
+    els.zh.value = item?.zh || '';
+    els.en.value = item?.en || '';
+    els.hi.value = item?.hi || '';
+    els.note.value = item?.note || '';
+  }
+
+  function saveDialogTemplate() {
+    ensureDialogState();
+    const els = getDialogEls();
+    if (!els.title) return;
+
+    const title = els.title.value.trim();
+    const category = els.category.value.trim() || '未分類';
+    const tags = els.tags.value.split(/[,\s，]+/).map((item) => item.trim()).filter(Boolean);
+    const zh = els.zh.value.trim();
+    const en = els.en.value.trim();
+    const hi = els.hi.value.trim();
+    const note = els.note.value.trim();
+
+    if (!title && !zh && !en && !hi) {
+      alert('請至少輸入標題或內容。');
+      return;
+    }
+
+    let item = getSelectedDialogTemplate();
+    if (!item) {
+      item = { id: uidDialog(), createdAt: new Date().toISOString(), favorite: false };
+      state.data.dialogDb.templates.unshift(item);
+      state.data.dialogDb.selectedId = item.id;
+    }
+
+    item.title = title || '未命名話術';
+    item.category = category;
+    item.tags = tags;
+    item.zh = zh;
+    item.en = en;
+    item.hi = hi;
+    item.note = note;
+    item.updatedAt = new Date().toISOString();
+
+    if (!state.data.dialogDb.categories.includes(category)) {
+      state.data.dialogDb.categories.push(category);
+    }
+
+    saveState();
+    persistDialogDbRootFix();
+    renderDialogDb();
+  }
+
+  function deleteDialogTemplate() {
+    ensureDialogState();
+    const item = getSelectedDialogTemplate();
+    if (!item) return alert('請先選擇話術。');
+    if (!confirm('確定刪除此話術？')) return;
+
+    state.data.dialogDb.templates = state.data.dialogDb.templates.filter((row) => row.id !== item.id);
+    state.data.dialogDb.selectedId = '';
+    saveState();
+    renderDialogDb();
+  }
+
+  function toggleDialogFavorite() {
+    const item = getSelectedDialogTemplate();
+    if (!item) return alert('請先選擇話術。');
+    item.favorite = !item.favorite;
+    saveState();
+    renderDialogDb();
+  }
+
+  function addDialogCategory() {
+    ensureDialogState();
+    const name = prompt('請輸入新分類名稱：');
+    if (!name) return;
+    const clean = name.trim();
+    if (!clean) return;
+    if (!state.data.dialogDb.categories.includes(clean)) {
+      state.data.dialogDb.categories.push(clean);
+      state.data.dialogDb.selectedCategory = clean;
+      saveState();
+      renderDialogDb();
+    }
+  }
+
+  function renameDialogCategory(oldName) {
+    ensureDialogState();
+    if (oldName === '全部' || oldName === '收藏' || oldName === '最近使用') return;
+    const name = prompt('修改分類名稱：', oldName);
+    if (!name) return;
+    const clean = name.trim();
+    if (!clean) return;
+
+    state.data.dialogDb.categories = state.data.dialogDb.categories.map((cat) => cat === oldName ? clean : cat);
+    state.data.dialogDb.templates.forEach((item) => {
+      if (item.category === oldName) item.category = clean;
+    });
+    if (state.data.dialogDb.selectedCategory === oldName) state.data.dialogDb.selectedCategory = clean;
+
+    saveState();
+    renderDialogDb();
+  }
+
+  function removeDialogCategory(name) {
+    ensureDialogState();
+    if (!confirm('刪除分類不會刪話術，分類內話術會改成「未分類」。確定？')) return;
+    state.data.dialogDb.categories = state.data.dialogDb.categories.filter((cat) => cat !== name);
+    state.data.dialogDb.templates.forEach((item) => {
+      if (item.category === name) item.category = '未分類';
+    });
+    state.data.dialogDb.selectedCategory = '全部';
+    saveState();
+    renderDialogDb();
+  }
+
+  function addDialogTemplate() {
+    ensureDialogState();
+    const category = state.data.dialogDb.selectedCategory && !['全部', '收藏', '最近使用'].includes(state.data.dialogDb.selectedCategory)
+      ? state.data.dialogDb.selectedCategory
+      : '';
+    const item = {
+      id: uidDialog(),
+      title: '',
+      category,
+      tags: [],
+      zh: '',
+      en: '',
+      hi: '',
+      note: '',
+      favorite: false,
+      createdAt: new Date().toISOString(),
+    };
+    state.data.dialogDb.templates.unshift(item);
+    state.data.dialogDb.selectedId = item.id;
+    saveState();
+    renderDialogCategorySelect(category || '未分類');
+    renderDialogDb();
+  }
+
+  function filteredDialogTemplates() {
+    ensureDialogState();
+    const els = getDialogEls();
+    const keyword = (els.search?.value || '').trim().toLowerCase();
+    const cat = state.data.dialogDb.selectedCategory || '全部';
+
+    return state.data.dialogDb.templates.filter((item) => {
+      let hitCategory = true;
+      if (cat === '收藏') hitCategory = !!item.favorite;
+      else if (cat === '最近使用') hitCategory = (state.data.dialogDb.recentIds || []).includes(item.id);
+      else if (cat !== '全部') hitCategory = item.category === cat;
+
+      const text = [
+        item.title,
+        item.category,
+        (item.tags || []).join(' '),
+        item.zh,
+        item.en,
+        item.hi,
+        item.note,
+      ].join(' ').toLowerCase();
+
+      return hitCategory && (!keyword || text.includes(keyword));
+    }).sort((a, b) => {
+      if (cat === '最近使用') {
+        return (state.data.dialogDb.recentIds || []).indexOf(a.id) - (state.data.dialogDb.recentIds || []).indexOf(b.id);
+      }
+      return 0;
+    });
+  }
+
+  window.renderDialogDb = function renderDialogDb() {
+    ensureDialogState();
+    const els = getDialogEls();
+    if (!els.categoryList || !els.templateList) return;
+
+    const fixedCats = ['全部', '收藏', '最近使用'];
+    const categories = [...fixedCats, ...state.data.dialogDb.categories];
+
+    els.categoryList.innerHTML = categories.map((cat) => {
+      const active = state.data.dialogDb.selectedCategory === cat ? ' is-active' : '';
+      const locked = fixedCats.includes(cat);
+      const count = cat === '全部'
+        ? state.data.dialogDb.templates.length
+        : cat === '收藏'
+          ? state.data.dialogDb.templates.filter((item) => item.favorite).length
+          : cat === '最近使用'
+            ? (state.data.dialogDb.recentIds || []).length
+            : state.data.dialogDb.templates.filter((item) => item.category === cat).length;
+
+      return `
+        <div class="dialog-category${active}" data-dialog-category="${cat}">
+          ${
+            locked
+              ? `<span class="dialog-cat-name">${cat}</span>`
+              : `<input class="dialog-cat-name-input" data-dialog-cat-old="${cat}" value="${cat}" title="可直接修改分類名稱" />`
+          }
+          <small>${count}</small>
+        </div>
+      `;
+    }).join('');
+
+    const rows = filteredDialogTemplates();
+    els.templateList.innerHTML = rows.map((item) => {
+      const active = state.data.dialogDb.selectedId === item.id ? ' is-active' : '';
+      const tags = (item.tags || []).slice(0, 3).map((tag) => `<em>${tag}</em>`).join('');
+      return `
+        <div class="dialog-template-item${active}" data-dialog-template-id="${item.id}">
+          <strong>${item.favorite ? '⭐ ' : ''}${item.title || '未命名話術'}</strong>
+          <span>${item.category || '未分類'}</span>
+          <div class="dialog-template-tags">${tags}</div>
+        </div>
+      `;
+    }).join('');
+
+    els.categoryCount && (els.categoryCount.textContent = state.data.dialogDb.categories.length);
+    els.templateCount && (els.templateCount.textContent = state.data.dialogDb.templates.length);
+
+    fillDialogEditor(getSelectedDialogTemplate());
+    renderDialogCategorySelect(getSelectedDialogTemplate()?.category || state.data.dialogDb.selectedCategory || '未分類');
+  };
+
+  
+function ensureDialogNavButton() {
+    const nav = document.querySelector('.sidebar nav, .nav, .sidebar-menu');
+    if (!nav) return;
+
+    let btn = document.querySelector('[data-view="conversation-db"]');
+
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.view = 'conversation-db';
+      btn.className = 'nav-button';
+      btn.textContent = '對話資料庫';
+    }
+
+    const allButtons = Array.from(nav.querySelectorAll('button'));
+
+    const customerBtn = allButtons.find((el) =>
+      el.textContent.replace(/\\s+/g, '').includes('客服處理備註')
+    );
+
+    if (customerBtn) {
+      customerBtn.insertAdjacentElement('afterend', btn);
+    } else {
+      nav.appendChild(btn);
+    }
+}
+
+
+  document.addEventListener('click', (event) => {
+    const catInput = event.target.closest('.dialog-cat-name-input');
+    if (catInput) {
+      return;
+    }
+
+    const cat = event.target.closest('[data-dialog-category]');
+    if (cat) {
+      ensureDialogState();
+      state.data.dialogDb.selectedCategory = cat.dataset.dialogCategory;
+      saveState();
+      renderDialogDb();
+      return;
+    }
+
+    const item = event.target.closest('[data-dialog-template-id]');
+    if (item) {
+      selectDialogTemplate(item.dataset.dialogTemplateId);
+      return;
+    }
+
+    const navBtn = event.target.closest('[data-view="conversation-db"]');
+    if (navBtn) {
+      setTimeout(renderDialogDb, 0);
+    }
+  });
+
+
+  document.addEventListener('change', (event) => {
+    const input = event.target.closest('.dialog-cat-name-input');
+    if (!input) return;
+
+    const oldName = input.dataset.dialogCatOld;
+    const newName = input.value.trim();
+
+    if (!newName || newName === oldName) {
+      renderDialogDb();
+      return;
+    }
+
+    ensureDialogState();
+
+    if (state.data.dialogDb.categories.includes(newName)) {
+      alert('此分類名稱已存在。');
+      renderDialogDb();
+      return;
+    }
+
+    state.data.dialogDb.categories = state.data.dialogDb.categories.map((cat) => cat === oldName ? newName : cat);
+    state.data.dialogDb.templates.forEach((item) => {
+      if (item.category === oldName) item.category = newName;
+    });
+
+    if (state.data.dialogDb.selectedCategory === oldName) {
+      state.data.dialogDb.selectedCategory = newName;
+    }
+
+    saveState();
+    renderDialogDb();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const input = event.target.closest('.dialog-cat-name-input');
+    if (!input) return;
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      input.blur();
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const backup = localStorage.getItem('dialogDbRootFixBackup');
+      if (backup && state && state.data && (!state.data.dialogDb || !state.data.dialogDb.templates || state.data.dialogDb.templates.length === 0)) {
+        state.data.dialogDb = normalizeDialogDb(JSON.parse(backup));
+      }
+    } catch (error) {}
+    ensureDialogState();
+    ensureDialogNavButton();
+
+    document.getElementById('dialog-add-category-btn')?.addEventListener('click', addDialogCategory);
+    document.getElementById('dialog-add-template-btn')?.addEventListener('click', addDialogTemplate);
+    document.getElementById('dialog-save-btn')?.addEventListener('click', saveDialogTemplate);
+    document.getElementById('dialog-delete-btn')?.addEventListener('click', deleteDialogTemplate);
+    document.getElementById('dialog-favorite-btn')?.addEventListener('click', toggleDialogFavorite);
+    document.getElementById('dialog-search')?.addEventListener('input', renderDialogDb);
+
+    document.getElementById('dialog-copy-zh-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-zh')?.value || ''));
+    document.getElementById('dialog-copy-en-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-en')?.value || ''));
+    document.getElementById('dialog-copy-hi-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-hi')?.value || ''));
+
+    setTimeout(() => {
+      ensureDialogNavButton();
+      renderDialogDb();
+    }, 100);
+  });
+
+  const originalRenderForDialogDb = render;
+  render = function () {
+    originalRenderForDialogDb();
+    ensureDialogNavButton();
+    renderDialogDb();
+  };
+})();
+
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (typeof ensureDialogNavButton === 'function') {
+      ensureDialogNavButton();
+    }
+  }, 300);
+});
+
+
+/* 對話資料庫保存保險：避免隔天重開資料不見 */
+window.addEventListener('beforeunload', () => {
+  try {
+    if (window.state && state.data && state.data.dialogDb) {
+      localStorage.setItem('dashboardData', JSON.stringify(state.data));
+      localStorage.setItem('dialogDbAutoPersist', JSON.stringify(state.data.dialogDb));
+    }
+  } catch (e) {}
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (window.state && state.data && !state.data.dialogDb) {
+      const backup = localStorage.getItem('dialogDbAutoPersist');
+      if (backup) {
+        state.data.dialogDb = JSON.parse(backup);
+        saveState();
+      }
+    }
+  } catch (e) {}
+});
+
+
+/* 對話資料庫：左側分類與右側下拉同步修正 */
+(function () {
+  const FIX_KEY = 'selfuse3_dialog_db_v1';
+
+  function getDialogDbForSync() {
+    if (!window.state) return null;
+    state.data = state.data || {};
+    state.data.dialogDb = state.data.dialogDb || {
+      categories: ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'],
+      templates: [],
+      selectedCategory: '全部',
+      selectedId: '',
+      recentIds: []
+    };
+
+    state.data.dialogDb.categories = Array.isArray(state.data.dialogDb.categories)
+      ? state.data.dialogDb.categories
+      : ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'];
+
+    state.data.dialogDb.templates = Array.isArray(state.data.dialogDb.templates)
+      ? state.data.dialogDb.templates
+      : [];
+
+    return state.data.dialogDb;
+  }
+
+  function saveDialogDbForSync() {
+    try {
+      const db = getDialogDbForSync();
+      if (!db) return;
+
+      localStorage.setItem(FIX_KEY, JSON.stringify(db));
+      localStorage.setItem('local-dashboard-app-v1', JSON.stringify(state.data));
+      localStorage.setItem('local-dashboard-app-v1-backup', JSON.stringify(state.data));
+    } catch (e) {}
+  }
+
+  function collectDialogCategories() {
+    const db = getDialogDbForSync();
+    if (!db) return [];
+
+    const set = new Set();
+
+    db.categories.forEach((cat) => {
+      const name = String(cat || '').trim();
+      if (name && !['全部', '收藏', '最近使用'].includes(name)) set.add(name);
+    });
+
+    db.templates.forEach((item) => {
+      const name = String(item.category || '').trim();
+      if (name && !['全部', '收藏', '最近使用'].includes(name)) set.add(name);
+    });
+
+    return Array.from(set);
+  }
+
+  function syncCategorySelect() {
+    const db = getDialogDbForSync();
+    const select = document.getElementById('dialog-category-input');
+    if (!db || !select) return;
+
+    const selectedItem = db.templates.find((item) => item.id === db.selectedId);
+    const current = selectedItem?.category || select.value || db.selectedCategory || '';
+
+    const categories = collectDialogCategories();
+
+    select.innerHTML = categories.map((cat) => {
+      return `<option value="${cat}">${cat}</option>`;
+    }).join('');
+
+    if (current && !categories.includes(current) && !['全部', '收藏', '最近使用'].includes(current)) {
+      const opt = document.createElement('option');
+      opt.value = current;
+      opt.textContent = current;
+      select.appendChild(opt);
+    }
+
+    if (current && !['全部', '收藏', '最近使用'].includes(current)) {
+      select.value = current;
+    }
+  }
+
+  function syncLeftCategories() {
+    const db = getDialogDbForSync();
+    const list = document.getElementById('dialog-category-list');
+    if (!db || !list) return;
+
+    db.categories = collectDialogCategories();
+
+    const fixed = ['全部', '收藏', '最近使用'];
+    const cats = [...fixed, ...db.categories];
+
+    list.innerHTML = cats.map((cat) => {
+      const count = cat === '全部'
+        ? db.templates.length
+        : cat === '收藏'
+          ? db.templates.filter((item) => item.favorite).length
+          : cat === '最近使用'
+            ? (db.recentIds || []).length
+            : db.templates.filter((item) => item.category === cat).length;
+
+      const active = db.selectedCategory === cat ? ' is-active' : '';
+
+      return `
+        <div class="dialog-category${active}" data-dialog-category="${cat}">
+          <span class="dialog-cat-name">${cat}</span>
+          <small>${count}</small>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function syncDialogCategoriesAll() {
+    syncLeftCategories();
+    syncCategorySelect();
+    saveDialogDbForSync();
+  }
+
+  document.addEventListener('change', (event) => {
+    const select = event.target.closest('#dialog-category-input');
+    if (!select) return;
+
+    const db = getDialogDbForSync();
+    const selectedItem = db?.templates.find((item) => item.id === db.selectedId);
+    if (!db || !selectedItem) return;
+
+    selectedItem.category = select.value;
+
+    if (select.value && !db.categories.includes(select.value)) {
+      db.categories.push(select.value);
+    }
+
+    db.selectedCategory = select.value;
+
+    syncDialogCategoriesAll();
+
+    if (typeof renderDialogDb === 'function') {
+      renderDialogDb();
+      setTimeout(syncDialogCategoriesAll, 0);
+    }
+  }, true);
+
+  document.addEventListener('click', (event) => {
+    const saveBtn = event.target.closest('#dialog-save-btn');
+    if (!saveBtn) return;
+
+    setTimeout(() => {
+      const db = getDialogDbForSync();
+      const select = document.getElementById('dialog-category-input');
+      const selectedItem = db?.templates.find((item) => item.id === db.selectedId);
+
+      if (db && select && selectedItem) {
+        selectedItem.category = select.value;
+        if (select.value && !db.categories.includes(select.value)) db.categories.push(select.value);
+      }
+
+      syncDialogCategoriesAll();
+
+      if (typeof renderDialogDb === 'function') {
+        renderDialogDb();
+        setTimeout(syncDialogCategoriesAll, 0);
+      }
+    }, 50);
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(syncDialogCategoriesAll, 300);
+    setTimeout(syncDialogCategoriesAll, 1000);
+  });
+
+  const timer = setInterval(() => {
+    const view = document.getElementById('conversation-db-view');
+    if (view && (view.classList.contains('active') || view.style.display === 'block')) {
+      syncDialogCategoriesAll();
+    }
+  }, 1500);
+
+  window.syncDialogCategoriesAll = syncDialogCategoriesAll;
+})();
+
+
+
+/* ===== 任務儀表版：勾選狀態刷新保存修正 ===== */
+(function () {
+  const TASK_CHECK_KEY = 'office3_task_check_history_backup_v1';
+
+  function readTaskCheckBackup() {
+    try {
+      return JSON.parse(localStorage.getItem(TASK_CHECK_KEY) || '{}') || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeTaskCheckBackup(data) {
+    try {
+      localStorage.setItem(TASK_CHECK_KEY, JSON.stringify(data || {}));
+    } catch (e) {}
+  }
+
+  function getTaskIdFromCheckbox(input) {
+    const row = input.closest('tr');
+    return row?.dataset?.id || input.dataset.id || input.getAttribute('data-task-id') || '';
+  }
+
+  function getDateKeyFromCheckbox(input) {
+    return input.dataset.dateKey || input.getAttribute('data-date-key') || input.name || '';
+  }
+
+  function backupTaskCheckbox(input) {
+    if (!input || input.type !== 'checkbox') return;
+
+    const id = getTaskIdFromCheckbox(input);
+    const dateKey = getDateKeyFromCheckbox(input);
+
+    if (!id || !dateKey) return;
+
+    const backup = readTaskCheckBackup();
+    backup[id] = backup[id] || {};
+    backup[id][dateKey] = !!input.checked;
+    writeTaskCheckBackup(backup);
+  }
+
+  function restoreTaskCheckboxes() {
+    const backup = readTaskCheckBackup();
+    const inputs = document.querySelectorAll('input[type="checkbox"][data-date-key]');
+
+    inputs.forEach((input) => {
+      const id = getTaskIdFromCheckbox(input);
+      const dateKey = getDateKeyFromCheckbox(input);
+
+      if (!id || !dateKey) return;
+      if (!backup[id] || typeof backup[id][dateKey] !== 'boolean') return;
+
+      input.checked = backup[id][dateKey];
+
+      try {
+        if (window.state && state.data && Array.isArray(state.data.tasks)) {
+          const task = state.data.tasks.find((item) => String(item.id) === String(id));
+          if (task) {
+            task.history = task.history || {};
+            task.history[dateKey] = backup[id][dateKey];
+          }
+        }
+      } catch (e) {}
+    });
+  }
+
+  function persistAllVisibleTaskCheckboxes() {
+    document.querySelectorAll('input[type="checkbox"][data-date-key]').forEach(backupTaskCheckbox);
+  }
+
+  document.addEventListener('change', (event) => {
+    const input = event.target.closest('input[type="checkbox"][data-date-key]');
+    if (!input) return;
+
+    backupTaskCheckbox(input);
+
+    try {
+      if (typeof saveState === 'function') saveState();
+    } catch (e) {}
+  }, true);
+
+  function restoreSoon() {
+    setTimeout(restoreTaskCheckboxes, 0);
+    setTimeout(restoreTaskCheckboxes, 100);
+    setTimeout(restoreTaskCheckboxes, 500);
+  }
+
+  document.addEventListener('DOMContentLoaded', restoreSoon);
+  window.addEventListener('load', restoreSoon);
+
+  try {
+    const oldRender = window.render || (typeof render === 'function' ? render : null);
+    if (oldRender && !window.__taskCheckPersistRenderHooked) {
+      window.__taskCheckPersistRenderHooked = true;
+      window.render = function () {
+        const result = oldRender.apply(this, arguments);
+        restoreSoon();
+        return result;
+      };
+      try { render = window.render; } catch (e) {}
+    }
+  } catch (e) {}
+
+  window.addEventListener('beforeunload', persistAllVisibleTaskCheckboxes);
+
+  setInterval(() => {
+    persistAllVisibleTaskCheckboxes();
+    restoreTaskCheckboxes();
+  }, 1500);
+})();
