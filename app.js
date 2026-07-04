@@ -631,6 +631,16 @@ function loadCloudStateJsonp(url) {
   });
 }
 
+function isDashboardStateData(value) {
+  if (!value || typeof value !== 'object') return false;
+  return Array.isArray(value.tasks)
+    && Array.isArray(value.channels)
+    && Array.isArray(value.taskColumns)
+    && Array.isArray(value.channelColumns)
+    && value.dropdownOptions
+    && typeof value.dropdownOptions === 'object';
+}
+
 async function pullCloudState() {
   const config = getCloudSyncConfig();
   if (!config.url) {
@@ -649,6 +659,9 @@ async function pullCloudState() {
     const remoteData = payload?.data || payload?.state;
     if (!remoteData || typeof remoteData !== 'object') {
       throw new Error('雲端尚未有資料，請先在主要電腦按「上傳本機資料」。');
+    }
+    if (!isDashboardStateData(remoteData)) {
+      throw new Error('雲端目前不是完整儀表板資料，請回主要電腦重新按「上傳本機資料」。');
     }
     const nextData = normalizeState(remoteData);
     nextData.cloudSync = {

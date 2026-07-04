@@ -1,5 +1,6 @@
 const DASHBOARD_STATE_SHEET_NAME = 'dashboard_state';
 const DASHBOARD_STATE_CHUNK_SIZE = 40000;
+const DASHBOARD_STATE_SPREADSHEET_ID = '10QR13gBTy2BEicBYhONCnSx7-FshYktZNi58okSH-14';
 
 function doGet(e) {
   const params = e && e.parameter ? e.parameter : {};
@@ -100,13 +101,29 @@ function saveDashboardState_(data, updatedAt) {
 }
 
 function getDashboardStateSheet_() {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const spreadsheet = DASHBOARD_STATE_SPREADSHEET_ID
+    ? SpreadsheetApp.openById(DASHBOARD_STATE_SPREADSHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    throw new Error('找不到 Google Sheet，請確認 DASHBOARD_STATE_SPREADSHEET_ID 是否正確。');
+  }
   let sheet = spreadsheet.getSheetByName(DASHBOARD_STATE_SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(DASHBOARD_STATE_SHEET_NAME);
-    sheet.hideSheet();
   }
+  sheet.showSheet();
   return sheet;
+}
+
+function testDashboardStateWrite() {
+  const spreadsheet = DASHBOARD_STATE_SPREADSHEET_ID
+    ? SpreadsheetApp.openById(DASHBOARD_STATE_SPREADSHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
+  const visibleSheet = spreadsheet.getSheets()[0];
+  visibleSheet.getRange('A1:B1').setValues([[
+    'dashboard_state_test',
+    new Date().toISOString(),
+  ]]);
 }
 
 function outputDashboardState_(payload, callback) {
