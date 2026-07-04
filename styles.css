@@ -175,6 +175,12 @@ select {
   margin-top: 2px;
 }
 
+/* 固定隱藏已停用的側邊欄入口，避免本地功能列排序設定把它們帶回來。 */
+.nav-group[data-group="channels"],
+.nav-button[data-view="orders"] {
+  display: none !important;
+}
+
 /* ------------------- 發單解析樣式 ------------------- */
 .orders-panel {
   padding: 20px;
