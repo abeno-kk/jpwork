@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>數值轉換器</title>
+  <style>
+    /* 全域樣式 */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f7;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      padding: 20px 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 26px;
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #333333;
+    }
+    p {
+      margin: 10px 0 8px;
+      color: #555555;
+      line-height: 1.4;
+    }
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #cccccc;
+      border-radius: 4px;
+      resize: vertical;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    /* 用於較大的輸入區域 */
+    #inputArea, #mapInputArea, #approxInputArea {
+      min-height: 140px;
+    }
+    /* 用於輸出區域 */
+    #outputArea, #mapOutputArea, #approxOutputArea {
+      min-height: 90px;
+      background-color: #f9f9f9;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333333;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cccccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    /* 標籤式介面樣式 */
+    .tabs {
+      display: flex;
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+    .tab-link {
+      padding: 10px 16px;
+      border: 1px solid #dddddd;
+      border-bottom: none;
+      margin-right: 5px;
+      background-color: #f0f2f5;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      font-size: 14px;
+      color: #333333;
+      font-weight: bold;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .tab-link.active {
+      background-color: #ffffff;
+      color: #007bff;
+      border-color: #cccccc;
+      border-bottom: 1px solid #ffffff;
+    }
+    .tab-content {
+      display: none;
+      border: 1px solid #cccccc;
+      border-top: none;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 0 6px 6px 6px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    /* 按鈕樣式 */
+    button {
+      padding: 8px 20px;
+      margin: 5px 8px 12px 0;
+      border: none;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    /* 特定按鈕顏色 */
+    #clearBtn {
+      background-color: #dc3545;
+    }
+    #clearBtn:hover {
+      background-color: #c82333;
+    }
+    #copyBtn {
+      background-color: #6c757d;
+    }
+    #copyBtn:hover {
+      background-color: #565e64;
+    }
+    /* 結果計數顯示 */
+    #countDisplay, #mapCountDisplay, #approxCountDisplay {
+      margin-top: 5px;
+      color: #333333;
+      font-weight: bold;
+    }
+    #usdtResult {
+      margin-top: 10px;
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    /* 資料轉換器的選項樣式 */
+    .clean-options {
+      margin: 10px 0;
+    }
+    .clean-options label {
+      margin-right: 15px;
+      font-size: 14px;
+      color: #333333;
+    }
+
+    /* 圖片暫存區樣式 */
+    .image-drop-area {
+      border: 2px dashed #cccccc;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 6px;
+      background-color: #fafafa;
+      margin-bottom: 15px;
+    }
+
+    /* 便條貼樣式 */
+    .note-tabs {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    .note-tab-link {
+      padding: 6px 12px;
+      margin-right: 5px;
+      background-color: #e2e6ea;
+      border: 1px solid #cccccc;
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+    }
+    .note-tab-link.active {
+      background-color: #ffffff;
+      border-bottom: 1px solid #ffffff;
+      color: #007bff;
+    }
+    #noteInput {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #cccccc;
+      border-radius: 4px;
+      resize: vertical;
+      min-height: 60px;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    #temporaryNotesContainer, #permanentNotesContainer {
+      margin-top: 10px;
+    }
+    .note {
+      background-color: #fff7e6;
+      border: 1px solid #f0e6cc;
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    .note-header {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .note-content {
+      margin-bottom: 6px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .note-actions button {
+      margin-right: 5px;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .note.completed {
+      background-color: #e6ffe6;
+      text-decoration: line-through;
+    }
+    .note-collapsed .note-content {
+      display: none;
+    }
+    .note-collapsed .note-summary {
+      display: block;
+    }
+    .note-summary {
+      display: none;
+      font-style: italic;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    .image-drop-area.dragover {
+      background-color: #e9f5ff;
+      border-color: #007bff;
+    }
+    .image-preview {
+      display: inline-block;
+      margin: 10px;
+      text-align: center;
+      vertical-align: top;
+    }
+    .image-preview img {
+      max-width: 120px;
+      max-height: 120px;
+      display: block;
+      margin-bottom: 5px;
+      border-radius: 4px;
+    }
+    .image-preview button {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    /* 清空圖片按鈕樣式 */
+    #imageClearBtn {
+      background-color: #dc3545;
+    }
+    #imageClearBtn:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>數值轉換器</h1>
+    <!-- 標籤式介面 -->
+    <div class="tabs">
+      <button class="tab-link active" data-target="basicTab">基本功能</button>
+      <button class="tab-link" data-target="usdtTab">USDT 計算</button>
+      <button class="tab-link" data-target="approxTab">近似取整</button>
+      <!-- 新增資料轉換器標籤 -->
+      <button class="tab-link" data-target="dataTab">資料轉換器</button>
+      <!-- 新增圖像暫存標籤 -->
+      <button class="tab-link" data-target="imageTab">圖像暫存</button>
+      <button class="tab-link" data-target="timeTab">時間轉換</button>
+      <!-- 便條貼標籤 -->
+      <button class="tab-link" data-target="noteTab">便條貼</button>
+    </div>
+
+    <!-- 基本功能：換行轉逗號與去重 -->
+    <div id="basicTab" class="tab-content active">
+      <p>請在下方輸入每行一個數值：</p>
+      <textarea id="inputArea" placeholder="在此貼上數值，每行一個"></textarea>
+      <button id="convertBtn">轉換</button>
+      <button id="dedupeConvertBtn">去重並轉換</button>
+      <button id="copyBtn">複製結果</button>
+      <button id="clearBtn">清除</button>
+      <p>結果：</p>
+      <textarea id="outputArea" readonly placeholder="轉換後的結果將顯示在此"></textarea>
+      <p id="countDisplay"></p>
+    </div>
+
+    <!-- USDT 轉換 -->
+    <div id="usdtTab" class="tab-content">
+      <p>輸入 USDT 數值及匯率，按下計算即可得到對應貨幣數值：</p>
+      <div class="form-group">
+        <label for="usdtInput">USDT 數值：</label>
+        <input type="text" id="usdtInput" placeholder="例如 16,666.66">
+      </div>
+      <div class="form-group">
+        <label for="exchangeRateInput">匯率：</label>
+        <input type="text" id="exchangeRateInput" placeholder="例如 32.5">
+      </div>
+      <button id="usdtConvertBtn">計算</button>
+      <p id="usdtResult"></p>
+
+      <hr>
+      <p>輸入盧比數值及匯率，按下計算即可得到對應 USDT 數值：</p>
+      <div class="form-group">
+        <label for="rupeeInput">盧比數值：</label>
+        <input type="text" id="rupeeInput" placeholder="例如 861,244.00">
+      </div>
+      <div class="form-group">
+        <label for="rupeeRateInput">匯率：</label>
+        <input type="text" id="rupeeRateInput" placeholder="例如 101">
+      </div>
+      <button id="rupeeConvertBtn">計算</button>
+      <p id="rupeeResult"></p>
+    </div>
+
+    <!-- 近似取整轉換 -->
+    <div id="approxTab" class="tab-content">
+      <p>輸入每行一個數值，系統會取前兩位數，其餘位數補零（例：1,184,201 → 1,100,000）：</p>
+      <textarea id="approxInputArea" placeholder="在此貼上數值，每行一個"></textarea>
+      <button id="approxConvertBtn">近似轉換</button>
+      <p>結果：</p>
+      <textarea id="approxOutputArea" readonly placeholder="轉換後的結果將顯示在此"></textarea>
+      <p id="approxCountDisplay"></p>
+    </div>
+
+    <!-- 資料轉換器：清理資料 -->
+    <div id="dataTab" class="tab-content">
+      <p>請在下方輸入原始資料（系統會去除逗點和空白）：</p>
+      <textarea id="dataInput" placeholder="在此貼上原始資料..."></textarea>
+      <div class="clean-options">
+        <label><input type="radio" name="dataOrientation" id="dataHorizontal" value="horizontal" checked> 橫貼（使用 Tab 分隔）</label>
+        <label><input type="radio" name="dataOrientation" id="dataVertical" value="vertical"> 直貼（每個值換行）</label>
+      </div>
+      <button id="dataCleanBtn">清理資料</button>
+      <button id="dataCopyBtn">複製結果</button>
+      <p>清理後的資料：</p>
+      <textarea id="dataOutput" readonly placeholder="清理後的資料將顯示在此..."></textarea>
+    </div>
+
+    <!-- 圖像暫存區 -->
+    <div id="imageTab" class="tab-content">
+      <p>將圖片拖放到下方區域或點擊選擇圖片。載入後可複製圖片到剪貼簿，方便貼到 Telegram 群組。</p>
+      <div id="imageDropArea" class="image-drop-area">
+        拖放圖片到此處，或點擊選擇
+        <input type="file" id="imageInput" accept="image/*" multiple style="display:none">
+      </div>
+      <div id="imagePreviewContainer"></div>
+      <button id="imageClearBtn">清空圖片</button>
+    </div>
+
+    <!-- 便條貼功能 -->
+
+    <!-- 時間轉換：印度 <-> 北京 -->
+    <div id="timeTab" class="tab-content">
+      <p>貼上時間後選擇方向，可支援多筆、多種格式、可沒有秒。</p>
+      <div class="form-group">
+        <label>
+          <input type="radio" name="timeDirection" value="indiaToBeijing" checked>
+          印度時間 → 北京時間（+2小時30分）
+        </label>
+        <label style="margin-left: 16px;">
+          <input type="radio" name="timeDirection" value="beijingToIndia">
+          北京時間 → 印度時間（-2小時30分）
+        </label>
+      </div>
+
+      <textarea id="timeInputArea" placeholder="貼上時間，例如：
+2026-02-05 20:48:31
+2026-02-05 20:48
+2026/02/05 20:48:31
+2026/2/5 20:48
+2026-02-05"></textarea>
+
+      <button id="timeConvertBtn">轉換時間</button>
+      <button id="timeCopyBtn">複製結果</button>
+      <button id="timeClearBtn">清除</button>
+
+      <p>結果：</p>
+      <textarea id="timeOutputArea" readonly placeholder="轉換後結果會顯示在此"></textarea>
+    </div>
+
+    <div id="noteTab" class="tab-content">
+      <div class="note-tabs">
+        <button class="note-tab-link active" data-target="temporary">臨時便條</button>
+        <button class="note-tab-link" data-target="permanent">常態便條</button>
+      </div>
+      <textarea id="noteInput" placeholder="輸入便條內容..."></textarea>
+      <button id="noteAddBtn">新增便條</button>
+      <div id="temporaryNotesContainer"></div>
+      <div id="permanentNotesContainer" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // 標籤切換邏輯：點擊不同標籤顯示對應內容
+      const tabLinks = document.querySelectorAll('.tab-link');
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+          tabLinks.forEach(function(l) { l.classList.remove('active'); });
+          tabContents.forEach(function(c) { c.classList.remove('active'); });
+          link.classList.add('active');
+          const target = link.getAttribute('data-target');
+          const targetEl = document.getElementById(target);
+          if (targetEl) targetEl.classList.add('active');
+        });
+      });
+
+      // 基本功能：換行轉逗號
+      const convertBtn = document.getElementById('convertBtn');
+      if (convertBtn) {
+        convertBtn.addEventListener('click', function() {
+          const input = document.getElementById('inputArea').value;
+          const values = input.split(/[\n\r]+/)
+            .map(function(item) { return item.trim(); })
+            .filter(function(item) { return item !== ''; });
+          document.getElementById('outputArea').value = values.join(',');
+          const countDisplay = document.getElementById('countDisplay');
+          if (countDisplay) countDisplay.textContent = '';
+        });
+      }
+
+      // 刪除重複值並轉換
+      const dedupeBtn = document.getElementById('dedupeConvertBtn');
+      if (dedupeBtn) {
+        dedupeBtn.addEventListener('click', function() {
+          const input = document.getElementById('inputArea').value;
+          const values = input.split(/[\n\r]+/)
+            .map(function(item) { return item.trim(); })
+            .filter(function(item) { return item !== ''; });
+          const seen = new Set();
+          const uniqueValues = [];
+          values.forEach(function(val) {
+            if (!seen.has(val)) {
+              seen.add(val);
+              uniqueValues.push(val);
+            }
+          });
+          document.getElementById('outputArea').value = uniqueValues.join(',');
+          const countDisplay = document.getElementById('countDisplay');
+          if (countDisplay) {
+            countDisplay.textContent = '總共有 ' + uniqueValues.length + ' 個數值';
+          }
+        });
+      }
+
+      // 複製結果
+      const copyBtn = document.getElementById('copyBtn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+          const outputArea = document.getElementById('outputArea');
+          if (outputArea) {
+            outputArea.select();
+            outputArea.setSelectionRange(0, 99999);
+            try {
+              const successful = document.execCommand('copy');
+              if (successful) {
+                alert('結果已複製到剪貼簿');
+              } else {
+                alert('無法複製，請手動複製');
+              }
+            } catch (err) {
+              alert('瀏覽器不支援複製功能，請手動複製');
+            }
+          }
+        });
+      }
+
+      // 清除輸入與輸出
+      const clearBtn = document.getElementById('clearBtn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+          const inputArea = document.getElementById('inputArea');
+          const outputArea = document.getElementById('outputArea');
+          if (inputArea) inputArea.value = '';
+          if (outputArea) outputArea.value = '';
+          const countDisplay = document.getElementById('countDisplay');
+          if (countDisplay) countDisplay.textContent = '';
+        });
+      }
+
+      // 自訂映射功能已移除，不再處理
+
+      // USDT 轉換
+      const usdtConvertBtn = document.getElementById('usdtConvertBtn');
+      if (usdtConvertBtn) {
+        usdtConvertBtn.addEventListener('click', function() {
+          const usdtStr = document.getElementById('usdtInput').value.trim();
+          const rateStr = document.getElementById('exchangeRateInput').value.trim();
+          const usdtSanitized = usdtStr.replace(/,/g, '');
+          const rateSanitized = rateStr.replace(/,/g, '');
+          const usdtVal = parseFloat(usdtSanitized);
+          const rateVal = parseFloat(rateSanitized);
+          const resultDisplay = document.getElementById('usdtResult');
+          if (isNaN(usdtVal) || isNaN(rateVal)) {
+            resultDisplay.textContent = '請輸入有效的數值';
+            return;
+          }
+          const result = usdtVal * rateVal;
+          const formatted = result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          resultDisplay.textContent = '結果：' + formatted;
+        });
+      }
+
+      // 盧比轉 USDT
+      const rupeeConvertBtn = document.getElementById('rupeeConvertBtn');
+      if (rupeeConvertBtn) {
+        rupeeConvertBtn.addEventListener('click', function() {
+          const rupeeStr = document.getElementById('rupeeInput').value.trim();
+          const rateStr = document.getElementById('rupeeRateInput').value.trim();
+          const rupeeSanitized = rupeeStr.replace(/,/g, '');
+          const rateSanitized = rateStr.replace(/,/g, '');
+          const rupeeVal = parseFloat(rupeeSanitized);
+          const rateVal = parseFloat(rateSanitized);
+          const resultDisplay = document.getElementById('rupeeResult');
+          if (isNaN(rupeeVal) || isNaN(rateVal) || rateVal === 0) {
+            resultDisplay.textContent = '請輸入有效的數值';
+            return;
+          }
+          const result = rupeeVal / rateVal;
+          const formatted = result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          resultDisplay.textContent = '結果：' + formatted + ' USDT';
+        });
+      }
+
+      // 整數近似轉換
+      const approxBtn = document.getElementById('approxConvertBtn');
+      if (approxBtn) {
+        approxBtn.addEventListener('click', function() {
+          const input = document.getElementById('approxInputArea').value;
+          const values = input.split(/[\n\r]+/)
+            .map(function(item) { return item.trim(); })
+            .filter(function(item) { return item !== ''; });
+          const results = values.map(function(val) {
+            const sanitizedStr = val.replace(/,/g, '').trim();
+            const num = parseFloat(sanitizedStr);
+            if (isNaN(num)) return '';
+            const intVal = Math.floor(num);
+            const digits = intVal.toString().length;
+            if (digits <= 2) {
+              return intVal.toString();
+            }
+            const firstTwo = parseInt(intVal.toString().slice(0, 2), 10);
+            const base = Math.pow(10, digits - 2);
+            const approx = firstTwo * base;
+            return approx.toString();
+          }).filter(function(item) { return item !== ''; });
+          document.getElementById('approxOutputArea').value = results.join(',');
+          const approxCountDisplay = document.getElementById('approxCountDisplay');
+          if (approxCountDisplay) {
+            approxCountDisplay.textContent = '總共有 ' + results.length + ' 個結果';
+          }
+        });
+      }
+
+      // 資料轉換器：清理資料
+      const dataCleanBtn = document.getElementById('dataCleanBtn');
+      if (dataCleanBtn) {
+        dataCleanBtn.addEventListener('click', function() {
+          const inputText = document.getElementById('dataInput').value;
+          // 使用正則表達式分割逗號與各類空白字元並移除空字串
+          const rawTokens = inputText.split(/[\s,]+/).filter(function(token) {
+            return token.trim() !== '';
+          });
+          /*
+           * 對清理後的資料進行去重處理：
+           * 如果第一個 token 含有非數字字元（例如 "uid"），視為標題保留，
+           * 後續數值則去除重複並保持原順序。
+           */
+          let headerToken = null;
+          let dataTokens = rawTokens;
+          if (rawTokens.length > 0 && /\D/.test(rawTokens[0])) {
+            headerToken = rawTokens[0];
+            dataTokens = rawTokens.slice(1);
+          }
+          const seen = new Set();
+          const uniqueTokens = [];
+          dataTokens.forEach(function(tok) {
+            if (!seen.has(tok)) {
+              seen.add(tok);
+              uniqueTokens.push(tok);
+            }
+          });
+          const resultTokens = headerToken ? [headerToken].concat(uniqueTokens) : uniqueTokens;
+          // 根據使用者選擇決定分隔符：橫貼用 Tab，直貼用換行
+          const isHorizontal = document.getElementById('dataHorizontal').checked;
+          const separator = isHorizontal ? '\t' : '\n';
+          const outputText = resultTokens.join(separator);
+          document.getElementById('dataOutput').value = outputText;
+        });
+      }
+      const dataCopyBtn = document.getElementById('dataCopyBtn');
+      if (dataCopyBtn) {
+        dataCopyBtn.addEventListener('click', function() {
+          const outputArea = document.getElementById('dataOutput');
+          if (outputArea) {
+            outputArea.select();
+            outputArea.setSelectionRange(0, 99999);
+            try {
+              const successful = document.execCommand('copy');
+              if (successful) {
+                alert('結果已複製到剪貼簿');
+              } else {
+                alert('無法複製，請手動複製');
+              }
+            } catch (err) {
+              alert('瀏覽器不支援複製功能，請手動複製');
+            }
+          }
+        });
+      }
+
+      // 圖像暫存功能
+      const imageDropArea = document.getElementById('imageDropArea');
+      const imageInput = document.getElementById('imageInput');
+      const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+      if (imageDropArea && imageInput && imagePreviewContainer) {
+        // 點擊拖放區觸發檔案選擇
+        imageDropArea.addEventListener('click', function() {
+          imageInput.click();
+        });
+        // 拖曳事件處理
+        imageDropArea.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          imageDropArea.classList.add('dragover');
+        });
+        imageDropArea.addEventListener('dragleave', function(e) {
+          e.preventDefault();
+          imageDropArea.classList.remove('dragover');
+        });
+        imageDropArea.addEventListener('drop', function(e) {
+          e.preventDefault();
+          imageDropArea.classList.remove('dragover');
+          const files = Array.from(e.dataTransfer.files);
+          handleImageFiles(files);
+        });
+        // 檔案選擇
+        imageInput.addEventListener('change', function(e) {
+          const files = Array.from(e.target.files);
+          handleImageFiles(files);
+          // 重置 input 以便重複選擇同一檔案
+          imageInput.value = '';
+        });
+      }
+
+      function handleImageFiles(files) {
+        files.forEach(function(file) {
+          if (file && file.type && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+              const dataUrl = ev.target.result;
+              const preview = document.createElement('div');
+              preview.className = 'image-preview';
+              const img = document.createElement('img');
+              img.src = dataUrl;
+              preview.appendChild(img);
+              const copyBtn = document.createElement('button');
+              copyBtn.textContent = '複製圖片';
+              copyBtn.addEventListener('click', function() {
+                // 將 dataURL 轉為 Blob
+                const blob = dataURLToBlob(dataUrl);
+                if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+                  alert('瀏覽器不支援圖片複製，請手動保存');
+                  return;
+                }
+                const item = new ClipboardItem({ [blob.type]: blob });
+                navigator.clipboard.write([item]).then(function() {
+                  alert('圖片已複製到剪貼簿');
+                }).catch(function() {
+                  alert('複製失敗，瀏覽器可能不支援');
+                });
+              });
+              preview.appendChild(copyBtn);
+              imagePreviewContainer.appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      function dataURLToBlob(dataURL) {
+        const arr = dataURL.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+      }
+
+      // 支援貼圖功能：當在圖像暫存分頁使用 Ctrl+V 貼上圖片時，自動加入預覽
+      document.addEventListener('paste', function(e) {
+        // 僅在圖像暫存分頁為活動狀態時處理貼上
+        const activeContent = document.querySelector('.tab-content.active');
+        if (!activeContent || activeContent.id !== 'imageTab') return;
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+        const items = clipboardData.items;
+        if (!items) return;
+        const files = [];
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type && item.type.indexOf('image') !== -1) {
+            const file = item.getAsFile();
+            if (file) {
+              files.push(file);
+            }
+          }
+        }
+        if (files.length > 0) {
+          handleImageFiles(files);
+          e.preventDefault();
+        }
+      });
+
+      // 一鍵清空圖片
+      const imageClearBtn = document.getElementById('imageClearBtn');
+      if (imageClearBtn) {
+        imageClearBtn.addEventListener('click', function() {
+          if (imagePreviewContainer) {
+            imagePreviewContainer.innerHTML = '';
+          }
+        });
+      }
+
+      /* 便條貼功能 */
+      // Note data structure stored in localStorage under "notes"
+      let notes = [];
+      const noteInput = document.getElementById('noteInput');
+      const noteAddBtn = document.getElementById('noteAddBtn');
+      const temporaryNotesContainer = document.getElementById('temporaryNotesContainer');
+      const permanentNotesContainer = document.getElementById('permanentNotesContainer');
+      const noteTabLinks = document.querySelectorAll('.note-tab-link');
+      let activeNoteTab = 'temporary';
+
+      function loadNotes() {
+        const stored = localStorage.getItem('notes');
+        notes = stored ? JSON.parse(stored) : [];
+        applyDailyUpdate();
+        renderNotes();
+      }
+
+      function saveNotes() {
+        localStorage.setItem('notes', JSON.stringify(notes));
+      }
+
+      // Move expired temporary notes to permanent category by date
+      function applyDailyUpdate() {
+        const today = getTodayDate();
+        let changed = false;
+        notes.forEach(function(note) {
+          if (note.category === 'temporary' && note.dateGroup == null) {
+            const noteDate = formatDate(note.timestamp);
+            if (noteDate !== today) {
+              note.category = 'permanent';
+              note.dateGroup = noteDate;
+              changed = true;
+            }
+          }
+        });
+        if (changed) {
+          saveNotes();
+        }
+      }
+
+      function renderNotes() {
+        if (temporaryNotesContainer) temporaryNotesContainer.innerHTML = '';
+        if (permanentNotesContainer) permanentNotesContainer.innerHTML = '';
+        // render temporary notes
+        notes.filter(function(note) { return note.category === 'temporary'; })
+             .forEach(function(note) {
+               const el = createNoteElement(note);
+               if (temporaryNotesContainer) temporaryNotesContainer.appendChild(el);
+             });
+        // group permanent notes by dateGroup
+        const groups = {};
+        notes.filter(function(note) { return note.category === 'permanent'; })
+             .forEach(function(note) {
+               const date = note.dateGroup || formatDate(note.timestamp);
+               if (!groups[date]) {
+                 groups[date] = [];
+               }
+               groups[date].push(note);
+             });
+        // sort dates descending (latest first)
+        Object.keys(groups).sort(function(a, b) {
+          return a < b ? 1 : -1;
+        }).forEach(function(date) {
+          const section = document.createElement('div');
+          const heading = document.createElement('h3');
+          heading.textContent = date;
+          section.appendChild(heading);
+          groups[date].forEach(function(note) {
+            const el = createNoteElement(note);
+            section.appendChild(el);
+          });
+          if (permanentNotesContainer) permanentNotesContainer.appendChild(section);
+        });
+        // Show/hide containers based on active tab
+        if (temporaryNotesContainer) {
+          temporaryNotesContainer.style.display = activeNoteTab === 'temporary' ? '' : 'none';
+        }
+        if (permanentNotesContainer) {
+          permanentNotesContainer.style.display = activeNoteTab === 'permanent' ? '' : 'none';
+        }
+      }
+
+      function addNote() {
+        if (!noteInput) return;
+        const text = noteInput.value.trim();
+        if (!text) return;
+        const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+        const timestamp = getTimestamp();
+        const category = activeNoteTab === 'temporary' ? 'temporary' : 'permanent';
+        const dateGroup = category === 'permanent' ? getTodayDate() : null;
+        const note = {
+          id: id,
+          content: text,
+          timestamp: timestamp,
+          category: category,
+          dateGroup: dateGroup
+        };
+        notes.push(note);
+        noteInput.value = '';
+        saveNotes();
+        renderNotes();
+      }
+
+      function deleteNote(noteId) {
+        const index = notes.findIndex(function(n) { return n.id === noteId; });
+        if (index !== -1) {
+          notes.splice(index, 1);
+          saveNotes();
+          renderNotes();
+        }
+      }
+
+      function updateTimestamp(note) {
+        note.timestamp = getTimestamp();
+        if (note.category === 'permanent') {
+          note.dateGroup = formatDate(note.timestamp);
+        }
+        saveNotes();
+      }
+
+      function createNoteElement(note) {
+        const noteDiv = document.createElement('div');
+        noteDiv.className = 'note';
+        noteDiv.setAttribute('data-id', note.id);
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'note-header';
+        headerDiv.textContent = note.timestamp;
+        noteDiv.appendChild(headerDiv);
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'note-content';
+        contentDiv.textContent = note.content;
+        contentDiv.setAttribute('contenteditable', false);
+        noteDiv.appendChild(contentDiv);
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'note-actions';
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '複製';
+        copyBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          copyToClipboard(note.content);
+        });
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '編輯';
+        editBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const mode = editBtn.getAttribute('data-mode');
+          if (mode !== 'editing') {
+            contentDiv.setAttribute('contenteditable', true);
+            contentDiv.focus();
+            editBtn.setAttribute('data-mode', 'editing');
+            editBtn.textContent = '保存';
+          } else {
+            contentDiv.setAttribute('contenteditable', false);
+            const newText = contentDiv.textContent.trim();
+            note.content = newText;
+            updateTimestamp(note);
+            editBtn.removeAttribute('data-mode');
+            editBtn.textContent = '編輯';
+            renderNotes();
+          }
+        });
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '刪除';
+        delBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          deleteNote(note.id);
+        });
+        actionsDiv.appendChild(copyBtn);
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(delBtn);
+        noteDiv.appendChild(actionsDiv);
+        noteDiv.addEventListener('click', function(e) {
+          if (e.target.closest('.note-actions') || (contentDiv.getAttribute('contenteditable') === 'true' && e.target === contentDiv)) {
+            return;
+          }
+          if (note.category === 'temporary') {
+            updateTimestamp(note);
+            renderNotes();
+          }
+        });
+        return noteDiv;
+      }
+
+      if (noteAddBtn) {
+        noteAddBtn.addEventListener('click', function() {
+          addNote();
+        });
+      }
+
+      if (noteTabLinks) {
+        noteTabLinks.forEach(function(link) {
+          link.addEventListener('click', function() {
+            noteTabLinks.forEach(function(l) { l.classList.remove('active'); });
+            this.classList.add('active');
+            activeNoteTab = this.getAttribute('data-target');
+            renderNotes();
+          });
+        });
+      }
+
+      function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() {
+            alert('內容已複製到剪貼簿');
+          }).catch(function() {
+            fallbackCopy(text);
+          });
+        } else {
+          fallbackCopy(text);
+        }
+      }
+
+      function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          alert('內容已複製到剪貼簿');
+        } catch (err) {
+          alert('瀏覽器不支援複製功能，請手動複製');
+        }
+        document.body.removeChild(textarea);
+      }
+
+      function getTimestamp() {
+        return new Date().toLocaleString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' });
+      }
+
+      function getTodayDate() {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+      }
+
+      function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = ('0' + (date.getMonth() + 1)).slice(-2);
+        const day = ('0' + date.getDate()).slice(-2);
+        return year + '-' + month + '-' + day;
+      }
+
+      // 初始化便條貼功能
+
+      /* 時間轉換：印度 <-> 北京 */
+      function pad2(num) {
+        return String(num).padStart(2, '0');
+      }
+
+      function formatDateTime(date, hasTime, hasSeconds) {
+        const y = date.getFullYear();
+        const m = pad2(date.getMonth() + 1);
+        const d = pad2(date.getDate());
+
+        if (!hasTime) {
+          return `${y}-${m}-${d}`;
+        }
+
+        const hh = pad2(date.getHours());
+        const mm = pad2(date.getMinutes());
+
+        if (!hasSeconds) {
+          return `${y}-${m}-${d} ${hh}:${mm}`;
+        }
+
+        const ss = pad2(date.getSeconds());
+        return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+      }
+
+      function parseFlexibleTime(line) {
+        const raw = String(line || '').trim();
+        if (!raw) return null;
+
+        // 支援：
+        // 2026-02-05 20:48:31
+        // 2026-02-05 20:48
+        // 2026/2/5 20:48
+        // 2026.2.5 20:48:31
+        // 2026-02-05
+        const match = raw.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[ T　]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+
+        if (!match) return null;
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const hasTime = match[4] !== undefined;
+        const hour = hasTime ? Number(match[4]) : 0;
+        const minute = hasTime ? Number(match[5]) : 0;
+        const hasSeconds = match[6] !== undefined;
+        const second = hasSeconds ? Number(match[6]) : 0;
+
+        if (
+          !year || month < 1 || month > 12 || day < 1 || day > 31 ||
+          hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59
+        ) {
+          return null;
+        }
+
+        return {
+          raw,
+          date: new Date(year, month - 1, day, hour, minute, second),
+          hasTime,
+          hasSeconds
+        };
+      }
+
+      function convertSingleTime(line, direction) {
+        const parsed = parseFlexibleTime(line);
+        if (!parsed) return line.trim() ? `無法解析：${line}` : '';
+
+        const offsetMinutes = direction === 'indiaToBeijing' ? 150 : -150;
+        const converted = new Date(parsed.date.getTime() + offsetMinutes * 60 * 1000);
+
+        const fromLabel = direction === 'indiaToBeijing' ? '印度' : '北京';
+        const toLabel = direction === 'indiaToBeijing' ? '北京' : '印度';
+
+        return `${fromLabel} ${parsed.raw} -> ${toLabel} ${formatDateTime(converted, parsed.hasTime, parsed.hasSeconds)}`;
+      }
+
+      const timeInputArea = document.getElementById('timeInputArea');
+      const timeOutputArea = document.getElementById('timeOutputArea');
+      const timeConvertBtn = document.getElementById('timeConvertBtn');
+      const timeCopyBtn = document.getElementById('timeCopyBtn');
+      const timeClearBtn = document.getElementById('timeClearBtn');
+
+      if (timeConvertBtn && timeInputArea && timeOutputArea) {
+        timeConvertBtn.addEventListener('click', function() {
+          const direction = document.querySelector('input[name="timeDirection"]:checked')?.value || 'indiaToBeijing';
+          const lines = timeInputArea.value.split(/\n+/);
+          const result = lines
+            .map(function(line) { return convertSingleTime(line, direction); })
+            .filter(Boolean)
+            .join('\n');
+
+          timeOutputArea.value = result;
+        });
+      }
+
+      if (timeCopyBtn && timeOutputArea) {
+        timeCopyBtn.addEventListener('click', function() {
+          copyToClipboard(timeOutputArea.value || '');
+        });
+      }
+
+      if (timeClearBtn && timeInputArea && timeOutputArea) {
+        timeClearBtn.addEventListener('click', function() {
+          timeInputArea.value = '';
+          timeOutputArea.value = '';
+        });
+      }
+
+
+      loadNotes();
+    })();
+  </script>
+</body>
+</html>
