@@ -482,10 +482,49 @@ function normalizeChannelSummarySync(config) {
   const mode = ['sheet-direct', 'public-csv', 'apps-script'].includes(config?.mode)
     ? config.mode
     : 'apps-script';
+  const url = mode === 'apps-script'
+    ? normalizeAppsScriptWebAppUrl(config?.url)
+    : String(config?.url || '').trim();
   return {
     mode,
-    url: String(config?.url || '').trim(),
+    url,
   };
+}
+
+function normalizeAppsScriptWebAppUrl(url) {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsedUrl = new URL(trimmed);
+    if (parsedUrl.hostname === 'script.google.com' && parsedUrl.pathname.endsWith('/dev')) {
+      parsedUrl.pathname = parsedUrl.pathname.replace(/\/dev$/, '/exec');
+      return parsedUrl.toString();
+    }
+  } catch (error) {
+    return trimmed.replace(/(script\.google\.com\/macros\/s\/[^/?#]+)\/dev(?=([?#]|$))/i, '$1/exec');
+  }
+
+  return trimmed;
+}
+
+function buildAppsScriptJsonpUrl(url, callbackName, params = {}) {
+  const normalizedUrl = normalizeAppsScriptWebAppUrl(url);
+  try {
+    const parsedUrl = new URL(normalizedUrl, window.location.href);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        parsedUrl.searchParams.set(key, String(value));
+      }
+    });
+    parsedUrl.searchParams.set('callback', callbackName);
+    return parsedUrl.toString();
+  } catch (error) {
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const searchParams = new URLSearchParams(params);
+    searchParams.set('callback', callbackName);
+    return `${normalizedUrl}${separator}${searchParams.toString()}`;
+  }
 }
 
 function normalizeHiddenColumns(hiddenColumns) {
@@ -832,11 +871,10 @@ function loadGoogleSheetRows() {
     }
     return new Promise((resolve, reject) => {
       const callbackName = `__channelSummaryAppsScript_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const separator = syncConfig.url.includes('?') ? '&' : '?';
       const script = document.createElement('script');
       const timeout = window.setTimeout(() => {
         cleanup();
-        reject(new Error('Apps Script API 讀取逾時，請確認已重新部署且網址正確。'));
+        reject(new Error('Apps Script API 讀取逾時，請確認 Web App 已重新部署，且執行身分與存取權限設定正確。'));
       }, 12000);
 
       function cleanup() {
@@ -857,10 +895,10 @@ function loadGoogleSheetRows() {
 
       script.onerror = () => {
         cleanup();
-        reject(new Error('Apps Script API 無法連線，請確認已部署為網頁應用程式，並使用最新 exec 網址。'));
+        reject(new Error('Apps Script API 無法連線，已自動將 /dev 改用 /exec；請確認 Web App 已部署為網頁應用程式，且存取權限允許目前使用者讀取。'));
       };
 
-      script.src = `${syncConfig.url}${separator}callback=${encodeURIComponent(callbackName)}`;
+      script.src = buildAppsScriptJsonpUrl(syncConfig.url, callbackName);
       document.body.appendChild(script);
     });
   }
@@ -1079,11 +1117,10 @@ function loadUpdateListRows() {
     }
     return new Promise((resolve, reject) => {
       const callbackName = `__updateListAppsScript_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const separator = syncConfig.url.includes('?') ? '&' : '?';
       const script = document.createElement('script');
       const timeout = window.setTimeout(() => {
         cleanup();
-        reject(new Error('Apps Script API 讀取逾時，請確認已重新部署且網址正確。'));
+        reject(new Error('Apps Script API 讀取逾時，請確認 Web App 已重新部署，且執行身分與存取權限設定正確。'));
       }, 12000);
 
       function cleanup() {
@@ -1105,23 +1142,10 @@ function loadUpdateListRows() {
 
       script.onerror = () => {
         cleanup();
-        reject(new Error('Apps Script API 無法連線，請確認已部署為網頁應用程式，並使用最新 exec 網址。'));
+        reject(new Error('Apps Script API 無法連線，已自動將 /dev 改用 /exec；請確認 Web App 已部署為網頁應用程式，且存取權限允許目前使用者讀取。'));
       };
 
-      let requestUrl = syncConfig.url;
-      // 允許使用同一支 Apps Script：不管原網址有沒有 type，都強制更新列表讀 type=updates
-      try {
-        const parsedUrl = new URL(syncConfig.url, window.location.href);
-        parsedUrl.searchParams.set('type', 'updates');
-        parsedUrl.searchParams.set('callback', callbackName);
-        requestUrl = parsedUrl.toString();
-      } catch (error) {
-        const params = new URLSearchParams();
-        params.set('type', 'updates');
-        params.set('callback', callbackName);
-        requestUrl = `${syncConfig.url}${separator}${params.toString()}`;
-      }
-      script.src = requestUrl;
+      script.src = buildAppsScriptJsonpUrl(syncConfig.url, callbackName, { type: 'updates' });
       document.body.appendChild(script);
     });
   }
@@ -3992,10 +4016,15 @@ els.channelSummaryRefreshBtn?.addEventListener('click', () => {
   void refreshChannelSummary();
 });
 els.channelSummarySyncSaveBtn?.addEventListener('click', () => {
+  const mode = els.channelSummarySyncMode?.value || 'sheet-direct';
+  const url = mode === 'apps-script'
+    ? normalizeAppsScriptWebAppUrl(els.channelSummarySyncUrl?.value)
+    : String(els.channelSummarySyncUrl?.value || '').trim();
   state.data.channelSummarySync = {
-    mode: els.channelSummarySyncMode?.value || 'sheet-direct',
-    url: String(els.channelSummarySyncUrl?.value || '').trim(),
+    mode,
+    url,
   };
+  if (els.channelSummarySyncUrl) els.channelSummarySyncUrl.value = url;
   saveState();
   state.channelSummary.rows = [];
   state.channelSummary.error = '';
@@ -4051,10 +4080,15 @@ els.updateListRefreshBtn?.addEventListener('click', () => {
   void refreshUpdateList();
 });
 els.updateListSyncSaveBtn?.addEventListener('click', () => {
+  const mode = els.updateListSyncMode?.value || 'apps-script';
+  const url = mode === 'apps-script'
+    ? normalizeAppsScriptWebAppUrl(els.updateListSyncUrl?.value)
+    : String(els.updateListSyncUrl?.value || '').trim();
   state.data.updateListSync = {
-    mode: els.updateListSyncMode?.value || 'apps-script',
-    url: String(els.updateListSyncUrl?.value || '').trim(),
+    mode,
+    url,
   };
+  if (els.updateListSyncUrl) els.updateListSyncUrl.value = url;
   saveState();
   state.updateList.headers = [];
   state.updateList.rows = [];
