@@ -190,7 +190,6 @@ const state = {
     channel: '',
     version: '',
     versionChecked: '',
-    packageName: '',
     sortKey: '',
     sortDirection: 'asc',
   },
@@ -266,7 +265,6 @@ const els = {
   channelSummarySyncSaveBtn: document.getElementById('channel-summary-sync-save-btn'),
   channelSummarySearch: document.getElementById('channel-summary-search'),
   channelSummaryChannelFilter: document.getElementById('channel-summary-channel-filter'),
-  channelSummaryPackageFilter: document.getElementById('channel-summary-package-filter'),
   channelSummaryVersionFilter: document.getElementById('channel-summary-version-filter'),
   channelSummaryConfirmFilter: document.getElementById('channel-summary-confirm-filter'),
   channelSummaryClearBtn: document.getElementById('channel-summary-clear-btn'),
@@ -276,9 +274,7 @@ const els = {
   channelSummaryTableBody: document.getElementById('channel-summary-table-body'),
   channelSummaryFieldSettingsBtn: document.getElementById('channel-summary-field-settings-btn'),
   channelSourceList: document.getElementById('channel-source-list'),
-  channelBatchNoteEditor: document.getElementById('channel-batch-note-editor'),
-  channelNotePreview: document.getElementById('channel-note-preview'),
-  channelNoteCollapseBtn: document.getElementById('channel-note-collapse-btn'),
+  channelBatchNote: document.getElementById('channel-batch-note'),
   channelBatchTime: document.getElementById('channel-batch-time'),
   channelBatchTimeDisplay: document.getElementById('channel-batch-time-display'),
   applyBatchTimeBtn: document.getElementById('apply-batch-time-btn'),
@@ -384,49 +380,6 @@ function loadState() {
   return createDefaultState();
 }
 
-
-function normalizeDialogDb(input) {
-  const source = input && typeof input === 'object' ? input : {};
-  const defaults = {
-    categories: ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'],
-    templates: [],
-    selectedCategory: '全部',
-    selectedId: '',
-    recentIds: [],
-  };
-
-  const categories = Array.isArray(source.categories)
-    ? [...new Set(source.categories.map((item) => String(item || '').trim()).filter(Boolean))]
-    : defaults.categories;
-
-  const templates = Array.isArray(source.templates)
-    ? source.templates.map((item) => ({
-        id: String(item?.id || ('dlg_' + Date.now() + '_' + Math.random().toString(16).slice(2))),
-        title: String(item?.title || ''),
-        category: String(item?.category || '未分類'),
-        tags: Array.isArray(item?.tags)
-          ? item.tags.map((tag) => String(tag || '').trim()).filter(Boolean)
-          : String(item?.tags || '').split(/[,\s，]+/).map((tag) => tag.trim()).filter(Boolean),
-        zh: String(item?.zh || ''),
-        en: String(item?.en || ''),
-        hi: String(item?.hi || ''),
-        note: String(item?.note || ''),
-        favorite: Boolean(item?.favorite),
-        createdAt: String(item?.createdAt || ''),
-        updatedAt: String(item?.updatedAt || ''),
-      }))
-    : [];
-
-  return {
-    categories: categories.length ? categories : defaults.categories,
-    templates,
-    selectedCategory: String(source.selectedCategory || '全部'),
-    selectedId: String(source.selectedId || ''),
-    recentIds: Array.isArray(source.recentIds) ? source.recentIds.map((id) => String(id)) : [],
-  };
-}
-
-
 function createDefaultState() {
   return {
     tasks: [],
@@ -453,7 +406,6 @@ function createDefaultState() {
     hiddenChannelRows: [],
     // 隱藏渠道名稱：同名渠道在新增批次後也會自動隱藏
     hiddenChannelKeys: [],
-    dialogDb: normalizeDialogDb({}),
   };
 }
 
@@ -474,7 +426,6 @@ function normalizeState(input) {
     hiddenColumns: normalizeHiddenColumns(input.hiddenColumns),
     hiddenChannelRows: Array.isArray(input.hiddenChannelRows) ? [...input.hiddenChannelRows] : [],
     hiddenChannelKeys: Array.isArray(input.hiddenChannelKeys) ? [...new Set(input.hiddenChannelKeys.map((item) => String(item).trim().toLowerCase()).filter(Boolean))] : [],
-    dialogDb: normalizeDialogDb(input.dialogDb),
   };
 }
 
@@ -482,49 +433,10 @@ function normalizeChannelSummarySync(config) {
   const mode = ['sheet-direct', 'public-csv', 'apps-script'].includes(config?.mode)
     ? config.mode
     : 'apps-script';
-  const url = mode === 'apps-script'
-    ? normalizeAppsScriptWebAppUrl(config?.url)
-    : String(config?.url || '').trim();
   return {
     mode,
-    url,
+    url: String(config?.url || '').trim(),
   };
-}
-
-function normalizeAppsScriptWebAppUrl(url) {
-  const trimmed = String(url || '').trim();
-  if (!trimmed) return '';
-
-  try {
-    const parsedUrl = new URL(trimmed);
-    if (parsedUrl.hostname === 'script.google.com' && parsedUrl.pathname.endsWith('/dev')) {
-      parsedUrl.pathname = parsedUrl.pathname.replace(/\/dev$/, '/exec');
-      return parsedUrl.toString();
-    }
-  } catch (error) {
-    return trimmed.replace(/(script\.google\.com\/macros\/s\/[^/?#]+)\/dev(?=([?#]|$))/i, '$1/exec');
-  }
-
-  return trimmed;
-}
-
-function buildAppsScriptJsonpUrl(url, callbackName, params = {}) {
-  const normalizedUrl = normalizeAppsScriptWebAppUrl(url);
-  try {
-    const parsedUrl = new URL(normalizedUrl, window.location.href);
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        parsedUrl.searchParams.set(key, String(value));
-      }
-    });
-    parsedUrl.searchParams.set('callback', callbackName);
-    return parsedUrl.toString();
-  } catch (error) {
-    const separator = normalizedUrl.includes('?') ? '&' : '?';
-    const searchParams = new URLSearchParams(params);
-    searchParams.set('callback', callbackName);
-    return `${normalizedUrl}${separator}${searchParams.toString()}`;
-  }
 }
 
 function normalizeHiddenColumns(hiddenColumns) {
@@ -684,15 +596,35 @@ function normalizeChannelColumns(columns) {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+  const serialized = JSON.stringify(state.data);
   try {
-    localStorage.setItem(STORAGE_BACKUP_KEY, JSON.stringify(state.data));
+    localStorage.setItem(STORAGE_KEY, serialized);
+  } catch (error) {
+    // Backup is another full copy, so free it and retry before reporting quota failure.
+    try {
+      localStorage.removeItem(STORAGE_BACKUP_KEY);
+      localStorage.removeItem(`${STORAGE_BACKUP_KEY}-ts`);
+      localStorage.setItem(STORAGE_KEY, serialized);
+    } catch (retryError) {
+      const stored = parseStoredState(localStorage.getItem(STORAGE_KEY));
+      if (stored) state.data = normalizeState(stored);
+      console.error('Dashboard data could not be saved.', retryError);
+      els.saveStatus.textContent = '儲存失敗：瀏覽器空間不足';
+      els.saveStatus.classList.add('save-error');
+      window.alert('這次修改未儲存。瀏覽器的網站儲存空間可能已滿，請先匯出備份並清理不需要的資料後再試。');
+      return false;
+    }
+  }
+  try {
+    localStorage.setItem(STORAGE_BACKUP_KEY, serialized);
     localStorage.setItem(`${STORAGE_BACKUP_KEY}-ts`, new Date().toISOString());
   } catch (error) {}
+  els.saveStatus.classList.remove('save-error');
   els.saveStatus.textContent = `已儲存 ${new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
   els.saveStatus.classList.remove('flash');
   void els.saveStatus.offsetWidth;
   els.saveStatus.classList.add('flash');
+  return true;
 }
 
 
@@ -756,11 +688,9 @@ function renderNavigation() {
 
   const activeGroup = state.view === 'tasks' || state.view === 'task-archive'
     ? 'tasks'
-    : state.view === 'channel-summary' || state.view === 'update-list'
-      ? 'channel-summary-group'
-      : state.view === 'channels' || state.view === 'channel-history'
-        ? 'channels'
-        : '';
+    : state.view === 'channels' || state.view === 'channel-history'
+      ? 'channels'
+      : '';
 
   if (activeGroup) {
     state.navGroups[activeGroup] = true;
@@ -871,10 +801,11 @@ function loadGoogleSheetRows() {
     }
     return new Promise((resolve, reject) => {
       const callbackName = `__channelSummaryAppsScript_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const separator = syncConfig.url.includes('?') ? '&' : '?';
       const script = document.createElement('script');
       const timeout = window.setTimeout(() => {
         cleanup();
-        reject(new Error('Apps Script API 讀取逾時，請確認 Web App 已重新部署，且執行身分與存取權限設定正確。'));
+        reject(new Error('Apps Script API 讀取逾時，請確認已重新部署且網址正確。'));
       }, 12000);
 
       function cleanup() {
@@ -895,10 +826,10 @@ function loadGoogleSheetRows() {
 
       script.onerror = () => {
         cleanup();
-        reject(new Error('Apps Script API 無法連線，已自動將 /dev 改用 /exec；請確認 Web App 已部署為網頁應用程式，且存取權限允許目前使用者讀取。'));
+        reject(new Error('Apps Script API 無法連線，請確認已部署為網頁應用程式，並使用最新 exec 網址。'));
       };
 
-      script.src = buildAppsScriptJsonpUrl(syncConfig.url, callbackName);
+      script.src = `${syncConfig.url}${separator}callback=${encodeURIComponent(callbackName)}`;
       document.body.appendChild(script);
     });
   }
@@ -1117,10 +1048,11 @@ function loadUpdateListRows() {
     }
     return new Promise((resolve, reject) => {
       const callbackName = `__updateListAppsScript_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const separator = syncConfig.url.includes('?') ? '&' : '?';
       const script = document.createElement('script');
       const timeout = window.setTimeout(() => {
         cleanup();
-        reject(new Error('Apps Script API 讀取逾時，請確認 Web App 已重新部署，且執行身分與存取權限設定正確。'));
+        reject(new Error('Apps Script API 讀取逾時，請確認已重新部署且網址正確。'));
       }, 12000);
 
       function cleanup() {
@@ -1142,10 +1074,23 @@ function loadUpdateListRows() {
 
       script.onerror = () => {
         cleanup();
-        reject(new Error('Apps Script API 無法連線，已自動將 /dev 改用 /exec；請確認 Web App 已部署為網頁應用程式，且存取權限允許目前使用者讀取。'));
+        reject(new Error('Apps Script API 無法連線，請確認已部署為網頁應用程式，並使用最新 exec 網址。'));
       };
 
-      script.src = buildAppsScriptJsonpUrl(syncConfig.url, callbackName, { type: 'updates' });
+      let requestUrl = syncConfig.url;
+      // 允許使用同一支 Apps Script：不管原網址有沒有 type，都強制更新列表讀 type=updates
+      try {
+        const parsedUrl = new URL(syncConfig.url, window.location.href);
+        parsedUrl.searchParams.set('type', 'updates');
+        parsedUrl.searchParams.set('callback', callbackName);
+        requestUrl = parsedUrl.toString();
+      } catch (error) {
+        const params = new URLSearchParams();
+        params.set('type', 'updates');
+        params.set('callback', callbackName);
+        requestUrl = `${syncConfig.url}${separator}${params.toString()}`;
+      }
+      script.src = requestUrl;
       document.body.appendChild(script);
     });
   }
@@ -1318,7 +1263,6 @@ function getFilteredChannelSummaryRows() {
   const search = state.channelSummary.search.trim().toLowerCase();
   const filteredRows = state.channelSummary.rows.filter((row) => {
     if (state.channelSummary.channel && row.channel !== state.channelSummary.channel) return false;
-    if (state.channelSummary.packageName && row.packageName !== state.channelSummary.packageName) return false;
     if (state.channelSummary.version && row.version !== state.channelSummary.version) return false;
     if (state.channelSummary.versionChecked && row.versionChecked !== state.channelSummary.versionChecked) return false;
     if (!search) return true;
@@ -1546,8 +1490,6 @@ function refreshUpdateList() {
     });
 }
 
-
-
 function renderChannelSummaryView() {
   if (!els.channelSummaryTableHead || !els.channelSummaryTableBody) return;
 
@@ -1640,14 +1582,10 @@ function syncChannelSummaryFilters() {
   if (!els.channelSummaryChannelFilter || !els.channelSummaryVersionFilter || !els.channelSummaryConfirmFilter) return;
 
   const channels = [...new Set(state.channelSummary.rows.map((row) => row.channel).filter(Boolean))];
-  const packageNames = [...new Set(state.channelSummary.rows.map((row) => row.packageName).filter(Boolean))];
   const versions = [...new Set(state.channelSummary.rows.map((row) => row.version).filter(Boolean))];
   const checks = [...new Set(state.channelSummary.rows.map((row) => row.versionChecked).filter(Boolean))];
 
   fillSelectOptions(els.channelSummaryChannelFilter, '全部渠道', channels, state.channelSummary.channel);
-  if (els.channelSummaryPackageFilter) {
-    fillSelectOptions(els.channelSummaryPackageFilter, '全部包名稱', packageNames, state.channelSummary.packageName);
-  }
   fillSelectOptions(els.channelSummaryVersionFilter, '全部版本', versions, state.channelSummary.version);
   fillSelectOptions(els.channelSummaryConfirmFilter, '全部確認狀態', checks, state.channelSummary.versionChecked);
   els.channelSummarySearch.value = state.channelSummary.search;
@@ -2770,59 +2708,8 @@ function getEffectiveHiddenChannelKeySet() {
   return hiddenKeys;
 }
 
-
-function getHiddenChannelEntries() {
-  const entries = [];
-  const seen = new Set();
-
-  const pushEntry = (key, id = '') => {
-    const normalizedKey = String(key || '').trim().toLowerCase();
-    const normalizedId = String(id || '').trim();
-    const entryKey = normalizedKey || normalizedId;
-    if (!entryKey || seen.has(entryKey)) return;
-
-    const channel = state.data.channels.find((item) => {
-      const itemKey = getChannelPermanentKey(item);
-      return (normalizedKey && itemKey === normalizedKey) || (normalizedId && item.id === normalizedId);
-    });
-
-    seen.add(entryKey);
-    entries.push({
-      key: normalizedKey,
-      id: normalizedId,
-      name: channel?.name || normalizedKey || normalizedId || '未命名渠道',
-    });
-  };
-
-  (state.data.hiddenChannelKeys || []).forEach((key) => pushEntry(key, ''));
-  (state.data.hiddenChannelRows || []).forEach((id) => {
-    const channel = state.data.channels.find((item) => item.id === id);
-    pushEntry(getChannelPermanentKey(channel), id);
-  });
-
-  return entries;
-}
-
-function removeHiddenChannelEntry(entry) {
-  const key = String(entry?.key || '').trim().toLowerCase();
-  const id = String(entry?.id || '').trim();
-
-  if (Array.isArray(state.data.hiddenChannelKeys)) {
-    state.data.hiddenChannelKeys = state.data.hiddenChannelKeys.filter((item) => String(item).trim().toLowerCase() !== key);
-  }
-
-  if (Array.isArray(state.data.hiddenChannelRows)) {
-    state.data.hiddenChannelRows = state.data.hiddenChannelRows.filter((hiddenId) => {
-      if (id && hiddenId === id) return false;
-      const channel = state.data.channels.find((item) => item.id === hiddenId);
-      return getChannelPermanentKey(channel) !== key;
-    });
-  }
-}
-
-
 function getHiddenChannelCount() {
-  return getHiddenChannelEntries().length;
+  return getEffectiveHiddenChannelKeySet().size || (state.data.hiddenChannelRows || []).length;
 }
 
 // 更新勾選的渠道 ID 並重新計算最新金額加總
@@ -2891,50 +2778,13 @@ function hideSelectedChannels() {
   render();
 }
 
-// 恢復已隱藏渠道列：可選擇恢復，不再全部恢復
+// 恢復所有已隱藏渠道列
 function restoreHiddenChannels() {
-  const entries = getHiddenChannelEntries();
-
-  if (!entries.length) {
-    window.alert('目前沒有已隱藏的渠道。');
-    return;
-  }
-
-  const message = [
-    '請輸入要恢復的編號，多筆可用逗號或空白分隔。',
-    '輸入 all 可全部恢復。',
-    '',
-    ...entries.map((entry, index) => `${index + 1}. ${entry.name}`),
-  ].join('\n');
-
-  const answer = window.prompt(message, '1');
-  if (answer === null) return;
-
-  const text = String(answer).trim().toLowerCase();
-  let selectedIndexes = [];
-
-  if (text === 'all' || text === '全部') {
-    selectedIndexes = entries.map((_, index) => index);
-  } else {
-    selectedIndexes = text
-      .split(/[\s,，]+/)
-      .map((item) => Number(item) - 1)
-      .filter((index) => Number.isInteger(index) && index >= 0 && index < entries.length);
-  }
-
-  selectedIndexes = [...new Set(selectedIndexes)];
-
-  if (!selectedIndexes.length) {
-    window.alert('沒有選到任何有效編號。');
-    return;
-  }
-
-  selectedIndexes.forEach((index) => removeHiddenChannelEntry(entries[index]));
-
+  state.data.hiddenChannelRows = [];
+  state.data.hiddenChannelKeys = [];
   if (state.selectedChannelIds) {
     state.selectedChannelIds.clear();
   }
-
   saveState();
   render();
 }
@@ -2973,37 +2823,14 @@ function syncChannelBatchTime() {
   els.channelBatchTimeDisplay.textContent = `本次處理時間 ${formatBatchDisplay(value)}`;
 }
 
-
-
-function toggleChannelNoteCollapse() {
-  if (!els.channelNotePreview) return;
-  const collapsed = els.channelNotePreview.dataset.collapsed === '1';
-  els.channelNotePreview.dataset.collapsed = collapsed ? '0' : '1';
-  renderChannelNotePreview();
-}
-
-
-
-
-
-function toggleChannelNoteCollapse() {
-  if (!els.channelNotePreview) return;
-  const collapsed = els.channelNotePreview.dataset.collapsed === '1';
-  els.channelNotePreview.dataset.collapsed = collapsed ? '0' : '1';
-  renderChannelNotePreview();
-}
-
-
 function syncChannelBatchNote() {
-  if (!els.channelBatchNoteEditor) return;
-  const nextValue = state.data.channelPermanentNote || '';
-  if (els.channelBatchNoteEditor.innerText.trim() !== nextValue.trim()) {
-    els.channelBatchNoteEditor.innerText = nextValue;
-  }
-  
+  if (!els.channelBatchNote) return;
+  // 永久備註：不再依照批次時間切換，新增批次後仍保留
+  els.channelBatchNote.value = state.data.channelPermanentNote || '';
 }
 
 function updateChannelBatchNote(value) {
+  // 永久備註：直接存在全域欄位，不跟 batchTime 綁定
   state.data.channelPermanentNote = String(value ?? '');
   saveState();
 }
@@ -3983,16 +3810,8 @@ els.channelBatchTime.addEventListener('change', () => {
   syncChannelBatchNote();
   render();
 });
-els.channelBatchNoteEditor?.addEventListener('input', () => {
-  updateChannelBatchNote(els.channelBatchNoteEditor.innerText || '');
-});
-
-els.channelNoteCollapseBtn?.addEventListener('click', () => {
-  const editor = els.channelBatchNoteEditor;
-  if (!editor) return;
-  editor.classList.toggle('collapsed');
-  els.channelNoteCollapseBtn.textContent =
-    editor.classList.contains('collapsed') ? '展開' : '收合';
+els.channelBatchNote?.addEventListener('input', () => {
+  updateChannelBatchNote(els.channelBatchNote.value || '');
 });
 els.applyBatchTimeBtn.addEventListener('click', applyBatchTimeToAllChannels);
 els.channelHistoryBatchSelect.addEventListener('change', () => {
@@ -4016,15 +3835,10 @@ els.channelSummaryRefreshBtn?.addEventListener('click', () => {
   void refreshChannelSummary();
 });
 els.channelSummarySyncSaveBtn?.addEventListener('click', () => {
-  const mode = els.channelSummarySyncMode?.value || 'sheet-direct';
-  const url = mode === 'apps-script'
-    ? normalizeAppsScriptWebAppUrl(els.channelSummarySyncUrl?.value)
-    : String(els.channelSummarySyncUrl?.value || '').trim();
   state.data.channelSummarySync = {
-    mode,
-    url,
+    mode: els.channelSummarySyncMode?.value || 'sheet-direct',
+    url: String(els.channelSummarySyncUrl?.value || '').trim(),
   };
-  if (els.channelSummarySyncUrl) els.channelSummarySyncUrl.value = url;
   saveState();
   state.channelSummary.rows = [];
   state.channelSummary.error = '';
@@ -4039,10 +3853,6 @@ els.channelSummaryChannelFilter?.addEventListener('change', () => {
   state.channelSummary.channel = els.channelSummaryChannelFilter.value || '';
   renderChannelSummaryView();
 });
-els.channelSummaryPackageFilter?.addEventListener('change', () => {
-  state.channelSummary.packageName = els.channelSummaryPackageFilter.value || '';
-  renderChannelSummaryView();
-});
 els.channelSummaryVersionFilter?.addEventListener('change', () => {
   state.channelSummary.version = els.channelSummaryVersionFilter.value || '';
   renderChannelSummaryView();
@@ -4054,7 +3864,6 @@ els.channelSummaryConfirmFilter?.addEventListener('change', () => {
 els.channelSummaryClearBtn?.addEventListener('click', () => {
   state.channelSummary.search = '';
   state.channelSummary.channel = '';
-  state.channelSummary.packageName = '';
   state.channelSummary.version = '';
   state.channelSummary.versionChecked = '';
   renderChannelSummaryView();
@@ -4080,15 +3889,10 @@ els.updateListRefreshBtn?.addEventListener('click', () => {
   void refreshUpdateList();
 });
 els.updateListSyncSaveBtn?.addEventListener('click', () => {
-  const mode = els.updateListSyncMode?.value || 'apps-script';
-  const url = mode === 'apps-script'
-    ? normalizeAppsScriptWebAppUrl(els.updateListSyncUrl?.value)
-    : String(els.updateListSyncUrl?.value || '').trim();
   state.data.updateListSync = {
-    mode,
-    url,
+    mode: els.updateListSyncMode?.value || 'apps-script',
+    url: String(els.updateListSyncUrl?.value || '').trim(),
   };
-  if (els.updateListSyncUrl) els.updateListSyncUrl.value = url;
   saveState();
   state.updateList.headers = [];
   state.updateList.rows = [];
@@ -4150,799 +3954,3 @@ els.dataBackupFile?.addEventListener('change', (event) => {
 });
 
 render();
-
-
-
-function persistDialogDbRootFix() {
-  try {
-    if (typeof state !== 'undefined' && state.data && state.data.dialogDb) {
-      localStorage.setItem('local-dashboard-app-v1', JSON.stringify(state.data));
-      localStorage.setItem('local-dashboard-app-v1-backup', JSON.stringify(state.data));
-      localStorage.setItem('dialogDbRootFixBackup', JSON.stringify(state.data.dialogDb));
-    }
-  } catch (error) {
-    console.error('dialogDb persist failed', error);
-  }
-}
-
-/* 對話資料庫：分類 / 多語言 / TAG / 收藏 / 最近使用 */
-(function () {
-  function ensureDialogState() {
-    state.data.dialogDb = state.data.dialogDb || {
-      categories: ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'],
-      templates: [],
-      selectedCategory: '全部',
-      selectedId: '',
-      recentIds: [],
-    };
-  }
-
-  function safeText(value) {
-    return String(value ?? '');
-  }
-
-  function uidDialog() {
-    return 'dlg_' + Date.now() + '_' + Math.random().toString(16).slice(2);
-  }
-
-  function copyDialogText(text) {
-    const value = safeText(text);
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(value);
-    } else {
-      const temp = document.createElement('textarea');
-      temp.value = value;
-      document.body.appendChild(temp);
-      temp.select();
-      document.execCommand('copy');
-      document.body.removeChild(temp);
-    }
-  }
-
-  function getDialogEls() {
-    return {
-      categoryList: document.getElementById('dialog-category-list'),
-      templateList: document.getElementById('dialog-template-list'),
-      search: document.getElementById('dialog-search'),
-      title: document.getElementById('dialog-title'),
-      category: document.getElementById('dialog-category-input'),
-      tags: document.getElementById('dialog-tags'),
-      zh: document.getElementById('dialog-zh'),
-      en: document.getElementById('dialog-en'),
-      hi: document.getElementById('dialog-hi'),
-      note: document.getElementById('dialog-note'),
-      categoryCount: document.getElementById('dialog-category-count'),
-      templateCount: document.getElementById('dialog-template-count'),
-    };
-  }
-
-  
-  function renderDialogCategorySelect(selectedValue = '') {
-    ensureDialogState();
-    const select = document.getElementById('dialog-category-input');
-    if (!select) return;
-
-    const categories = [...new Set([...(state.data.dialogDb.categories || []), '未分類'])];
-    const currentValue = selectedValue || select.value || '';
-
-    select.innerHTML = categories.map((cat) => {
-      const selected = cat === currentValue ? 'selected' : '';
-      return `<option value="${cat}" ${selected}>${cat}</option>`;
-    }).join('');
-
-    if (currentValue && !categories.includes(currentValue)) {
-      const option = document.createElement('option');
-      option.value = currentValue;
-      option.textContent = currentValue;
-      option.selected = true;
-      select.appendChild(option);
-    }
-  }
-
-
-  function getSelectedDialogTemplate() {
-    ensureDialogState();
-    return state.data.dialogDb.templates.find((item) => item.id === state.data.dialogDb.selectedId) || null;
-  }
-
-  function setDialogRecent(id) {
-    ensureDialogState();
-    state.data.dialogDb.recentIds = [id, ...(state.data.dialogDb.recentIds || []).filter((item) => item !== id)].slice(0, 20);
-    saveState();
-  }
-
-  function selectDialogTemplate(id) {
-    ensureDialogState();
-    state.data.dialogDb.selectedId = id;
-    setDialogRecent(id);
-    saveState();
-    renderDialogDb();
-  }
-
-  function fillDialogEditor(item) {
-    const els = getDialogEls();
-    if (!els.title) return;
-
-    els.title.value = item?.title || '';
-    renderDialogCategorySelect(item?.category || state.data.dialogDb.selectedCategory || '未分類');
-    els.category.value = item?.category || state.data.dialogDb.selectedCategory || '未分類';
-    els.tags.value = (item?.tags || []).join(', ');
-    els.zh.value = item?.zh || '';
-    els.en.value = item?.en || '';
-    els.hi.value = item?.hi || '';
-    els.note.value = item?.note || '';
-  }
-
-  function saveDialogTemplate() {
-    ensureDialogState();
-    const els = getDialogEls();
-    if (!els.title) return;
-
-    const title = els.title.value.trim();
-    const category = els.category.value.trim() || '未分類';
-    const tags = els.tags.value.split(/[,\s，]+/).map((item) => item.trim()).filter(Boolean);
-    const zh = els.zh.value.trim();
-    const en = els.en.value.trim();
-    const hi = els.hi.value.trim();
-    const note = els.note.value.trim();
-
-    if (!title && !zh && !en && !hi) {
-      alert('請至少輸入標題或內容。');
-      return;
-    }
-
-    let item = getSelectedDialogTemplate();
-    if (!item) {
-      item = { id: uidDialog(), createdAt: new Date().toISOString(), favorite: false };
-      state.data.dialogDb.templates.unshift(item);
-      state.data.dialogDb.selectedId = item.id;
-    }
-
-    item.title = title || '未命名話術';
-    item.category = category;
-    item.tags = tags;
-    item.zh = zh;
-    item.en = en;
-    item.hi = hi;
-    item.note = note;
-    item.updatedAt = new Date().toISOString();
-
-    if (!state.data.dialogDb.categories.includes(category)) {
-      state.data.dialogDb.categories.push(category);
-    }
-
-    saveState();
-    persistDialogDbRootFix();
-    renderDialogDb();
-  }
-
-  function deleteDialogTemplate() {
-    ensureDialogState();
-    const item = getSelectedDialogTemplate();
-    if (!item) return alert('請先選擇話術。');
-    if (!confirm('確定刪除此話術？')) return;
-
-    state.data.dialogDb.templates = state.data.dialogDb.templates.filter((row) => row.id !== item.id);
-    state.data.dialogDb.selectedId = '';
-    saveState();
-    renderDialogDb();
-  }
-
-  function toggleDialogFavorite() {
-    const item = getSelectedDialogTemplate();
-    if (!item) return alert('請先選擇話術。');
-    item.favorite = !item.favorite;
-    saveState();
-    renderDialogDb();
-  }
-
-  function addDialogCategory() {
-    ensureDialogState();
-    const name = prompt('請輸入新分類名稱：');
-    if (!name) return;
-    const clean = name.trim();
-    if (!clean) return;
-    if (!state.data.dialogDb.categories.includes(clean)) {
-      state.data.dialogDb.categories.push(clean);
-      state.data.dialogDb.selectedCategory = clean;
-      saveState();
-      renderDialogDb();
-    }
-  }
-
-  function renameDialogCategory(oldName) {
-    ensureDialogState();
-    if (oldName === '全部' || oldName === '收藏' || oldName === '最近使用') return;
-    const name = prompt('修改分類名稱：', oldName);
-    if (!name) return;
-    const clean = name.trim();
-    if (!clean) return;
-
-    state.data.dialogDb.categories = state.data.dialogDb.categories.map((cat) => cat === oldName ? clean : cat);
-    state.data.dialogDb.templates.forEach((item) => {
-      if (item.category === oldName) item.category = clean;
-    });
-    if (state.data.dialogDb.selectedCategory === oldName) state.data.dialogDb.selectedCategory = clean;
-
-    saveState();
-    renderDialogDb();
-  }
-
-  function removeDialogCategory(name) {
-    ensureDialogState();
-    if (!confirm('刪除分類不會刪話術，分類內話術會改成「未分類」。確定？')) return;
-    state.data.dialogDb.categories = state.data.dialogDb.categories.filter((cat) => cat !== name);
-    state.data.dialogDb.templates.forEach((item) => {
-      if (item.category === name) item.category = '未分類';
-    });
-    state.data.dialogDb.selectedCategory = '全部';
-    saveState();
-    renderDialogDb();
-  }
-
-  function addDialogTemplate() {
-    ensureDialogState();
-    const category = state.data.dialogDb.selectedCategory && !['全部', '收藏', '最近使用'].includes(state.data.dialogDb.selectedCategory)
-      ? state.data.dialogDb.selectedCategory
-      : '';
-    const item = {
-      id: uidDialog(),
-      title: '',
-      category,
-      tags: [],
-      zh: '',
-      en: '',
-      hi: '',
-      note: '',
-      favorite: false,
-      createdAt: new Date().toISOString(),
-    };
-    state.data.dialogDb.templates.unshift(item);
-    state.data.dialogDb.selectedId = item.id;
-    saveState();
-    renderDialogCategorySelect(category || '未分類');
-    renderDialogDb();
-  }
-
-  function filteredDialogTemplates() {
-    ensureDialogState();
-    const els = getDialogEls();
-    const keyword = (els.search?.value || '').trim().toLowerCase();
-    const cat = state.data.dialogDb.selectedCategory || '全部';
-
-    return state.data.dialogDb.templates.filter((item) => {
-      let hitCategory = true;
-      if (cat === '收藏') hitCategory = !!item.favorite;
-      else if (cat === '最近使用') hitCategory = (state.data.dialogDb.recentIds || []).includes(item.id);
-      else if (cat !== '全部') hitCategory = item.category === cat;
-
-      const text = [
-        item.title,
-        item.category,
-        (item.tags || []).join(' '),
-        item.zh,
-        item.en,
-        item.hi,
-        item.note,
-      ].join(' ').toLowerCase();
-
-      return hitCategory && (!keyword || text.includes(keyword));
-    }).sort((a, b) => {
-      if (cat === '最近使用') {
-        return (state.data.dialogDb.recentIds || []).indexOf(a.id) - (state.data.dialogDb.recentIds || []).indexOf(b.id);
-      }
-      return 0;
-    });
-  }
-
-  window.renderDialogDb = function renderDialogDb() {
-    ensureDialogState();
-    const els = getDialogEls();
-    if (!els.categoryList || !els.templateList) return;
-
-    const fixedCats = ['全部', '收藏', '最近使用'];
-    const categories = [...fixedCats, ...state.data.dialogDb.categories];
-
-    els.categoryList.innerHTML = categories.map((cat) => {
-      const active = state.data.dialogDb.selectedCategory === cat ? ' is-active' : '';
-      const locked = fixedCats.includes(cat);
-      const count = cat === '全部'
-        ? state.data.dialogDb.templates.length
-        : cat === '收藏'
-          ? state.data.dialogDb.templates.filter((item) => item.favorite).length
-          : cat === '最近使用'
-            ? (state.data.dialogDb.recentIds || []).length
-            : state.data.dialogDb.templates.filter((item) => item.category === cat).length;
-
-      return `
-        <div class="dialog-category${active}" data-dialog-category="${cat}">
-          ${
-            locked
-              ? `<span class="dialog-cat-name">${cat}</span>`
-              : `<input class="dialog-cat-name-input" data-dialog-cat-old="${cat}" value="${cat}" title="可直接修改分類名稱" />`
-          }
-          <small>${count}</small>
-        </div>
-      `;
-    }).join('');
-
-    const rows = filteredDialogTemplates();
-    els.templateList.innerHTML = rows.map((item) => {
-      const active = state.data.dialogDb.selectedId === item.id ? ' is-active' : '';
-      const tags = (item.tags || []).slice(0, 3).map((tag) => `<em>${tag}</em>`).join('');
-      return `
-        <div class="dialog-template-item${active}" data-dialog-template-id="${item.id}">
-          <strong>${item.favorite ? '⭐ ' : ''}${item.title || '未命名話術'}</strong>
-          <span>${item.category || '未分類'}</span>
-          <div class="dialog-template-tags">${tags}</div>
-        </div>
-      `;
-    }).join('');
-
-    els.categoryCount && (els.categoryCount.textContent = state.data.dialogDb.categories.length);
-    els.templateCount && (els.templateCount.textContent = state.data.dialogDb.templates.length);
-
-    fillDialogEditor(getSelectedDialogTemplate());
-    renderDialogCategorySelect(getSelectedDialogTemplate()?.category || state.data.dialogDb.selectedCategory || '未分類');
-  };
-
-  
-function ensureDialogNavButton() {
-    const nav = document.querySelector('.sidebar nav, .nav, .sidebar-menu');
-    if (!nav) return;
-
-    let btn = document.querySelector('[data-view="conversation-db"]');
-
-    if (!btn) {
-      btn = document.createElement('button');
-      btn.type = 'button';
-      btn.dataset.view = 'conversation-db';
-      btn.className = 'nav-button';
-      btn.textContent = '對話資料庫';
-    }
-
-    const allButtons = Array.from(nav.querySelectorAll('button'));
-
-    const customerBtn = allButtons.find((el) =>
-      el.textContent.replace(/\\s+/g, '').includes('客服處理備註')
-    );
-
-    if (customerBtn) {
-      customerBtn.insertAdjacentElement('afterend', btn);
-    } else {
-      nav.appendChild(btn);
-    }
-}
-
-
-  document.addEventListener('click', (event) => {
-    const catInput = event.target.closest('.dialog-cat-name-input');
-    if (catInput) {
-      return;
-    }
-
-    const cat = event.target.closest('[data-dialog-category]');
-    if (cat) {
-      ensureDialogState();
-      state.data.dialogDb.selectedCategory = cat.dataset.dialogCategory;
-      saveState();
-      renderDialogDb();
-      return;
-    }
-
-    const item = event.target.closest('[data-dialog-template-id]');
-    if (item) {
-      selectDialogTemplate(item.dataset.dialogTemplateId);
-      return;
-    }
-
-    const navBtn = event.target.closest('[data-view="conversation-db"]');
-    if (navBtn) {
-      setTimeout(renderDialogDb, 0);
-    }
-  });
-
-
-  document.addEventListener('change', (event) => {
-    const input = event.target.closest('.dialog-cat-name-input');
-    if (!input) return;
-
-    const oldName = input.dataset.dialogCatOld;
-    const newName = input.value.trim();
-
-    if (!newName || newName === oldName) {
-      renderDialogDb();
-      return;
-    }
-
-    ensureDialogState();
-
-    if (state.data.dialogDb.categories.includes(newName)) {
-      alert('此分類名稱已存在。');
-      renderDialogDb();
-      return;
-    }
-
-    state.data.dialogDb.categories = state.data.dialogDb.categories.map((cat) => cat === oldName ? newName : cat);
-    state.data.dialogDb.templates.forEach((item) => {
-      if (item.category === oldName) item.category = newName;
-    });
-
-    if (state.data.dialogDb.selectedCategory === oldName) {
-      state.data.dialogDb.selectedCategory = newName;
-    }
-
-    saveState();
-    renderDialogDb();
-  });
-
-  document.addEventListener('keydown', (event) => {
-    const input = event.target.closest('.dialog-cat-name-input');
-    if (!input) return;
-
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      input.blur();
-    }
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    try {
-      const backup = localStorage.getItem('dialogDbRootFixBackup');
-      if (backup && state && state.data && (!state.data.dialogDb || !state.data.dialogDb.templates || state.data.dialogDb.templates.length === 0)) {
-        state.data.dialogDb = normalizeDialogDb(JSON.parse(backup));
-      }
-    } catch (error) {}
-    ensureDialogState();
-    ensureDialogNavButton();
-
-    document.getElementById('dialog-add-category-btn')?.addEventListener('click', addDialogCategory);
-    document.getElementById('dialog-add-template-btn')?.addEventListener('click', addDialogTemplate);
-    document.getElementById('dialog-save-btn')?.addEventListener('click', saveDialogTemplate);
-    document.getElementById('dialog-delete-btn')?.addEventListener('click', deleteDialogTemplate);
-    document.getElementById('dialog-favorite-btn')?.addEventListener('click', toggleDialogFavorite);
-    document.getElementById('dialog-search')?.addEventListener('input', renderDialogDb);
-
-    document.getElementById('dialog-copy-zh-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-zh')?.value || ''));
-    document.getElementById('dialog-copy-en-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-en')?.value || ''));
-    document.getElementById('dialog-copy-hi-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-hi')?.value || ''));
-
-    setTimeout(() => {
-      ensureDialogNavButton();
-      renderDialogDb();
-    }, 100);
-  });
-
-  const originalRenderForDialogDb = render;
-  render = function () {
-    originalRenderForDialogDb();
-    ensureDialogNavButton();
-    renderDialogDb();
-  };
-})();
-
-
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (typeof ensureDialogNavButton === 'function') {
-      ensureDialogNavButton();
-    }
-  }, 300);
-});
-
-
-/* 對話資料庫保存保險：避免隔天重開資料不見 */
-window.addEventListener('beforeunload', () => {
-  try {
-    if (window.state && state.data && state.data.dialogDb) {
-      localStorage.setItem('dashboardData', JSON.stringify(state.data));
-      localStorage.setItem('dialogDbAutoPersist', JSON.stringify(state.data.dialogDb));
-    }
-  } catch (e) {}
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    if (window.state && state.data && !state.data.dialogDb) {
-      const backup = localStorage.getItem('dialogDbAutoPersist');
-      if (backup) {
-        state.data.dialogDb = JSON.parse(backup);
-        saveState();
-      }
-    }
-  } catch (e) {}
-});
-
-
-/* 對話資料庫：左側分類與右側下拉同步修正 */
-(function () {
-  const FIX_KEY = 'selfuse3_dialog_db_v1';
-
-  function getDialogDbForSync() {
-    if (!window.state) return null;
-    state.data = state.data || {};
-    state.data.dialogDb = state.data.dialogDb || {
-      categories: ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'],
-      templates: [],
-      selectedCategory: '全部',
-      selectedId: '',
-      recentIds: []
-    };
-
-    state.data.dialogDb.categories = Array.isArray(state.data.dialogDb.categories)
-      ? state.data.dialogDb.categories
-      : ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'];
-
-    state.data.dialogDb.templates = Array.isArray(state.data.dialogDb.templates)
-      ? state.data.dialogDb.templates
-      : [];
-
-    return state.data.dialogDb;
-  }
-
-  function saveDialogDbForSync() {
-    try {
-      const db = getDialogDbForSync();
-      if (!db) return;
-
-      localStorage.setItem(FIX_KEY, JSON.stringify(db));
-      localStorage.setItem('local-dashboard-app-v1', JSON.stringify(state.data));
-      localStorage.setItem('local-dashboard-app-v1-backup', JSON.stringify(state.data));
-    } catch (e) {}
-  }
-
-  function collectDialogCategories() {
-    const db = getDialogDbForSync();
-    if (!db) return [];
-
-    const set = new Set();
-
-    db.categories.forEach((cat) => {
-      const name = String(cat || '').trim();
-      if (name && !['全部', '收藏', '最近使用'].includes(name)) set.add(name);
-    });
-
-    db.templates.forEach((item) => {
-      const name = String(item.category || '').trim();
-      if (name && !['全部', '收藏', '最近使用'].includes(name)) set.add(name);
-    });
-
-    return Array.from(set);
-  }
-
-  function syncCategorySelect() {
-    const db = getDialogDbForSync();
-    const select = document.getElementById('dialog-category-input');
-    if (!db || !select) return;
-
-    const selectedItem = db.templates.find((item) => item.id === db.selectedId);
-    const current = selectedItem?.category || select.value || db.selectedCategory || '';
-
-    const categories = collectDialogCategories();
-
-    select.innerHTML = categories.map((cat) => {
-      return `<option value="${cat}">${cat}</option>`;
-    }).join('');
-
-    if (current && !categories.includes(current) && !['全部', '收藏', '最近使用'].includes(current)) {
-      const opt = document.createElement('option');
-      opt.value = current;
-      opt.textContent = current;
-      select.appendChild(opt);
-    }
-
-    if (current && !['全部', '收藏', '最近使用'].includes(current)) {
-      select.value = current;
-    }
-  }
-
-  function syncLeftCategories() {
-    const db = getDialogDbForSync();
-    const list = document.getElementById('dialog-category-list');
-    if (!db || !list) return;
-
-    db.categories = collectDialogCategories();
-
-    const fixed = ['全部', '收藏', '最近使用'];
-    const cats = [...fixed, ...db.categories];
-
-    list.innerHTML = cats.map((cat) => {
-      const count = cat === '全部'
-        ? db.templates.length
-        : cat === '收藏'
-          ? db.templates.filter((item) => item.favorite).length
-          : cat === '最近使用'
-            ? (db.recentIds || []).length
-            : db.templates.filter((item) => item.category === cat).length;
-
-      const active = db.selectedCategory === cat ? ' is-active' : '';
-
-      return `
-        <div class="dialog-category${active}" data-dialog-category="${cat}">
-          <span class="dialog-cat-name">${cat}</span>
-          <small>${count}</small>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function syncDialogCategoriesAll() {
-    syncLeftCategories();
-    syncCategorySelect();
-    saveDialogDbForSync();
-  }
-
-  document.addEventListener('change', (event) => {
-    const select = event.target.closest('#dialog-category-input');
-    if (!select) return;
-
-    const db = getDialogDbForSync();
-    const selectedItem = db?.templates.find((item) => item.id === db.selectedId);
-    if (!db || !selectedItem) return;
-
-    selectedItem.category = select.value;
-
-    if (select.value && !db.categories.includes(select.value)) {
-      db.categories.push(select.value);
-    }
-
-    db.selectedCategory = select.value;
-
-    syncDialogCategoriesAll();
-
-    if (typeof renderDialogDb === 'function') {
-      renderDialogDb();
-      setTimeout(syncDialogCategoriesAll, 0);
-    }
-  }, true);
-
-  document.addEventListener('click', (event) => {
-    const saveBtn = event.target.closest('#dialog-save-btn');
-    if (!saveBtn) return;
-
-    setTimeout(() => {
-      const db = getDialogDbForSync();
-      const select = document.getElementById('dialog-category-input');
-      const selectedItem = db?.templates.find((item) => item.id === db.selectedId);
-
-      if (db && select && selectedItem) {
-        selectedItem.category = select.value;
-        if (select.value && !db.categories.includes(select.value)) db.categories.push(select.value);
-      }
-
-      syncDialogCategoriesAll();
-
-      if (typeof renderDialogDb === 'function') {
-        renderDialogDb();
-        setTimeout(syncDialogCategoriesAll, 0);
-      }
-    }, 50);
-  }, true);
-
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(syncDialogCategoriesAll, 300);
-    setTimeout(syncDialogCategoriesAll, 1000);
-  });
-
-  const timer = setInterval(() => {
-    const view = document.getElementById('conversation-db-view');
-    if (view && (view.classList.contains('active') || view.style.display === 'block')) {
-      syncDialogCategoriesAll();
-    }
-  }, 1500);
-
-  window.syncDialogCategoriesAll = syncDialogCategoriesAll;
-})();
-
-
-
-/* ===== 任務儀表版：勾選狀態刷新保存修正 ===== */
-(function () {
-  const TASK_CHECK_KEY = 'office3_task_check_history_backup_v1';
-
-  function readTaskCheckBackup() {
-    try {
-      return JSON.parse(localStorage.getItem(TASK_CHECK_KEY) || '{}') || {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function writeTaskCheckBackup(data) {
-    try {
-      localStorage.setItem(TASK_CHECK_KEY, JSON.stringify(data || {}));
-    } catch (e) {}
-  }
-
-  function getTaskIdFromCheckbox(input) {
-    const row = input.closest('tr');
-    return row?.dataset?.id || input.dataset.id || input.getAttribute('data-task-id') || '';
-  }
-
-  function getDateKeyFromCheckbox(input) {
-    return input.dataset.dateKey || input.getAttribute('data-date-key') || input.name || '';
-  }
-
-  function backupTaskCheckbox(input) {
-    if (!input || input.type !== 'checkbox') return;
-
-    const id = getTaskIdFromCheckbox(input);
-    const dateKey = getDateKeyFromCheckbox(input);
-
-    if (!id || !dateKey) return;
-
-    const backup = readTaskCheckBackup();
-    backup[id] = backup[id] || {};
-    backup[id][dateKey] = !!input.checked;
-    writeTaskCheckBackup(backup);
-  }
-
-  function restoreTaskCheckboxes() {
-    const backup = readTaskCheckBackup();
-    const inputs = document.querySelectorAll('input[type="checkbox"][data-date-key]');
-
-    inputs.forEach((input) => {
-      const id = getTaskIdFromCheckbox(input);
-      const dateKey = getDateKeyFromCheckbox(input);
-
-      if (!id || !dateKey) return;
-      if (!backup[id] || typeof backup[id][dateKey] !== 'boolean') return;
-
-      input.checked = backup[id][dateKey];
-
-      try {
-        if (window.state && state.data && Array.isArray(state.data.tasks)) {
-          const task = state.data.tasks.find((item) => String(item.id) === String(id));
-          if (task) {
-            task.history = task.history || {};
-            task.history[dateKey] = backup[id][dateKey];
-          }
-        }
-      } catch (e) {}
-    });
-  }
-
-  function persistAllVisibleTaskCheckboxes() {
-    document.querySelectorAll('input[type="checkbox"][data-date-key]').forEach(backupTaskCheckbox);
-  }
-
-  document.addEventListener('change', (event) => {
-    const input = event.target.closest('input[type="checkbox"][data-date-key]');
-    if (!input) return;
-
-    backupTaskCheckbox(input);
-
-    try {
-      if (typeof saveState === 'function') saveState();
-    } catch (e) {}
-  }, true);
-
-  function restoreSoon() {
-    setTimeout(restoreTaskCheckboxes, 0);
-    setTimeout(restoreTaskCheckboxes, 100);
-    setTimeout(restoreTaskCheckboxes, 500);
-  }
-
-  document.addEventListener('DOMContentLoaded', restoreSoon);
-  window.addEventListener('load', restoreSoon);
-
-  try {
-    const oldRender = window.render || (typeof render === 'function' ? render : null);
-    if (oldRender && !window.__taskCheckPersistRenderHooked) {
-      window.__taskCheckPersistRenderHooked = true;
-      window.render = function () {
-        const result = oldRender.apply(this, arguments);
-        restoreSoon();
-        return result;
-      };
-      try { render = window.render; } catch (e) {}
-    }
-  } catch (e) {}
-
-  window.addEventListener('beforeunload', persistAllVisibleTaskCheckboxes);
-
-  setInterval(() => {
-    persistAllVisibleTaskCheckboxes();
-    restoreTaskCheckboxes();
-  }, 1500);
-})();
