@@ -29,18 +29,9 @@
             </div>
           </div>
 
-          <div class="nav-group" data-group="channel-summary-group">
-            <button class="nav-group-toggle is-open" data-nav-group="channel-summary-group" type="button">
-              <span>渠道數據統整表</span>
-              <span class="nav-group-arrow">⌄</span>
-            </button>
-            <div class="nav-submenu is-open" data-nav-submenu="channel-summary-group">
-              <button class="nav-button" data-view="channel-summary">渠道數據統整表</button>
-              <button class="nav-button" data-view="update-list">更新列表</button>
-            </div>
-          </div>
+          <button class="nav-button nav-button-standalone" data-view="channel-summary">渠道統整表</button>
 
-          <div class="nav-group" data-group="channels" hidden>
+          <div class="nav-group" data-group="channels">
             <button class="nav-group-toggle is-open" data-nav-group="channels" type="button">
               <span>渠道管理</span>
               <span class="nav-group-arrow">⌄</span>
@@ -53,13 +44,11 @@
 
           <button class="nav-button nav-button-standalone" data-view="tools">資料工具</button>
           <!-- 新增發單解析功能列，可自訂欄位、排序與篩選 -->
-          <button class="nav-button nav-button-standalone" data-view="orders" hidden>發單解析</button>
+          <button class="nav-button nav-button-standalone" data-view="orders">發單解析</button>
+          <!-- 新增更新列表功能列：手動刷新渠道統整表 -->
+          <button class="nav-button nav-button-standalone" data-view="update-list">更新列表</button>
           <!-- 編輯功能列按鈕：可切換左側功能列的編輯模式 -->
           <button id="nav-edit-toggle" class="secondary-button nav-edit-toggle" type="button">編輯功能列</button>
-
-        
-          <button class="nav-button nav-button-standalone dialog-db-nav-btn" data-view="conversation-db" type="button">對話資料庫</button>
-
         </nav>
       </aside>
 
@@ -98,7 +87,8 @@
               <button id="add-task-btn" class="primary-button compact-button">新增任務</button>
             </div>
           </div>
-<section class="panel">
+
+          <section class="panel">
             <div class="panel-header">
               <div>
                 <h3>任務清單</h3>
@@ -157,19 +147,6 @@
             <div>
               <h3 class="task-topbar-title">渠道整合表</h3>
               <p class="task-topbar-text">把回U兩張表合在一起，用時間排序，適合同一天多次更新。</p>
-              <div class="channel-batch-note-row channel-batch-note-row-title">
-                
-                <div class="channel-note-head">
-                  <label class="batch-note-label channel-note-label">
-                    <span>批次備註</span>
-                    <div id="channel-batch-note-editor" class="channel-note-editor" contenteditable="true" spellcheck="false" placeholder="可直接編輯、換行、貼上內容"></div>
-                  </label>
-                  <button id="channel-note-collapse-btn" class="secondary-button compact-mini-button" type="button">收合</button>
-                  
-                </div>
-                
-              </div>
-
             </div>
             <div class="task-topbar-actions">
               <span class="summary-pill">總筆數：<strong id="channel-total-count">0</strong></span>
@@ -203,6 +180,13 @@
                 <div id="channel-batch-time-display" class="batch-time-display" hidden></div>
                 <button id="apply-batch-time-btn" class="secondary-button compact-mini-button" type="button">套用到全部</button>
               </div>
+            </div>
+
+            <div class="channel-batch-note-row">
+              <label class="batch-note-label">
+                <span>批次備註</span>
+                <input id="channel-batch-note" type="text" class="batch-note-input" placeholder="例如：下午批次、已通知營運" />
+              </label>
             </div>
 
             <div class="table-wrap">
@@ -247,7 +231,6 @@
                 <button id="channel-summary-sync-save-btn" class="secondary-button compact-mini-button" type="button">儲存同步來源</button>
                 <input id="channel-summary-search" type="text" class="date-input channel-summary-search" placeholder="搜尋 APPID、渠道名稱、渠道或版本" />
                 <select id="channel-summary-channel-filter" class="date-input channel-summary-filter"></select>
-                <select id="channel-summary-package-filter" class="date-input channel-summary-filter"><option value="">全部包名稱</option></select>
                 <select id="channel-summary-version-filter" class="date-input channel-summary-filter"></select>
                 <select id="channel-summary-confirm-filter" class="date-input channel-summary-filter"></select>
                 <button id="channel-summary-clear-btn" class="secondary-button compact-mini-button" type="button">清除條件</button>
@@ -368,10 +351,6 @@
               <div class="orders-actions">
                 <button id="orders-add-btn" class="secondary-button" type="button">新增空白記錄</button>
                 <button id="orders-add-col-btn" class="secondary-button" type="button">新增欄位</button>
-                <button id="orders-add-date-col-btn" class="secondary-button" type="button">新增日期欄位</button>
-                <button id="orders-add-status-col-btn" class="secondary-button" type="button">新增完成欄位</button>
-                <button id="orders-archive-selected-btn" class="secondary-button" type="button">封存勾選</button>
-                <button id="orders-toggle-archive-btn" class="secondary-button" type="button">查看封存</button>
                 <button id="orders-copy-btn" class="secondary-button" type="button">複製資料</button>
                 <!-- 複製筆數：可指定要複製的資料筆數，預設複製全部 -->
                 <input id="orders-copy-count" type="number" min="1" class="date-input" style="width:100px" placeholder="複製筆數" />
@@ -395,13 +374,6 @@
                     <tr><th>批次時間</th><th>筆數</th><th>操作</th></tr>
                   </thead>
                   <tbody id="orders-batch-list"></tbody>
-                </table>
-              </div>
-              <div id="orders-archive-panel" class="orders-batch-panel orders-archive-panel" hidden>
-                <h4>封存資料</h4>
-                <table class="record-table orders-batch-table">
-                  <thead id="orders-archive-head"></thead>
-                  <tbody id="orders-archive-list"></tbody>
                 </table>
               </div>
             </div>
@@ -454,79 +426,19 @@
           </section>
         </section>
 
-      
-        <section id="conversation-db-view" class="view">
-          <div class="task-topbar">
-            <div>
-              <h3 class="task-topbar-title">對話資料庫</h3>
-              <p class="task-topbar-text">中英文／印度文對照、分類、標籤、收藏與最近使用的客服話術資料庫。</p>
-            </div>
-            <div class="toolbar-pills">
-              <span class="summary-pill">分類：<strong id="dialog-category-count">0</strong></span>
-              <span class="summary-pill">話術：<strong id="dialog-template-count">0</strong></span>
-            </div>
-          </div>
-
-          <section class="panel dialog-db-panel">
-            <div class="dialog-db-toolbar">
-              <input id="dialog-search" class="search-input" placeholder="搜尋標題 / 分類 / TAG / 中文 / 英文 / 印度文..." />
-              <button id="dialog-add-category-btn" class="secondary-button" type="button">新增分類</button>
-              <button id="dialog-add-template-btn" class="primary-button" type="button">新增話術</button>
-            </div>
-
-            <div class="dialog-db-layout">
-              <aside class="dialog-categories">
-                <div class="dialog-section-title">分類</div>
-                <div id="dialog-category-list" class="dialog-category-list"></div>
-              </aside>
-
-              <aside class="dialog-template-list-wrap">
-                <div class="dialog-section-title">話術列表</div>
-                <div id="dialog-template-list" class="dialog-template-list"></div>
-              </aside>
-
-              <section class="dialog-editor">
-                <div class="dialog-editor-head">
-                  <input id="dialog-title" placeholder="標題 / 用途" />
-                  <select id="dialog-category-input" title="分類"></select>
-                </div>
-
-                <input id="dialog-tags" placeholder="TAG，例如：withdrawal, utr, pending" />
-
-                <div class="dialog-text-grid">
-                  <label>
-                    <span>中文內容</span>
-                    <textarea id="dialog-zh" placeholder="中文話術"></textarea>
-                  </label>
-                  <label>
-                    <span>英文內容</span>
-                    <textarea id="dialog-en" placeholder="English template"></textarea>
-                  </label>
-                  <label>
-                    <span>印度文內容</span>
-                    <textarea id="dialog-hi" placeholder="Hindi template"></textarea>
-                  </label>
-                  <label>
-                    <span>備註</span>
-                    <textarea id="dialog-note" placeholder="內部備註"></textarea>
-                  </label>
-                </div>
-
-                <div class="dialog-editor-actions">
-                  <button id="dialog-save-btn" class="primary-button" type="button">儲存話術</button>
-                  <button id="dialog-favorite-btn" class="secondary-button" type="button">加入收藏</button>
-                  <button id="dialog-copy-zh-btn" class="secondary-button" type="button">複製中文</button>
-                  <button id="dialog-copy-en-btn" class="secondary-button" type="button">複製英文</button>
-                  <button id="dialog-copy-hi-btn" class="secondary-button" type="button">複製印度文</button>
-                  <button id="dialog-delete-btn" class="danger-button" type="button">刪除</button>
-                </div>
-              </section>
-            </div>
-          </section>
-        </section>
-
       </main>
     </div>
+
+    <aside id="sticky-notes-panel" class="sticky-notes-panel" aria-label="臨時便利貼" hidden>
+      <div class="sticky-notes-header">
+        <div><p class="panel-label">Quick Notes</p><h3>臨時便利貼</h3></div>
+        <div class="sticky-notes-header-actions"><button id="sticky-note-add-btn" class="secondary-button compact-mini-button" type="button">新增</button><button id="sticky-notes-close-btn" class="ghost-button compact-mini-button" type="button">關閉</button></div>
+      </div>
+      <p class="sticky-notes-hint">輸入後會自動儲存，關閉網頁或重新開機後仍會保留。</p>
+      <div id="sticky-notes-list" class="sticky-notes-list"></div>
+      <div id="sticky-notes-empty" class="sticky-notes-empty">還沒有便利貼，按「新增」開始記錄。</div>
+    </aside>
+    <button id="sticky-notes-toggle" class="sticky-notes-toggle" type="button" aria-controls="sticky-notes-panel" aria-expanded="false"><span aria-hidden="true">📝</span><span>便利貼</span><strong id="sticky-notes-count" class="sticky-notes-count" hidden>0</strong></button>
 
     <template id="task-row-template">
       <tr>
@@ -619,39 +531,19 @@
         const ordersKey = 'ordersRecords';
         const columnsKey = 'ordersColumns';
         const batchesKey = 'ordersBatches';
-        const archiveKey = 'ordersArchivedRecords';
-
         let orders = [];
         let columns = [];
         let sortKey = '';
         let sortDir = 'asc';
+        // copyColumns: 紀錄每個欄位是否在複製時包含
         let copyColumns = [];
+        // orderBatches: 儲存批次資料及時間
         let orderBatches = [];
-        let archivedOrders = [];
-        let archiveVisible = false;
-        let columnWidths = JSON.parse(localStorage.getItem('ordersColumnWidths') || '{}');
-
-        function uid() {
-          return 'row_' + Date.now() + '_' + Math.random().toString(16).slice(2);
-        }
-
-        function normalizeColumn(col) {
-          return {
-            key: col.key,
-            name: col.name || col.key,
-            type: col.type || 'text',
-          };
-        }
-
-        function normalizeOrder(order) {
-          if (!order.__rowId) order.__rowId = uid();
-          return order;
-        }
 
         function loadOrders() {
           try {
             const raw = localStorage.getItem(ordersKey);
-            orders = raw ? JSON.parse(raw).map(normalizeOrder) : [];
+            orders = raw ? JSON.parse(raw) : [];
           } catch (e) {
             orders = [];
           }
@@ -660,24 +552,23 @@
         function loadColumns() {
           try {
             const raw = localStorage.getItem(columnsKey);
-            columns = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw).map(normalizeColumn) : [];
+            columns = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [];
           } catch (e) {
             columns = [];
           }
-
           if (!columns || columns.length === 0) {
             columns = [
-              { key: 'id', name: 'New ID', type: 'text' },
-              { key: 'time', name: '發單時間', type: 'date' },
-              { key: 'pay', name: '金流', type: 'text' },
-              { key: 'status', name: '完成狀態', type: 'status' },
+              { key: 'id', name: 'New ID' },
+              { key: 'time', name: '發單時間' },
+              { key: 'pay', name: '金流' },
             ];
           }
-
+          // 初始化複製欄位設定：預設全選
           copyColumns = columns.map(() => true);
         }
 
         function saveOrders() {
+          // 在儲存前，移除所有臨時的 __selected 標記，避免寫入 localStorage
           const sanitized = orders.map(order => {
             const copy = { ...order };
             delete copy.__selected;
@@ -690,6 +581,7 @@
           localStorage.setItem(columnsKey, JSON.stringify(columns));
         }
 
+        // 批次資料載入
         function loadBatches() {
           try {
             const raw = localStorage.getItem(batchesKey);
@@ -699,84 +591,48 @@
           }
         }
 
+        // 批次資料儲存
         function saveBatches() {
           localStorage.setItem(batchesKey, JSON.stringify(orderBatches));
         }
 
-        function loadArchive() {
-          try {
-            const raw = localStorage.getItem(archiveKey);
-            archivedOrders = raw ? JSON.parse(raw) : [];
-          } catch (e) {
-            archivedOrders = [];
-          }
-        }
-
-        function saveArchive() {
-          localStorage.setItem(archiveKey, JSON.stringify(archivedOrders));
-        }
-
-        function saveColumnWidths() {
-          localStorage.setItem('ordersColumnWidths', JSON.stringify(columnWidths));
-        }
-
-        function reorderColumns(sourceKey, targetKey) {
-          const sourceIndex = columns.findIndex(c => c.key === sourceKey);
-          const targetIndex = columns.findIndex(c => c.key === targetKey);
-          if (sourceIndex === -1 || targetIndex === -1) return;
-
-          const [moved] = columns.splice(sourceIndex, 1);
-          columns.splice(targetIndex, 0, moved);
-
-          saveColumns();
-          renderTable();
-        }
-
-        function getNewColumnKey(prefix = 'col') {
+        function getNewColumnKey() {
           let idx = 1;
           const existing = new Set(columns.map(c => c.key));
-          while (existing.has(prefix + idx)) idx++;
-          return prefix + idx;
+          while (existing.has('col' + idx)) idx++;
+          return 'col' + idx;
         }
 
         function addEmptyOrder() {
-          const record = { __rowId: uid() };
+          const record = {};
           columns.forEach(col => {
-            record[col.key] = col.type === 'status' ? '未完成' : '';
+            record[col.key] = '';
           });
           orders.push(record);
           saveOrders();
           renderTable();
         }
 
-        function addColumn(type = 'text') {
-          const defaultName = type === 'date' ? '日期' : type === 'status' ? '完成狀態' : '';
-          const name = prompt('請輸入新的欄位名稱：', defaultName);
+        function addColumn() {
+          const name = prompt('請輸入新的欄位名稱：');
           if (!name) return;
-
-          const key = getNewColumnKey(type === 'date' ? 'date' : type === 'status' ? 'status' : 'col');
-          columns.push({ key, name, type });
-
+          const key = getNewColumnKey();
+          columns.push({ key, name });
           orders.forEach(order => {
-            order[key] = type === 'status' ? '未完成' : '';
+            order[key] = '';
           });
-
           saveColumns();
           saveOrders();
+          // 新增欄位時預設將其加入複製範圍
           copyColumns.push(true);
           renderTable();
         }
 
-        function renameColumn(key, value) {
+        function renameColumn(key) {
           const col = columns.find(c => c.key === key);
           if (!col) return;
-
-          const newName = String(value || '').trim();
-          if (!newName) {
-            renderTable();
-            return;
-          }
-
+          const newName = prompt('請輸入新的欄位名稱：', col.name);
+          if (!newName) return;
           col.name = newName;
           saveColumns();
           renderTable();
@@ -789,7 +645,6 @@
             sortKey = key;
             sortDir = 'asc';
           }
-
           orders.sort((a, b) => {
             const aVal = a[key] || '';
             const bVal = b[key] || '';
@@ -797,202 +652,64 @@
             if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
             return 0;
           });
-
           saveOrders();
           renderTable();
-        }
-
-        function createHeaderCell(col) {
-          const th = document.createElement('th');
-          th.dataset.key = col.key;
-          th.draggable = true;
-
-          if (columnWidths[col.key]) {
-            th.style.width = columnWidths[col.key] + 'px';
-            th.style.minWidth = columnWidths[col.key] + 'px';
-          }
-
-          th.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', col.key);
-            th.classList.add('orders-dragging');
-          });
-
-          th.addEventListener('dragend', () => {
-            th.classList.remove('orders-dragging');
-          });
-
-          th.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            th.classList.add('orders-drag-over');
-          });
-
-          th.addEventListener('dragleave', () => {
-            th.classList.remove('orders-drag-over');
-          });
-
-          th.addEventListener('drop', (e) => {
-            e.preventDefault();
-            th.classList.remove('orders-drag-over');
-            const sourceKey = e.dataTransfer.getData('text/plain');
-            reorderColumns(sourceKey, col.key);
-          });
-
-          const wrap = document.createElement('div');
-          wrap.className = 'orders-header-edit';
-
-          const titleInput = document.createElement('input');
-          titleInput.type = 'text';
-          titleInput.value = col.name;
-
-          titleInput.addEventListener('change', () => renameColumn(col.key, titleInput.value));
-
-          const sortBtn = document.createElement('button');
-          sortBtn.type = 'button';
-          sortBtn.className = 'orders-sort-btn';
-          sortBtn.textContent = col.key === sortKey ? (sortDir === 'asc' ? '▲' : '▼') : '↕';
-
-          sortBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sortBy(col.key);
-          });
-
-          const deleteBtn = document.createElement('button');
-          deleteBtn.type = 'button';
-          deleteBtn.className = 'orders-delete-col-btn';
-          deleteBtn.textContent = '✕';
-
-          deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-
-            if (!confirm('確定刪除此欄位？')) return;
-
-            columns = columns.filter(c => c.key !== col.key);
-
-            orders.forEach(order => {
-              delete order[col.key];
-            });
-
-            delete columnWidths[col.key];
-
-            saveColumns();
-            saveOrders();
-            saveColumnWidths();
-
-            renderTable();
-          });
-
-          const resizeHandle = document.createElement('div');
-          resizeHandle.className = 'orders-resize-handle';
-
-          resizeHandle.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-
-            const startX = e.clientX;
-            const startWidth = th.offsetWidth;
-
-            function onMove(ev) {
-              const width = Math.max(80, startWidth + (ev.clientX - startX));
-              columnWidths[col.key] = width;
-              th.style.width = width + 'px';
-              th.style.minWidth = width + 'px';
-            }
-
-            function onUp() {
-              saveColumnWidths();
-              document.removeEventListener('mousemove', onMove);
-              document.removeEventListener('mouseup', onUp);
-              renderTable();
-            }
-
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-          });
-
-          wrap.appendChild(titleInput);
-          wrap.appendChild(sortBtn);
-          wrap.appendChild(deleteBtn);
-
-          th.appendChild(wrap);
-          th.appendChild(resizeHandle);
-
-          return th;
-        }
-
-        function createFieldInput(order, col) {
-          if (col.type === 'date') {
-            const input = document.createElement('input');
-            input.type = 'date';
-            input.value = order[col.key] || '';
-            input.addEventListener('input', (e) => {
-              order[col.key] = e.target.value;
-              saveOrders();
-            });
-            return input;
-          }
-
-          if (col.type === 'status') {
-            const select = document.createElement('select');
-            ['未完成', '完成'].forEach(text => {
-              const option = document.createElement('option');
-              option.value = text;
-              option.textContent = text;
-              select.appendChild(option);
-            });
-            select.value = order[col.key] || '未完成';
-            select.className = select.value === '完成' ? 'orders-status-done' : 'orders-status-pending';
-            select.addEventListener('change', (e) => {
-              order[col.key] = e.target.value;
-              select.className = select.value === '完成' ? 'orders-status-done' : 'orders-status-pending';
-              saveOrders();
-            });
-            return select;
-          }
-
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.value = order[col.key] || '';
-          input.addEventListener('input', (e) => {
-            order[col.key] = e.target.value;
-            saveOrders();
-          });
-          return input;
         }
 
         function renderTable() {
           const head = document.getElementById('orders-table-head');
           const body = document.getElementById('orders-table-body');
           if (!head || !body) return;
-
           head.innerHTML = '';
           const headerRow = document.createElement('tr');
-
+          // 新增選擇欄標題
           const selTh = document.createElement('th');
           selTh.style.width = '30px';
+          // 全選 checkbox
           const selAllCb = document.createElement('input');
           selAllCb.type = 'checkbox';
           selAllCb.id = 'orders-select-all';
           selAllCb.addEventListener('change', (e) => {
             const checked = e.target.checked;
+            // 設定所有項目的 __selected
             orders.forEach(order => {
               order.__selected = checked;
             });
+            // 重新渲染表格但不改變排序
             renderTable();
           });
           selTh.appendChild(selAllCb);
           headerRow.appendChild(selTh);
-
-          columns.forEach(col => headerRow.appendChild(createHeaderCell(col)));
-
+          // 產生欄位標題
+          columns.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col.name;
+            th.dataset.key = col.key;
+            th.addEventListener('click', () => sortBy(col.key));
+            th.addEventListener('dblclick', (e) => {
+              e.stopPropagation();
+              renameColumn(col.key);
+            });
+            // indicate sort direction on current key
+            if (col.key === sortKey) {
+              const arrow = document.createElement('span');
+              arrow.textContent = sortDir === 'asc' ? ' ▲' : ' ▼';
+              th.appendChild(arrow);
+            }
+            headerRow.appendChild(th);
+          });
+          // 操作欄
           const opTh = document.createElement('th');
           opTh.textContent = '操作';
           headerRow.appendChild(opTh);
           head.appendChild(headerRow);
 
+          // build body
           body.innerHTML = '';
           const searchVal = (document.getElementById('orders-search')?.value || '').trim().toLowerCase();
           let count = 0;
-
           orders.forEach((order, idx) => {
+            // filter
             if (searchVal) {
               const match = columns.some(col => {
                 const val = (order[col.key] || '').toString().toLowerCase();
@@ -1000,9 +717,8 @@
               });
               if (!match) return;
             }
-
             const tr = document.createElement('tr');
-
+            // 選擇欄
             const selTd = document.createElement('td');
             selTd.style.textAlign = 'center';
             const selCb = document.createElement('input');
@@ -1010,26 +726,28 @@
             selCb.checked = !!order.__selected;
             selCb.addEventListener('change', () => {
               order.__selected = selCb.checked;
-              const allChecked = orders.length > 0 && orders.every(o => o.__selected);
+              // 更新全選狀態
+              const allChecked = orders.every(o => o.__selected);
               const selAll = document.getElementById('orders-select-all');
               if (selAll) selAll.checked = allChecked;
             });
             selTd.appendChild(selCb);
             tr.appendChild(selTd);
-
+            // 欄位資料
             columns.forEach(col => {
               const td = document.createElement('td');
-              td.appendChild(createFieldInput(order, col));
+              const input = document.createElement('input');
+              input.type = 'text';
+              input.value = order[col.key] || '';
+              input.addEventListener('input', (e) => {
+                order[col.key] = e.target.value;
+                saveOrders();
+              });
+              td.appendChild(input);
               tr.appendChild(td);
             });
-
+            // action cell
             const tdAction = document.createElement('td');
-
-            const archiveBtn = document.createElement('button');
-            archiveBtn.className = 'secondary-button compact-mini-button';
-            archiveBtn.textContent = '封存';
-            archiveBtn.addEventListener('click', () => archiveRows([order.__rowId]));
-
             const delBtn = document.createElement('button');
             delBtn.className = 'danger-button compact-mini-button';
             delBtn.textContent = '刪除';
@@ -1038,45 +756,42 @@
               saveOrders();
               renderTable();
             });
-
-            tdAction.appendChild(archiveBtn);
             tdAction.appendChild(delBtn);
             tr.appendChild(tdAction);
             body.appendChild(tr);
             count++;
           });
-
           const countEl = document.getElementById('orders-count');
-          if (countEl) countEl.textContent = '筆數：' + count;
-
+          if (countEl) {
+            countEl.textContent = '筆數：' + count;
+          }
+          // 更新複製欄位選擇器
           renderCopySelector();
         }
 
-        function archiveRows(rowIds) {
-          const idSet = new Set(rowIds);
-          const moving = orders.filter(order => idSet.has(order.__rowId));
-          if (!moving.length) {
-            alert('請先勾選要封存的資料。');
-            return;
-          }
-
-          const archivedAt = new Date().toLocaleString('zh-TW');
-          moving.forEach(order => {
-            const copy = { ...order, archivedAt };
-            delete copy.__selected;
-            archivedOrders.unshift(copy);
+        function parseOrders() {
+          const textarea = document.getElementById('orders-input');
+          if (!textarea) return;
+          const text = textarea.value.trim();
+          if (!text) return;
+          const lines = text.split(/\n+/);
+          lines.forEach(line => {
+            const parts = line.trim().split(/[\t,\s]+/).filter(Boolean);
+            if (!parts.length) return;
+            const record = {};
+            columns.forEach((col, idx) => {
+              record[col.key] = parts[idx] || '';
+            });
+            orders.push(record);
           });
-
-          orders = orders.filter(order => !idSet.has(order.__rowId));
           saveOrders();
-          saveArchive();
+          textarea.value = '';
           renderTable();
-          renderArchive();
         }
 
-        function archiveSelectedOrders() {
-          const ids = orders.filter(order => order.__selected).map(order => order.__rowId);
-          archiveRows(ids);
+        function clearInput() {
+          const textarea = document.getElementById('orders-input');
+          if (textarea) textarea.value = '';
         }
 
         function fallbackCopy(text) {
@@ -1093,25 +808,29 @@
 
         function copyOrders() {
           if (!orders.length) return;
+          // 先檢查是否有選擇行，若有則只複製選擇的行，否則全選
           let rows = orders.filter(order => order.__selected);
           if (rows.length === 0) rows = orders;
-
+          // 若指定複製筆數，則限制行數
           const countInput = document.getElementById('orders-copy-count');
           let limit = 0;
           if (countInput && countInput.value) {
             const n = parseInt(countInput.value);
             if (!isNaN(n) && n > 0) limit = n;
           }
-
-          const rowsToCopy = limit > 0 ? rows.slice(0, limit) : rows;
+          let rowsToCopy = rows;
+          if (limit > 0) {
+            rowsToCopy = rows.slice(0, limit);
+          }
           const lines = rowsToCopy.map(order => {
             const parts = [];
             columns.forEach((col, idx) => {
-              if (copyColumns[idx]) parts.push(order[col.key] || '');
+              if (copyColumns[idx]) {
+                parts.push(order[col.key] || '');
+              }
             });
             return parts.join('\t');
           }).join('\n');
-
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(lines).then(() => {
               alert('資料已複製到剪貼簿');
@@ -1121,6 +840,7 @@
           }
         }
 
+        // 渲染複製欄位選擇器
         function renderCopySelector() {
           const container = document.getElementById('orders-copy-select');
           if (!container) return;
@@ -1129,7 +849,7 @@
             const label = document.createElement('label');
             const cb = document.createElement('input');
             cb.type = 'checkbox';
-            cb.checked = copyColumns[idx] ?? true;
+            cb.checked = copyColumns[idx];
             cb.addEventListener('change', () => {
               copyColumns[idx] = cb.checked;
             });
@@ -1139,11 +859,11 @@
           });
         }
 
+        // 渲染批次歷史列表
         function renderBatches() {
           const tbody = document.getElementById('orders-batch-list');
           if (!tbody) return;
           tbody.innerHTML = '';
-
           orderBatches.forEach((batch, idx) => {
             const tr = document.createElement('tr');
             const tdTime = document.createElement('td');
@@ -1151,26 +871,26 @@
             const tdCount = document.createElement('td');
             tdCount.textContent = batch.data.length;
             const tdOp = document.createElement('td');
-
             const viewBtn = document.createElement('button');
             viewBtn.className = 'secondary-button compact-mini-button';
             viewBtn.textContent = '載入';
             viewBtn.addEventListener('click', () => {
-              columns = batch.columns.map(c => normalizeColumn(Object.assign({}, c)));
+              // 讀取批次資料回到當前表格
+              columns = batch.columns.map(c => Object.assign({}, c));
               orders = batch.data.map(row => {
-                const rec = { __rowId: uid() };
+                const rec = {};
                 batch.columns.forEach((col, i) => {
                   rec[col.key] = row[i] || '';
                 });
                 return rec;
               });
+              // 複製欄位設定重新初始化為全選
               copyColumns = columns.map(() => true);
               saveColumns();
               saveOrders();
               renderTable();
               renderCopySelector();
             });
-
             const delBtn = document.createElement('button');
             delBtn.className = 'danger-button compact-mini-button';
             delBtn.textContent = '刪除';
@@ -1179,7 +899,6 @@
               saveBatches();
               renderBatches();
             });
-
             tdOp.appendChild(viewBtn);
             tdOp.appendChild(delBtn);
             tr.appendChild(tdTime);
@@ -1189,133 +908,45 @@
           });
         }
 
-        function renderArchive() {
-          const panel = document.getElementById('orders-archive-panel');
-          const head = document.getElementById('orders-archive-head');
-          const body = document.getElementById('orders-archive-list');
-          if (!panel || !head || !body) return;
-
-          panel.hidden = !archiveVisible;
-          if (!archiveVisible) return;
-
-          head.innerHTML = '';
-          body.innerHTML = '';
-
-          const trHead = document.createElement('tr');
-          const archivedAtTh = document.createElement('th');
-          archivedAtTh.textContent = '封存時間';
-          trHead.appendChild(archivedAtTh);
-
-          columns.forEach(col => {
-            const th = document.createElement('th');
-            th.textContent = col.name;
-            trHead.appendChild(th);
-          });
-
-          const opTh = document.createElement('th');
-          opTh.textContent = '操作';
-          trHead.appendChild(opTh);
-          head.appendChild(trHead);
-
-          archivedOrders.forEach((order, idx) => {
-            const tr = document.createElement('tr');
-
-            const tdTime = document.createElement('td');
-            tdTime.textContent = order.archivedAt || '';
-            tr.appendChild(tdTime);
-
-            columns.forEach(col => {
-              const td = document.createElement('td');
-              td.textContent = order[col.key] || '';
-              tr.appendChild(td);
-            });
-
-            const tdOp = document.createElement('td');
-
-            const restoreBtn = document.createElement('button');
-            restoreBtn.className = 'secondary-button compact-mini-button';
-            restoreBtn.textContent = '恢復';
-            restoreBtn.addEventListener('click', () => {
-              const restored = { ...archivedOrders[idx] };
-              delete restored.archivedAt;
-              restored.__rowId = uid();
-              orders.push(restored);
-              archivedOrders.splice(idx, 1);
-              saveOrders();
-              saveArchive();
-              renderTable();
-              renderArchive();
-            });
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'danger-button compact-mini-button';
-            delBtn.textContent = '刪除';
-            delBtn.addEventListener('click', () => {
-              archivedOrders.splice(idx, 1);
-              saveArchive();
-              renderArchive();
-            });
-
-            tdOp.appendChild(restoreBtn);
-            tdOp.appendChild(delBtn);
-            tr.appendChild(tdOp);
-            body.appendChild(tr);
-          });
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
+          // 如果沒有 orders-view，則不初始化
           if (!document.getElementById('orders-view')) return;
-
           loadOrders();
           loadColumns();
           loadBatches();
-          loadArchive();
-
+          // 初始渲染
           renderTable();
           renderBatches();
-          renderArchive();
           renderCopySelector();
-
-          document.getElementById('orders-add-btn')?.addEventListener('click', addEmptyOrder);
-          document.getElementById('orders-add-col-btn')?.addEventListener('click', () => addColumn('text'));
-          document.getElementById('orders-add-date-col-btn')?.addEventListener('click', () => addColumn('date'));
-          document.getElementById('orders-add-status-col-btn')?.addEventListener('click', () => addColumn('status'));
-          document.getElementById('orders-archive-selected-btn')?.addEventListener('click', archiveSelectedOrders);
-          document.getElementById('orders-toggle-archive-btn')?.addEventListener('click', () => {
-            archiveVisible = !archiveVisible;
-            const btn = document.getElementById('orders-toggle-archive-btn');
-            if (btn) btn.textContent = archiveVisible ? '隱藏封存' : '查看封存';
-            renderArchive();
-          });
-
-          document.getElementById('orders-copy-btn')?.addEventListener('click', copyOrders);
-
-          document.getElementById('orders-save-batch-btn')?.addEventListener('click', () => {
+          // 綁定事件
+          const addBtn = document.getElementById('orders-add-btn');
+          if (addBtn) addBtn.addEventListener('click', addEmptyOrder);
+          const addColBtn = document.getElementById('orders-add-col-btn');
+          if (addColBtn) addColBtn.addEventListener('click', addColumn);
+          const copyBtn = document.getElementById('orders-copy-btn');
+          if (copyBtn) copyBtn.addEventListener('click', copyOrders);
+          const saveBatchBtn = document.getElementById('orders-save-batch-btn');
+          if (saveBatchBtn) saveBatchBtn.addEventListener('click', () => {
             const now = new Date();
+            // 使用台灣時區格式化時間
             const formatter = new Intl.DateTimeFormat('zh-TW', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', second: '2-digit',
+              hour12: false
             });
-
             const timestamp = formatter.format(now);
             const batch = {
               time: timestamp,
               columns: columns.map(c => Object.assign({}, c)),
               data: orders.map(order => columns.map(col => order[col.key] || '')),
             };
-
             orderBatches.push(batch);
             saveBatches();
             renderBatches();
             alert('批次已儲存');
           });
-
-          document.getElementById('orders-search')?.addEventListener('input', renderTable);
+          const searchInput = document.getElementById('orders-search');
+          if (searchInput) searchInput.addEventListener('input', renderTable);
         });
       })();
     </script>
@@ -1572,144 +1203,6 @@
           });
         }
 
-
-        function enforceChannelSummaryGroup() {
-          const navEl = document.querySelector('.nav');
-          if (!navEl) return;
-
-          let groupEl = navEl.querySelector('.nav-group[data-group="channel-summary-group"]');
-
-          if (!groupEl) {
-            groupEl = document.createElement('div');
-            groupEl.className = 'nav-group';
-            groupEl.dataset.group = 'channel-summary-group';
-            groupEl.innerHTML = `
-              <button class="nav-group-toggle is-open" data-nav-group="channel-summary-group" type="button">
-                <span>渠道數據統整表</span>
-                <span class="nav-group-arrow">⌄</span>
-              </button>
-              <div class="nav-submenu is-open" data-nav-submenu="channel-summary-group"></div>
-            `;
-            const channelsGroup = navEl.querySelector('.nav-group[data-group="channels"]');
-            navEl.insertBefore(groupEl, channelsGroup || navEl.firstChild);
-          }
-
-          const submenu = groupEl.querySelector('.nav-submenu') || groupEl.appendChild(document.createElement('div'));
-          submenu.classList.add('nav-submenu', 'is-open');
-          submenu.dataset.navSubmenu = 'channel-summary-group';
-
-          ['channel-summary', 'update-list'].forEach((view) => {
-            let btn = navEl.querySelector('.nav-button[data-view="' + view + '"]');
-            if (!btn) {
-              btn = document.createElement('button');
-              btn.className = 'nav-button';
-              btn.dataset.view = view;
-              btn.textContent = view === 'channel-summary' ? '渠道數據統整表' : '更新列表';
-            }
-            btn.classList.remove('nav-button-standalone');
-            submenu.appendChild(btn);
-          });
-        }
-
-        function updateNavConfigFromDom() {
-          const navEl = document.querySelector('.nav');
-          if (!navEl) return;
-
-          const cfg = loadNavConfig();
-          cfg.order = [];
-          cfg.groupOrder = cfg.groupOrder || {};
-
-          Array.from(navEl.children).forEach((child) => {
-            if (child.id === 'nav-edit-toggle') return;
-
-            if (child.classList.contains('nav-group')) {
-              const groupName = child.dataset.group;
-              const groupKey = 'group-' + groupName;
-              cfg.order.push(groupKey);
-
-              const submenu = child.querySelector('.nav-submenu');
-              cfg.groupOrder[groupKey] = submenu
-                ? Array.from(submenu.querySelectorAll('.nav-button')).map((btn) => btn.dataset.view).filter(Boolean)
-                : [];
-            } else if (child.classList.contains('nav-button')) {
-              const view = child.dataset.view;
-              if (view && view !== 'channel-summary' && view !== 'update-list') {
-                cfg.order.push(view);
-              }
-            }
-          });
-
-          navConfig = cfg;
-          saveNavConfig(navConfig);
-        }
-
-        function enableNavDragDrop() {
-          const navEl = document.querySelector('.nav');
-          if (!navEl || navEl.dataset.dragDropReady === '1') return;
-          navEl.dataset.dragDropReady = '1';
-
-          let draggingEl = null;
-
-          function makeDraggable(el) {
-            if (!el || el.dataset.dragReady === '1') return;
-            el.dataset.dragReady = '1';
-            el.draggable = true;
-
-            el.addEventListener('dragstart', (event) => {
-              if (!navEditing) return event.preventDefault();
-              draggingEl = el;
-              event.dataTransfer.effectAllowed = 'move';
-              event.dataTransfer.setData('text/plain', el.dataset.view || el.dataset.group || '');
-              el.classList.add('nav-dragging');
-            });
-
-            el.addEventListener('dragend', () => {
-              el.classList.remove('nav-dragging');
-              draggingEl = null;
-              updateNavConfigFromDom();
-            });
-          }
-
-          function makeDropZone(zone) {
-            if (!zone || zone.dataset.dropReady === '1') return;
-            zone.dataset.dropReady = '1';
-
-            zone.addEventListener('dragover', (event) => {
-              if (!navEditing || !draggingEl) return;
-              event.preventDefault();
-              zone.classList.add('nav-drop-target');
-            });
-
-            zone.addEventListener('dragleave', () => {
-              zone.classList.remove('nav-drop-target');
-            });
-
-            zone.addEventListener('drop', (event) => {
-              if (!navEditing || !draggingEl) return;
-              event.preventDefault();
-              zone.classList.remove('nav-drop-target');
-
-              if (zone.classList.contains('nav-submenu')) {
-                draggingEl.classList.remove('nav-button-standalone');
-                zone.appendChild(draggingEl);
-              } else if (zone.classList.contains('nav')) {
-                if (draggingEl.classList.contains('nav-button')) {
-                  draggingEl.classList.add('nav-button-standalone');
-                }
-                const editBtn = document.getElementById('nav-edit-toggle');
-                zone.insertBefore(draggingEl, editBtn);
-              }
-
-              updateNavConfigFromDom();
-            });
-          }
-
-          navEl.querySelectorAll('.nav-button, .nav-group').forEach(makeDraggable);
-          navEl.querySelectorAll('.nav-submenu').forEach(makeDropZone);
-          makeDropZone(navEl);
-        }
-
-
         // 套用設定到現有 DOM
         function applyNavConfig(cfg) {
           const navEl = document.querySelector('.nav');
@@ -1737,7 +1230,6 @@
                 if (titleSpan) titleSpan.textContent = cfg.titles[key];
               }
             } else {
-              if (key === 'channel-summary' || key === 'update-list') return;
               const btn = navEl.querySelector('.nav-button[data-view="' + key + '"]');
               if (btn) navEl.appendChild(btn);
               if (btn && cfg.titles[key]) {
@@ -1754,20 +1246,12 @@
           navEl.classList.toggle('is-editing', navEditing);
           const toggleBtn = document.getElementById('nav-edit-toggle');
           if (toggleBtn) toggleBtn.textContent = navEditing ? '完成' : '編輯功能列';
-          enableNavDragDrop();
-          if (!navEditing) {
-            enforceChannelSummaryGroup();
-            updateNavConfigFromDom();
-          }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
           navConfig = loadNavConfig();
           applyNavConfig(navConfig);
-          enforceChannelSummaryGroup();
           initEditIcons();
-          enableNavDragDrop();
-          updateNavConfigFromDom();
           const editToggleBtn = document.getElementById('nav-edit-toggle');
           if (editToggleBtn) {
             editToggleBtn.addEventListener('click', (e) => {
