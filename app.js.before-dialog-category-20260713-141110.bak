@@ -4112,125 +4112,6 @@ function persistDialogDbRootFix() {
     }
   }
 
-  function completeMissingDialogLanguages() {
-    ensureDialogState();
-    const completions = [
-      {
-        matches: ['提款駁回'],
-        zh: '您好～訂單 8004876971 已駁回，請您重新提交提款申請即可。其餘兩筆訂單，我們已請廠商加速處理中，還請您耐心等候～感謝您的回饋與配合 🙏',
-        en: 'Hello~ Order 8004876971 has been rejected. Please resubmit your withdrawal request. For the other two orders, we have asked the service provider to expedite the processing. Please wait patiently. Thank you for your feedback and cooperation. 🙏',
-        hi: 'नमस्ते~ ऑर्डर 8004876971 अस्वीकृत कर दिया गया है। कृपया निकासी अनुरोध दोबारा जमा करें। अन्य दो ऑर्डरों के लिए हमने सेवा प्रदाता से प्रक्रिया तेज करने को कहा है। कृपया धैर्यपूर्वक प्रतीक्षा करें~ आपके सहयोग और समझ के लिए धन्यवाद। 🙏',
-      },
-      {
-        matches: ['加速存款'],
-        zh: '我們已請廠商加速處理您的存款到帳流程，還請您耐心等候～感謝您的回饋與配合 🙏',
-        en: 'We have asked the service provider to expedite the processing of your deposit. Please wait patiently. Thank you for your feedback and cooperation. 🙏',
-        hi: 'हमने सेवा प्रदाता से आपकी जमा राशि को खाते में जमा करने की प्रक्रिया तेज करने का अनुरोध किया है। कृपया धैर्यपूर्वक प्रतीक्षा करें~ आपकी प्रतिक्रिया और सहयोग के लिए धन्यवाद। 🙏',
-      },
-      {
-        matches: ['查詢代收', '已完成'],
-        zh: '我們查詢到該筆提款已完成。若您確認尚未收到款項，請告知是哪一筆提款未到帳，並提供該時段的銀行對帳單（PDF 格式），以便我們進一步查詢。',
-        en: 'We found that the withdrawal has been completed. If you confirm that the funds were not received, please let us know which withdrawal was not received and provide a bank statement (PDF format) covering the relevant time period for further investigation.',
-        hi: 'हमने पाया कि निकासी पूरी हो चुकी है। यदि आपको राशि प्राप्त नहीं हुई है, तो कृपया बताएं कि कौन-सी निकासी प्राप्त नहीं हुई और संबंधित अवधि का बैंक स्टेटमेंट (PDF प्रारूप में) प्रदान करें, ताकि हम आगे जाँच कर सकें।',
-      },
-    ];
-    let filled = 0;
-
-    state.data.dialogDb.templates.forEach((item) => {
-      const rule = completions.find((entry) =>
-        entry.matches.every((keyword) => String(item.title || '').includes(keyword))
-      );
-      if (!rule) return;
-
-      let itemChanged = false;
-      ['zh', 'en', 'hi'].forEach((field) => {
-        if (!String(item[field] || '').trim()) {
-          item[field] = rule[field];
-          filled += 1;
-          itemChanged = true;
-        }
-      });
-      if (itemChanged) item.updatedAt = new Date().toISOString();
-    });
-
-    if (filled) {
-      saveState();
-      persistDialogDbRootFix();
-    }
-    return filled;
-  }
-
-  function renderDialogCategoryManager() {
-    ensureDialogState();
-    const list = document.getElementById('dialog-category-manager-list');
-    if (!list) return;
-    list.replaceChildren();
-
-    if (!state.data.dialogDb.categories.length) {
-      const empty = document.createElement('div');
-      empty.className = 'dialog-template-empty';
-      empty.textContent = '目前沒有自訂分類';
-      list.appendChild(empty);
-      return;
-    }
-
-    state.data.dialogDb.categories.forEach((category) => {
-      const row = document.createElement('div');
-      row.className = 'dialog-category-manager-row';
-      row.dataset.dialogManagerCategory = category;
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = category;
-      input.setAttribute('aria-label', `${category} 分類名稱`);
-
-      const saveButton = document.createElement('button');
-      saveButton.className = 'secondary-button';
-      saveButton.type = 'button';
-      saveButton.dataset.dialogManagerAction = 'save';
-      saveButton.textContent = '儲存名稱';
-
-      const deleteButton = document.createElement('button');
-      deleteButton.className = 'danger-button';
-      deleteButton.type = 'button';
-      deleteButton.dataset.dialogManagerAction = 'delete';
-      deleteButton.textContent = '刪除分類';
-
-      row.append(input, saveButton, deleteButton);
-      list.appendChild(row);
-    });
-  }
-
-  function saveManagedDialogCategory(row) {
-    const oldName = row?.dataset.dialogManagerCategory || '';
-    const input = row?.querySelector('input');
-    const newName = input?.value.trim() || '';
-    if (!oldName || !newName) {
-      alert('分類名稱不能留空。');
-      input?.focus();
-      return;
-    }
-    if (oldName === newName) return;
-    if (state.data.dialogDb.categories.includes(newName)) {
-      alert('此分類名稱已存在。');
-      input?.focus();
-      return;
-    }
-
-    state.data.dialogDb.categories = state.data.dialogDb.categories.map((category) =>
-      category === oldName ? newName : category
-    );
-    state.data.dialogDb.templates.forEach((item) => {
-      if (item.category === oldName) item.category = newName;
-    });
-    if (state.data.dialogDb.selectedCategory === oldName) {
-      state.data.dialogDb.selectedCategory = newName;
-    }
-    saveState();
-    persistDialogDbRootFix();
-    renderDialogDb();
-    renderDialogCategoryManager();
-  }
   function exportDialogDbOnly() {
     ensureDialogState();
     const payload = {
@@ -4540,7 +4421,7 @@ function persistDialogDbRootFix() {
 
     els.categoryList.innerHTML = categories.map((cat) => {
       const active = state.data.dialogDb.selectedCategory === cat ? ' is-active' : '';
-
+      const locked = fixedCats.includes(cat);
       const count = cat === '全部'
         ? state.data.dialogDb.templates.length
         : cat === '收藏'
@@ -4553,7 +4434,7 @@ function persistDialogDbRootFix() {
         <div class="dialog-category${active}" data-dialog-category="${cat}">
           <span class="dialog-cat-name">${cat}</span>
           <small>${count}</small>
-
+          ${locked ? '' : `<button class="dialog-category-rename" data-dialog-rename-category="${cat}" type="button">改名</button>`}
         </div>
       `;
     }).join('');
@@ -4590,6 +4471,12 @@ function ensureDialogNavButton() {
 
 
   document.addEventListener('click', (event) => {
+    const renameCategoryButton = event.target.closest('[data-dialog-rename-category]');
+    if (renameCategoryButton) {
+      event.stopPropagation();
+      renameDialogCategory(renameCategoryButton.dataset.dialogRenameCategory);
+      return;
+    }
 
     const cat = event.target.closest('[data-dialog-category]');
     if (cat) {
@@ -4613,6 +4500,48 @@ function ensureDialogNavButton() {
   });
 
 
+  document.addEventListener('change', (event) => {
+    const input = event.target.closest('.dialog-cat-name-input');
+    if (!input) return;
+
+    const oldName = input.dataset.dialogCatOld;
+    const newName = input.value.trim();
+
+    if (!newName || newName === oldName) {
+      renderDialogDb();
+      return;
+    }
+
+    ensureDialogState();
+
+    if (state.data.dialogDb.categories.includes(newName)) {
+      alert('此分類名稱已存在。');
+      renderDialogDb();
+      return;
+    }
+
+    state.data.dialogDb.categories = state.data.dialogDb.categories.map((cat) => cat === oldName ? newName : cat);
+    state.data.dialogDb.templates.forEach((item) => {
+      if (item.category === oldName) item.category = newName;
+    });
+
+    if (state.data.dialogDb.selectedCategory === oldName) {
+      state.data.dialogDb.selectedCategory = newName;
+    }
+
+    saveState();
+    renderDialogDb();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const input = event.target.closest('.dialog-cat-name-input');
+    if (!input) return;
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      input.blur();
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -4634,7 +4563,6 @@ function ensureDialogNavButton() {
       console.warn('對話資料庫舊備份讀取失敗', error);
     }
     ensureDialogState();
-    const filledLanguages = completeMissingDialogLanguages();
     ensureDialogNavButton();
 
     document.getElementById('dialog-add-category-btn')?.addEventListener('click', addDialogCategory);
@@ -4656,35 +4584,6 @@ function ensureDialogNavButton() {
       event.target.value = '';
     });
 
-    const categoryManager = document.getElementById('dialog-category-manager');
-    document.getElementById('dialog-manage-categories-btn')?.addEventListener('click', () => {
-      renderDialogCategoryManager();
-      categoryManager?.showModal();
-    });
-    document.getElementById('dialog-category-manager-close')?.addEventListener('click', () => {
-      categoryManager?.close();
-    });
-    categoryManager?.addEventListener('click', (event) => {
-      if (event.target === categoryManager) categoryManager.close();
-    });
-    document.getElementById('dialog-category-manager-list')?.addEventListener('click', (event) => {
-      const button = event.target.closest('[data-dialog-manager-action]');
-      const row = button?.closest('[data-dialog-manager-category]');
-      if (!button || !row) return;
-
-      if (button.dataset.dialogManagerAction === 'save') {
-        saveManagedDialogCategory(row);
-      } else if (button.dataset.dialogManagerAction === 'delete') {
-        removeDialogCategory(row.dataset.dialogManagerCategory);
-        renderDialogCategoryManager();
-      }
-    });
-    document.getElementById('dialog-category-manager-list')?.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' || !event.target.matches('input')) return;
-      event.preventDefault();
-      saveManagedDialogCategory(event.target.closest('[data-dialog-manager-category]'));
-    });
-
     ['dialog-title', 'dialog-category-input', 'dialog-tags', 'dialog-zh', 'dialog-en', 'dialog-hi', 'dialog-note'].forEach((id) => {
       document.getElementById(id)?.addEventListener('input', () => {
         dialogEditorDirty = true;
@@ -4699,9 +4598,6 @@ function ensureDialogNavButton() {
     setTimeout(() => {
       ensureDialogNavButton();
       renderDialogDb();
-      if (filledLanguages) {
-        setDialogEditorStatus(`已補齊 ${filledLanguages} 個空白語言欄位`, 'saved');
-      }
     }, 100);
   });
 

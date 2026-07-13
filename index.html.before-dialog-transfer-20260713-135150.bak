@@ -441,11 +441,7 @@
             <div class="dialog-db-toolbar">
               <input id="dialog-search" class="search-input" placeholder="搜尋標題、分類、TAG 或話術內容…" />
               <button id="dialog-clear-search-btn" class="ghost-button compact-mini-button" type="button">清除搜尋</button>
-              <button id="dialog-export-btn" class="secondary-button" type="button">匯出話術</button>
-              <button id="dialog-import-btn" class="secondary-button" type="button">匯入話術</button>
-              <input id="dialog-import-file" type="file" accept="application/json,.json" hidden />
               <button id="dialog-add-category-btn" class="secondary-button" type="button">新增分類</button>
-              <button id="dialog-manage-categories-btn" class="secondary-button" type="button">管理分類</button>
               <button id="dialog-add-template-btn" class="primary-button" type="button">新增話術</button>
             </div>
 
@@ -505,17 +501,6 @@
               </section>
             </div>
           </section>
-
-          <dialog id="dialog-category-manager" class="dialog-category-manager">
-            <div class="dialog-category-manager-card">
-              <div class="dialog-category-manager-head">
-                <div><p class="panel-label">Category Settings</p><h3>管理分類</h3></div>
-                <button id="dialog-category-manager-close" class="ghost-button" type="button">關閉</button>
-              </div>
-              <p class="dialog-category-manager-hint">在這裡集中重新命名或刪除分類，話術內容不會被刪除。</p>
-              <div id="dialog-category-manager-list" class="dialog-category-manager-list"></div>
-            </div>
-          </dialog>
         </section>
 
       </main>
