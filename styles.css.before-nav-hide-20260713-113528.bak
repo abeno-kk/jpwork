@@ -1363,11 +1363,3 @@ body.capture-mode #channel-selected-sum-pill {
 .sticky-note-delete { border: none; background: transparent; color: #a43e35; cursor: pointer; }
 body.capture-mode .sticky-notes-toggle, body.capture-mode .sticky-notes-panel { display: none !important; }
 @media (max-width: 720px) { .sticky-notes-toggle { right: 16px; bottom: 16px; } .sticky-notes-panel { right: 16px; bottom: 76px; } }
-/* 功能列隱藏：一般模式隱藏，編輯模式保留淡色項目以便恢復 */
-.nav-item-hidden { display: none !important; }
-.nav.is-editing > .nav-group.nav-item-hidden { display: grid !important; }
-.nav.is-editing > .nav-button.nav-item-hidden,
-.nav.is-editing .nav-submenu > .nav-button.nav-item-hidden { display: block !important; }
-.nav.is-editing .nav-item-hidden { opacity: 0.48; }
-.nav.is-editing .nav-item-hidden:hover { opacity: 0.72; }
-.nav-edit-icons button[data-nav-action="visibility"] { min-width: 18px; font-weight: 700; }

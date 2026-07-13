@@ -960,8 +960,7 @@
           const config = {
             order: [],
             titles: {},
-            groupOrder: {},
-            hidden: []
+            groupOrder: {}
           };
           const navEl = document.querySelector('.nav');
           Array.from(navEl.children).forEach((child) => {
@@ -995,9 +994,7 @@
           const json = localStorage.getItem(NAV_CONFIG_KEY);
           if (json) {
             try {
-              const parsed = JSON.parse(json);
-              parsed.hidden = Array.isArray(parsed.hidden) ? parsed.hidden : [];
-              return parsed;
+              return JSON.parse(json);
             } catch (e) {
               console.error('navConfig parse error', e);
             }
@@ -1008,28 +1005,6 @@
         // 儲存導航設定
         function saveNavConfig(cfg) {
           localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(cfg));
-        }
-
-        function applyHiddenState(el, key) {
-          const hidden = Array.isArray(navConfig.hidden) && navConfig.hidden.includes(key);
-          el.classList.toggle('nav-item-hidden', hidden);
-          const button = el.querySelector(':scope > .nav-edit-icons [data-nav-action="visibility"], :scope > .nav-group-toggle .nav-edit-icons [data-nav-action="visibility"]');
-          if (button) {
-            button.textContent = hidden ? '↩' : '◉';
-            button.title = hidden ? '恢復顯示' : '隱藏功能';
-            button.setAttribute('aria-label', button.title);
-          }
-        }
-
-        function toggleItemHidden(el) {
-          const key = getNavKey(el);
-          if (!key) return;
-          navConfig.hidden = Array.isArray(navConfig.hidden) ? navConfig.hidden : [];
-          const index = navConfig.hidden.indexOf(key);
-          if (index >= 0) navConfig.hidden.splice(index, 1);
-          else navConfig.hidden.push(key);
-          applyHiddenState(el, key);
-          saveNavConfig(navConfig);
         }
 
         // 取得元素對應的 key
@@ -1188,17 +1163,9 @@
             evt.stopPropagation();
             renameItem(el);
           });
-          const visibilityBtn = document.createElement('button');
-          visibilityBtn.type = 'button';
-          visibilityBtn.dataset.navAction = 'visibility';
-          visibilityBtn.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-            toggleItemHidden(el);
-          });
           icons.appendChild(upBtn);
           icons.appendChild(downBtn);
           icons.appendChild(renameBtn);
-          icons.appendChild(visibilityBtn);
           if (el.classList.contains('nav-group')) {
             const toggleEl = el.querySelector('.nav-group-toggle');
             const arrowSpan = toggleEl.querySelector('.nav-group-arrow');
@@ -1268,10 +1235,6 @@
               }
             }
           });
-          navEl.querySelectorAll('.nav-group, .nav-button').forEach((el) => {
-            const key = getNavKey(el);
-            if (key) applyHiddenState(el, key);
-          });
           // 編輯按鈕不屬於可排序項目，永遠固定在功能列最下方。
           const editToggle = document.getElementById('nav-edit-toggle');
           if (editToggle) navEl.appendChild(editToggle);
@@ -1290,8 +1253,6 @@
           navConfig = loadNavConfig();
           applyNavConfig(navConfig);
           initEditIcons();
-          const currentNav = document.querySelector('.nav');
-          currentNav.querySelectorAll('.nav-group, .nav-button').forEach((el) => { const key = getNavKey(el); if (key) applyHiddenState(el, key); });
           const editToggleBtn = document.getElementById('nav-edit-toggle');
           if (editToggleBtn) {
             editToggleBtn.addEventListener('click', (e) => {
