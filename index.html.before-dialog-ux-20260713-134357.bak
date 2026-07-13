@@ -439,8 +439,7 @@
 
           <section class="panel dialog-db-panel">
             <div class="dialog-db-toolbar">
-              <input id="dialog-search" class="search-input" placeholder="搜尋標題、分類、TAG 或話術內容…" />
-              <button id="dialog-clear-search-btn" class="ghost-button compact-mini-button" type="button">清除搜尋</button>
+              <input id="dialog-search" class="search-input" placeholder="搜尋標題 / 分類 / TAG / 中文 / 英文 / 印度文..." />
               <button id="dialog-add-category-btn" class="secondary-button" type="button">新增分類</button>
               <button id="dialog-add-template-btn" class="primary-button" type="button">新增話術</button>
             </div>
@@ -462,10 +461,7 @@
                   <select id="dialog-category-input" title="分類"></select>
                 </div>
 
-                <div class="dialog-editor-meta">
-                  <input id="dialog-tags" placeholder="TAG，例如：withdrawal, utr, pending" />
-                  <span id="dialog-editor-status" class="dialog-editor-status" aria-live="polite">選擇話術或新增一筆</span>
-                </div>
+                <input id="dialog-tags" placeholder="TAG，例如：withdrawal, utr, pending" />
 
                 <div class="dialog-text-grid">
                   <label>
@@ -487,16 +483,12 @@
                 </div>
 
                 <div class="dialog-editor-actions">
-                  <div class="dialog-primary-actions">
-                    <button id="dialog-save-btn" class="primary-button" type="button">儲存話術</button>
-                    <button id="dialog-favorite-btn" class="secondary-button" type="button">加入收藏</button>
-                    <button id="dialog-delete-btn" class="danger-button" type="button">刪除</button>
-                  </div>
-                  <div class="dialog-copy-actions" aria-label="複製話術">
-                    <button id="dialog-copy-zh-btn" class="secondary-button" type="button">複製中文</button>
-                    <button id="dialog-copy-en-btn" class="secondary-button" type="button">複製英文</button>
-                    <button id="dialog-copy-hi-btn" class="secondary-button" type="button">複製印度文</button>
-                  </div>
+                  <button id="dialog-save-btn" class="primary-button" type="button">儲存話術</button>
+                  <button id="dialog-favorite-btn" class="secondary-button" type="button">加入收藏</button>
+                  <button id="dialog-copy-zh-btn" class="secondary-button" type="button">複製中文</button>
+                  <button id="dialog-copy-en-btn" class="secondary-button" type="button">複製英文</button>
+                  <button id="dialog-copy-hi-btn" class="secondary-button" type="button">複製印度文</button>
+                  <button id="dialog-delete-btn" class="danger-button" type="button">刪除</button>
                 </div>
               </section>
             </div>

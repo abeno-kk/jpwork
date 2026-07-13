@@ -4079,7 +4079,6 @@ function persistDialogDbRootFix() {
 
 /* 對話資料庫：分類 / 多語言 / TAG / 收藏 / 最近使用 */
 (function () {
-  let dialogEditorDirty = false;
   function ensureDialogState() {
     state.data.dialogDb = state.data.dialogDb || {
       categories: ['提款', '充值', '客服', '活動', '風控', 'VIP', '補單'],
@@ -4126,23 +4125,10 @@ function persistDialogDbRootFix() {
       note: document.getElementById('dialog-note'),
       categoryCount: document.getElementById('dialog-category-count'),
       templateCount: document.getElementById('dialog-template-count'),
-      editorStatus: document.getElementById('dialog-editor-status'),
     };
   }
 
   
-  function setDialogEditorStatus(message, tone = '') {
-    const status = document.getElementById('dialog-editor-status');
-    if (!status) return;
-    status.textContent = message;
-    status.dataset.tone = tone;
-  }
-
-  function confirmDiscardDialogChanges() {
-    if (!dialogEditorDirty) return true;
-    return confirm('目前有尚未儲存的修改，要放棄這些修改嗎？');
-  }
-
   function renderDialogCategorySelect(selectedValue = '') {
     ensureDialogState();
     const select = document.getElementById('dialog-category-input');
@@ -4179,8 +4165,6 @@ function persistDialogDbRootFix() {
 
   function selectDialogTemplate(id) {
     ensureDialogState();
-    if (id !== state.data.dialogDb.selectedId && !confirmDiscardDialogChanges()) return;
-    dialogEditorDirty = false;
     state.data.dialogDb.selectedId = id;
     setDialogRecent(id);
     saveState();
@@ -4199,8 +4183,6 @@ function persistDialogDbRootFix() {
     els.en.value = item?.en || '';
     els.hi.value = item?.hi || '';
     els.note.value = item?.note || '';
-    dialogEditorDirty = false;
-    setDialogEditorStatus(item ? '已載入，可直接編輯' : '新增模式：填寫後再儲存', item ? 'ready' : 'draft');
   }
 
   function saveDialogTemplate() {
@@ -4241,11 +4223,9 @@ function persistDialogDbRootFix() {
       state.data.dialogDb.categories.push(category);
     }
 
-    dialogEditorDirty = false;
     saveState();
     persistDialogDbRootFix();
     renderDialogDb();
-    setDialogEditorStatus('已儲存 ' + new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' }), 'saved');
   }
 
   function deleteDialogTemplate() {
@@ -4256,7 +4236,6 @@ function persistDialogDbRootFix() {
 
     state.data.dialogDb.templates = state.data.dialogDb.templates.filter((row) => row.id !== item.id);
     state.data.dialogDb.selectedId = '';
-    dialogEditorDirty = false;
     saveState();
     renderDialogDb();
   }
@@ -4315,15 +4294,26 @@ function persistDialogDbRootFix() {
 
   function addDialogTemplate() {
     ensureDialogState();
-    if (!confirmDiscardDialogChanges()) return;
     const category = state.data.dialogDb.selectedCategory && !['全部', '收藏', '最近使用'].includes(state.data.dialogDb.selectedCategory)
       ? state.data.dialogDb.selectedCategory
-      : '未分類';
-    dialogEditorDirty = false;
-    state.data.dialogDb.selectedId = '';
-    fillDialogEditor({ category, title: '', tags: [], zh: '', en: '', hi: '', note: '' });
-    document.getElementById('dialog-title')?.focus();
-    setDialogEditorStatus('新增模式：填寫完成後按「儲存話術」', 'draft');
+      : '';
+    const item = {
+      id: uidDialog(),
+      title: '',
+      category,
+      tags: [],
+      zh: '',
+      en: '',
+      hi: '',
+      note: '',
+      favorite: false,
+      createdAt: new Date().toISOString(),
+    };
+    state.data.dialogDb.templates.unshift(item);
+    state.data.dialogDb.selectedId = item.id;
+    saveState();
+    renderDialogCategorySelect(category || '未分類');
+    renderDialogDb();
   }
 
   function filteredDialogTemplates() {
@@ -4378,31 +4368,34 @@ function persistDialogDbRootFix() {
 
       return `
         <div class="dialog-category${active}" data-dialog-category="${cat}">
-          <span class="dialog-cat-name">${cat}</span>
+          ${
+            locked
+              ? `<span class="dialog-cat-name">${cat}</span>`
+              : `<input class="dialog-cat-name-input" data-dialog-cat-old="${cat}" value="${cat}" title="可直接修改分類名稱" />`
+          }
           <small>${count}</small>
-          ${locked ? '' : `<button class="dialog-category-rename" data-dialog-rename-category="${cat}" type="button">改名</button>`}
         </div>
       `;
     }).join('');
 
     const rows = filteredDialogTemplates();
-    els.templateList.innerHTML = rows.length ? rows.map((item) => {
+    els.templateList.innerHTML = rows.map((item) => {
       const active = state.data.dialogDb.selectedId === item.id ? ' is-active' : '';
       const tags = (item.tags || []).slice(0, 3).map((tag) => `<em>${tag}</em>`).join('');
-      const preview = String(item.zh || item.en || item.hi || item.note || '').replace(/\s+/g, ' ').slice(0, 72);
       return `
         <div class="dialog-template-item${active}" data-dialog-template-id="${item.id}">
-          <div class="dialog-template-title-row"><strong>${item.favorite ? '★ ' : ''}${item.title || '未命名話術'}</strong><span>${item.category || '未分類'}</span></div>
-          ${preview ? `<p>${preview}${preview.length >= 72 ? '…' : ''}</p>` : ''}
+          <strong>${item.favorite ? '⭐ ' : ''}${item.title || '未命名話術'}</strong>
+          <span>${item.category || '未分類'}</span>
           <div class="dialog-template-tags">${tags}</div>
         </div>
       `;
-    }).join('') : '<div class="dialog-template-empty">沒有符合條件的話術</div>';
+    }).join('');
 
     els.categoryCount && (els.categoryCount.textContent = state.data.dialogDb.categories.length);
     els.templateCount && (els.templateCount.textContent = state.data.dialogDb.templates.length);
 
-    if (!dialogEditorDirty) fillDialogEditor(getSelectedDialogTemplate());
+    fillDialogEditor(getSelectedDialogTemplate());
+    renderDialogCategorySelect(getSelectedDialogTemplate()?.category || state.data.dialogDb.selectedCategory || '未分類');
   };
 
   
@@ -4417,10 +4410,8 @@ function ensureDialogNavButton() {
 
 
   document.addEventListener('click', (event) => {
-    const renameCategoryButton = event.target.closest('[data-dialog-rename-category]');
-    if (renameCategoryButton) {
-      event.stopPropagation();
-      renameDialogCategory(renameCategoryButton.dataset.dialogRenameCategory);
+    const catInput = event.target.closest('.dialog-cat-name-input');
+    if (catInput) {
       return;
     }
 
@@ -4517,19 +4508,6 @@ function ensureDialogNavButton() {
     document.getElementById('dialog-delete-btn')?.addEventListener('click', deleteDialogTemplate);
     document.getElementById('dialog-favorite-btn')?.addEventListener('click', toggleDialogFavorite);
     document.getElementById('dialog-search')?.addEventListener('input', renderDialogDb);
-    document.getElementById('dialog-clear-search-btn')?.addEventListener('click', () => {
-      const search = document.getElementById('dialog-search');
-      if (search) search.value = '';
-      renderDialogDb();
-      search?.focus();
-    });
-
-    ['dialog-title', 'dialog-category-input', 'dialog-tags', 'dialog-zh', 'dialog-en', 'dialog-hi', 'dialog-note'].forEach((id) => {
-      document.getElementById(id)?.addEventListener('input', () => {
-        dialogEditorDirty = true;
-        setDialogEditorStatus('尚未儲存', 'dirty');
-      });
-    });
 
     document.getElementById('dialog-copy-zh-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-zh')?.value || ''));
     document.getElementById('dialog-copy-en-btn')?.addEventListener('click', () => copyDialogText(document.getElementById('dialog-en')?.value || ''));
@@ -4539,13 +4517,6 @@ function ensureDialogNavButton() {
       ensureDialogNavButton();
       renderDialogDb();
     }, 100);
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's' && state.view === 'conversation-db') {
-      event.preventDefault();
-      saveDialogTemplate();
-    }
   });
 
   const originalRenderForDialogDb = render;

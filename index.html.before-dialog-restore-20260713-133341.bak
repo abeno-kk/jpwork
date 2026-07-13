@@ -45,7 +45,6 @@
           <button class="nav-button nav-button-standalone" data-view="tools">資料工具</button>
           <!-- 新增發單解析功能列，可自訂欄位、排序與篩選 -->
           <button class="nav-button nav-button-standalone" data-view="orders">發單解析</button>
-          <button class="nav-button nav-button-standalone dialog-db-nav-btn" data-view="conversation-db" type="button">對話資料庫</button>
           <!-- 編輯功能列按鈕：可切換左側功能列的編輯模式 -->
           <button id="nav-edit-toggle" class="secondary-button nav-edit-toggle" type="button">編輯功能列</button>
         </nav>
@@ -421,84 +420,6 @@
                 <thead id="update-list-table-head"></thead>
                 <tbody id="update-list-table-body"></tbody>
               </table>
-            </div>
-          </section>
-        </section>
-
-        <section id="conversation-db-view" class="view">
-          <div class="task-topbar">
-            <div>
-              <h3 class="task-topbar-title">對話資料庫</h3>
-              <p class="task-topbar-text">中英文／印度文對照、分類、標籤、收藏與最近使用的客服話術資料庫。</p>
-            </div>
-            <div class="toolbar-pills">
-              <span class="summary-pill">分類：<strong id="dialog-category-count">0</strong></span>
-              <span class="summary-pill">話術：<strong id="dialog-template-count">0</strong></span>
-            </div>
-          </div>
-
-          <section class="panel dialog-db-panel">
-            <div class="dialog-db-toolbar">
-              <input id="dialog-search" class="search-input" placeholder="搜尋標題、分類、TAG 或話術內容…" />
-              <button id="dialog-clear-search-btn" class="ghost-button compact-mini-button" type="button">清除搜尋</button>
-              <button id="dialog-add-category-btn" class="secondary-button" type="button">新增分類</button>
-              <button id="dialog-add-template-btn" class="primary-button" type="button">新增話術</button>
-            </div>
-
-            <div class="dialog-db-layout">
-              <aside class="dialog-categories">
-                <div class="dialog-section-title">分類</div>
-                <div id="dialog-category-list" class="dialog-category-list"></div>
-              </aside>
-
-              <aside class="dialog-template-list-wrap">
-                <div class="dialog-section-title">話術列表</div>
-                <div id="dialog-template-list" class="dialog-template-list"></div>
-              </aside>
-
-              <section class="dialog-editor">
-                <div class="dialog-editor-head">
-                  <input id="dialog-title" placeholder="標題 / 用途" />
-                  <select id="dialog-category-input" title="分類"></select>
-                </div>
-
-                <div class="dialog-editor-meta">
-                  <input id="dialog-tags" placeholder="TAG，例如：withdrawal, utr, pending" />
-                  <span id="dialog-editor-status" class="dialog-editor-status" aria-live="polite">選擇話術或新增一筆</span>
-                </div>
-
-                <div class="dialog-text-grid">
-                  <label>
-                    <span>中文內容</span>
-                    <textarea id="dialog-zh" placeholder="中文話術"></textarea>
-                  </label>
-                  <label>
-                    <span>英文內容</span>
-                    <textarea id="dialog-en" placeholder="English template"></textarea>
-                  </label>
-                  <label>
-                    <span>印度文內容</span>
-                    <textarea id="dialog-hi" placeholder="Hindi template"></textarea>
-                  </label>
-                  <label>
-                    <span>備註</span>
-                    <textarea id="dialog-note" placeholder="內部備註"></textarea>
-                  </label>
-                </div>
-
-                <div class="dialog-editor-actions">
-                  <div class="dialog-primary-actions">
-                    <button id="dialog-save-btn" class="primary-button" type="button">儲存話術</button>
-                    <button id="dialog-favorite-btn" class="secondary-button" type="button">加入收藏</button>
-                    <button id="dialog-delete-btn" class="danger-button" type="button">刪除</button>
-                  </div>
-                  <div class="dialog-copy-actions" aria-label="複製話術">
-                    <button id="dialog-copy-zh-btn" class="secondary-button" type="button">複製中文</button>
-                    <button id="dialog-copy-en-btn" class="secondary-button" type="button">複製英文</button>
-                    <button id="dialog-copy-hi-btn" class="secondary-button" type="button">複製印度文</button>
-                  </div>
-                </div>
-              </section>
             </div>
           </section>
         </section>
@@ -1030,7 +951,7 @@
     <!-- 導航列編輯功能腳本 -->
     <script>
       (function() {
-        const NAV_CONFIG_KEY = 'dashboardNavConfigV4';
+        const NAV_CONFIG_KEY = 'dashboardNavConfigV3';
         let navConfig;
         let navEditing = false;
 
