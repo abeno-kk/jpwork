@@ -1,86 +1,72 @@
----
+﻿---
 name: google-sheets-dashboard
-description: Use this skill when building, modifying, or extending this Google Sheets dashboard-style web app. It enforces a read-first workflow, favors adding features over redesign, preserves the current visual layout, and keeps editable columns plus history behavior intact.
+description: 維護與擴充 D:\工具\自用工具\工作儀表板\程式 的本機工作儀表板。當 Codex 需要修改這套 HTML、CSS、JavaScript 儀表板的任務管理、任務封存、渠道批次與歷史、渠道統整表、更新列表、發單解析、資料工具、欄位設定、localStorage 持久化、JSON 備份還原，或 Google Sheets／Apps Script 同步功能時使用。以現有程式為唯一事實來源，保留既有介面、資料與向後相容性。
 ---
 
-# Google Sheets Dashboard Skill
+# 工作儀表板維護
 
-Use this skill when working on this dashboard project or other similar Google Sheets-style dashboard apps with editable tables, history tracking, and lightweight local or Sheets-backed workflows.
+## 以程式為準
 
-## Required First Reads
+將 `D:\工具\自用工具\工作儀表板\程式` 視為專案根目錄。不要沿用舊文件中的 `/Users/kklin/Documents/New project` 路徑，也不要只依 README 判斷功能；README 與部分舊檔可能有編碼問題或內容過時。
 
-Before proposing or editing anything, always read these files in this order:
+開始修改前，依工作範圍讀取實際程式：
 
-1. `/Users/kklin/Documents/New project/index.html`
-2. `/Users/kklin/Documents/New project/styles.css`
-3. `/Users/kklin/Documents/New project/app.js`
+1. 一律先讀 `index.html`、`styles.css`、`app.js`。
+2. 修改資料工具時，再讀 `tools.html`；`index.html` 以 iframe 載入的是這一份。
+3. 修改渠道統整表或更新列表同步時，再讀 `channel_summary_api.gs`。
+4. 修改發單解析或左側導覽時，檢查 `index.html` 底部的內嵌 JavaScript；這兩項功能不在 `app.js` 內。
+5. 只有在任務確實涉及時，才讀 `note.html`、`note.js`、`mapping.js`、`tools01.html`、簡報產生檔案或圖片／ZIP；不要假設它們都由主頁載入。
 
-Do not skip this step. Build context from the real structure first.
+## 現有功能範圍
 
-## Primary Goal
+維護下列已實作功能，不要把專案誤認成單純的 Google Sheets 表格：
 
-Quickly create and modify a Google Sheets dashboard workflow app without unnecessarily redesigning the interface.
+- 任務儀表板：自訂欄位、操作說明連結、任務類型、備註、依日期保存完成紀錄、日期區間切換。
+- 任務封存：封存、搜尋、依類型篩選、還原與永久刪除。
+- 渠道儀表板：可編輯欄位、欄位與列拖曳排序、欄寬、下拉選項、批次時間、批次備註、永久列備註、新增批次、勾選加總、隱藏與恢復渠道、截圖模式。
+- 歷史批次：依批次或日期範圍查詢，並可刪除指定批次。
+- 渠道統整表：從 Google Sheet 直接讀取、公開 CSV 或 Apps Script API 同步；支援欄位別名、搜尋、篩選、排序、欄位顯示設定與數值加總。
+- 更新列表：從同步來源讀取動態欄位，並支援搜尋與排序。
+- 資料工具：載入 `tools.html`，處理圖片與本機便條等工具功能。
+- 發單解析：貼上／新增資料、自訂欄位、排序、搜尋、複製與儲存批次。
+- 導覽列：排序、重新命名與群組開合設定。
+- 本機資料：示範資料、JSON 匯入／匯出、備份／還原、刪除復原與清除資料。
 
-## Working Rules
+## 資料相容性
 
-1. Read `index.html`, `styles.css`, and `app.js` first.
-2. Prioritize adding or repairing functionality instead of large visual rewrites.
-3. New or updated functionality should support:
-   - pasting tabular data into the app
-   - editable fields and editable columns
-   - adding new columns
-   - preserving old data/history for later lookup
-4. When replying to the user:
-   - first state the modification plan
-   - then provide the concrete change summary
+優先擴充現有狀態與正規化流程，不要另建互不相容的儲存方式。
 
-## UI / UX Principles
+- 主狀態使用 `local-dashboard-app-v1`，備份使用 `local-dashboard-app-v1-backup`；保留 `STORAGE_FALLBACK_KEYS` 的舊資料復原能力。
+- 新增持久化欄位時，同步更新 `createDefaultState()`、`normalizeState()`、相關實體正規化函式、讀寫流程與畫面渲染。
+- 保留既有 `tasks`、`channels`、自訂欄位、欄寬、下拉選項、隱藏欄列、批次備註、同步設定與封存資料。
+- 發單解析與導覽列另有自己的 localStorage 資料；修改前先查明 key 與資料形狀。
+- 不得因重構、重設或測試而清除使用者 localStorage。需要資料遷移時，先建立可回復的相容處理。
+- 匯入 JSON 時繼續經過正規化，不要直接信任外部資料形狀。
 
-- Preserve the current dashboard layout and visual language unless the user explicitly asks for a redesign.
-- Reuse existing components, class names, state patterns, and table behaviors whenever possible.
-- Avoid introducing extra control clutter when an inline editing pattern already exists.
-- Prefer minimal, high-signal UI additions that fit the current beige / dashboard style.
+## 修改原則
 
-## Implementation Priorities
+1. 嚴格遵守使用者明確指定的修改範圍。使用者沒有要求修改的功能、畫面、文字、樣式、資料結構、儲存格式與既有行為，一律不得變更。
+2. 不要把順手重構、整理程式、統一樣式、修正其他問題或改善未指定功能視為本次工作的一部分。若完成指定功能確實必須連動其他功能，先向使用者說明影響並取得同意後才修改。
+3. 先追蹤狀態形狀、事件入口、渲染流程與儲存流程，再修改。
+4. 優先沿用現有 DOM、class、元件、表格行為與米色儀表板視覺語言。
+5. 除非使用者明確要求重新設計，否則只做必要的介面調整。
+6. 新增表格欄位時，同步處理顯示、編輯、排序／拖曳、隱藏、正規化、持久化與舊資料載入。
+7. 修改 Google Sheets 同步時，同時核對前端解析器、同步模式、欄位別名、Apps Script 回傳格式、錯誤訊息與空資料行為。
+8. 修改 `channel_summary_api.gs` 時，不要公開新的敏感網址、憑證或私密設定；保留 `channel` 與 `updates` 類型及 JSON／JSONP 回應相容性。
+9. 不要順手大量修復疑似亂碼。先確認檔案實際編碼、瀏覽器顯示與執行結果；只處理本次範圍內且能驗證的文字，並以 UTF-8 儲存。
+10. 保留 `tools.html` 與 `tools01.html` 的角色差異；只有確認兩者應同步時才一起修改。
 
-When making changes, follow this order:
+## 驗證
 
-1. Understand the current state shape and render flow in `app.js`.
-2. Reuse existing table rendering and view switching patterns.
-3. Extend state normalization when adding new persisted properties.
-4. Preserve backward compatibility with existing saved local data whenever feasible.
-5. Add UI only after the data model and behavior are clear.
+依修改風險執行驗證：
 
-## Data Handling Guidance
+1. 對所有改過的 JavaScript 執行語法檢查。
+2. 使用本機 HTTP 伺服器開啟 `index.html`，不要只用 `file://` 驗證。
+3. 實際檢查受影響頁面、重新整理後的資料保留、舊 JSON 匯入，以及未修改頁面是否仍可切換。
+4. 涉及渠道資料時，至少驗證新增／編輯、批次、歷史、隱藏、截圖或欄位設定中受影響的路徑。
+5. 涉及同步時，分別驗證成功、空資料、錯誤回應與缺少網址；若沒有可用外部來源，明確說明未能完成的實測。
+6. 不要用清除正式瀏覽器資料作為測試手段；需要隔離測試時，使用乾淨的測試環境或先匯出備份。
 
-- Prefer extending existing persisted state rather than creating disconnected storage patterns.
-- If a new feature introduces records, batches, archives, or logs, ensure old data remains queryable.
-- If a new feature supports pasted table data:
-  - accept tab/newline-delimited content
-  - normalize row/column shape before saving
-  - keep imported raw values editable after import
-- When adding columns:
-  - update both the visible table config and the normalization logic
-  - ensure existing saved data still loads safely
+## 回覆使用者
 
-## Response Pattern
-
-Use this response structure unless the user asks otherwise:
-
-### 修改計畫
-
-- Briefly explain what you will change and where.
-- Mention assumptions if needed.
-
-### 變更內容
-
-- Summarize the actual edits made.
-- Mention key files changed.
-- Mention any limitations, follow-up work, or testing notes.
-
-## Watchouts
-
-- Do not do a broad redesign just because the code is messy.
-- Do not break existing localStorage-backed data unless the user explicitly approves a migration.
-- Do not add new UI panels or controls when the feature can live inside the current structure cleanly.
-- Do not forget to update both render logic and persistence logic when adding new fields.
+以中文先說明完成結果，再列出修改檔案與驗證結果。若有未驗證的外部同步、編碼風險或相容性限制，清楚指出，不要宣稱已完整通過。

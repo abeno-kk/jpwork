@@ -29,6 +29,8 @@
             </div>
           </div>
 
+          <button class="nav-button nav-button-standalone" data-view="channel-summary">渠道統整表</button>
+
           <div class="nav-group" data-group="channels">
             <button class="nav-group-toggle is-open" data-nav-group="channels" type="button">
               <span>渠道管理</span>
@@ -37,14 +39,14 @@
             <div class="nav-submenu is-open" data-nav-submenu="channels">
               <button class="nav-button" data-view="channels">渠道儀表版</button>
               <button class="nav-button" data-view="channel-history">歷史批次</button>
-              <button class="nav-button" data-view="channel-summary">渠道統整表</button>
-              <button class="nav-button" data-view="update-list">更新列表</button>
             </div>
           </div>
 
           <button class="nav-button nav-button-standalone" data-view="tools">資料工具</button>
           <!-- 新增發單解析功能列，可自訂欄位、排序與篩選 -->
           <button class="nav-button nav-button-standalone" data-view="orders">發單解析</button>
+          <!-- 新增更新列表功能列：手動刷新渠道統整表 -->
+          <button class="nav-button nav-button-standalone" data-view="update-list">更新列表</button>
           <!-- 編輯功能列按鈕：可切換左側功能列的編輯模式 -->
           <button id="nav-edit-toggle" class="secondary-button nav-edit-toggle" type="button">編輯功能列</button>
         </nav>
@@ -426,17 +428,6 @@
 
       </main>
     </div>
-
-    <aside id="sticky-notes-panel" class="sticky-notes-panel" aria-label="臨時便利貼" hidden>
-      <div class="sticky-notes-header">
-        <div><p class="panel-label">Quick Notes</p><h3>臨時便利貼</h3></div>
-        <div class="sticky-notes-header-actions"><button id="sticky-note-add-btn" class="secondary-button compact-mini-button" type="button">新增</button><button id="sticky-notes-close-btn" class="ghost-button compact-mini-button" type="button">關閉</button></div>
-      </div>
-      <p class="sticky-notes-hint">輸入後會自動儲存，關閉網頁或重新開機後仍會保留。</p>
-      <div id="sticky-notes-list" class="sticky-notes-list"></div>
-      <div id="sticky-notes-empty" class="sticky-notes-empty">還沒有便利貼，按「新增」開始記錄。</div>
-    </aside>
-    <button id="sticky-notes-toggle" class="sticky-notes-toggle" type="button" aria-controls="sticky-notes-panel" aria-expanded="false"><span aria-hidden="true">📝</span><span>便利貼</span><strong id="sticky-notes-count" class="sticky-notes-count" hidden>0</strong></button>
 
     <template id="task-row-template">
       <tr>
@@ -951,7 +942,7 @@
     <!-- 導航列編輯功能腳本 -->
     <script>
       (function() {
-        const NAV_CONFIG_KEY = 'dashboardNavConfigV3';
+        const NAV_CONFIG_KEY = 'navConfig';
         let navConfig;
         let navEditing = false;
 
@@ -1053,7 +1044,7 @@
         function moveItemDown(el) {
           const parent = el.parentElement;
           const next = el.nextElementSibling;
-          if (!next || next.id === 'nav-edit-toggle') return;
+          if (!next) return;
           parent.insertBefore(next, el);
           const key = getNavKey(el);
           if (!key) return;
@@ -1235,9 +1226,6 @@
               }
             }
           });
-          // 編輯按鈕不屬於可排序項目，永遠固定在功能列最下方。
-          const editToggle = document.getElementById('nav-edit-toggle');
-          if (editToggle) navEl.appendChild(editToggle);
         }
 
         // 切換編輯模式

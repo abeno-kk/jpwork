@@ -740,7 +740,7 @@ function renderNavigation() {
 
   const activeGroup = state.view === 'tasks' || state.view === 'task-archive'
     ? 'tasks'
-    : ['channels', 'channel-history', 'channel-summary', 'update-list'].includes(state.view)
+    : state.view === 'channels' || state.view === 'channel-history'
       ? 'channels'
       : '';
 

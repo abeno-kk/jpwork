@@ -208,7 +208,6 @@ const state = {
   },
   // 儲存目前勾選的渠道 ID，用於計算最新金額的總和（不會被持久化）
   selectedChannelIds: new Set(),
-  stickyNotesOpen: false,
 };
 
 const els = {
@@ -305,13 +304,6 @@ const els = {
   updateListCount: document.getElementById('update-list-count'),
   updateListSyncStatus: document.getElementById('update-list-sync-status'),
   updateListMessage: document.getElementById('update-list-message'),
-  stickyNotesPanel: document.getElementById('sticky-notes-panel'),
-  stickyNotesToggle: document.getElementById('sticky-notes-toggle'),
-  stickyNotesCount: document.getElementById('sticky-notes-count'),
-  stickyNotesList: document.getElementById('sticky-notes-list'),
-  stickyNotesEmpty: document.getElementById('sticky-notes-empty'),
-  stickyNoteAddBtn: document.getElementById('sticky-note-add-btn'),
-  stickyNotesCloseBtn: document.getElementById('sticky-notes-close-btn'),
 };
 
 function parseStoredState(raw) {
@@ -414,18 +406,7 @@ function createDefaultState() {
     hiddenChannelRows: [],
     // 隱藏渠道名稱：同名渠道在新增批次後也會自動隱藏
     hiddenChannelKeys: [],
-    stickyNotes: [],
   };
-}
-
-function normalizeStickyNotes(notes) {
-  if (!Array.isArray(notes)) return [];
-  return notes.map((note) => ({
-    id: note?.id || crypto.randomUUID(), text: String(note?.text || ''),
-    completed: Boolean(note?.completed),
-    color: ['yellow', 'pink', 'blue'].includes(note?.color) ? note.color : 'yellow',
-    createdAt: note?.createdAt || new Date().toISOString(),
-  }));
 }
 
 function normalizeState(input) {
@@ -445,7 +426,6 @@ function normalizeState(input) {
     hiddenColumns: normalizeHiddenColumns(input.hiddenColumns),
     hiddenChannelRows: Array.isArray(input.hiddenChannelRows) ? [...input.hiddenChannelRows] : [],
     hiddenChannelKeys: Array.isArray(input.hiddenChannelKeys) ? [...new Set(input.hiddenChannelKeys.map((item) => String(item).trim().toLowerCase()).filter(Boolean))] : [],
-    stickyNotes: normalizeStickyNotes(input.stickyNotes),
   };
 }
 
@@ -697,39 +677,7 @@ function render() {
   renderUpdateListView();
   renderChannelHistoryTable();
   renderSuggestionLists();
-  renderStickyNotes();
   updateCaptureFit();
-}
-
-function renderStickyNotes() {
-  if (!els.stickyNotesList) return;
-  const notes = state.data.stickyNotes || [];
-  els.stickyNotesPanel.hidden = !state.stickyNotesOpen;
-  els.stickyNotesToggle.setAttribute('aria-expanded', String(state.stickyNotesOpen));
-  els.stickyNotesCount.textContent = String(notes.filter((note) => !note.completed).length);
-  els.stickyNotesCount.hidden = notes.length === 0;
-  els.stickyNotesEmpty.hidden = notes.length > 0;
-  els.stickyNotesList.innerHTML = '';
-  notes.forEach((note) => {
-    const card = document.createElement('article');
-    card.className = `sticky-note-card sticky-note-${note.color}${note.completed ? ' is-completed' : ''}`;
-    card.dataset.id = note.id;
-    card.innerHTML = `<textarea class="sticky-note-text" data-action="edit-sticky-note" placeholder="輸入臨時記事…" aria-label="便利貼內容"></textarea><div class="sticky-note-actions"><label class="sticky-note-complete"><input type="checkbox" data-action="complete-sticky-note" ${note.completed ? 'checked' : ''} /> 完成</label><select data-action="color-sticky-note"><option value="yellow" ${note.color === 'yellow' ? 'selected' : ''}>黃色</option><option value="pink" ${note.color === 'pink' ? 'selected' : ''}>粉色</option><option value="blue" ${note.color === 'blue' ? 'selected' : ''}>藍色</option></select><button class="sticky-note-delete" data-action="delete-sticky-note" type="button">刪除</button></div>`;
-    card.querySelector('textarea').value = note.text;
-    els.stickyNotesList.appendChild(card);
-  });
-}
-function addStickyNote() {
-  const note = normalizeStickyNotes([{ text: '' }])[0];
-  state.data.stickyNotes.unshift(note); state.stickyNotesOpen = true; saveState(); renderStickyNotes();
-  els.stickyNotesList.querySelector(`[data-id="${note.id}"] textarea`)?.focus();
-}
-function updateStickyNote(id, changes) {
-  const note = state.data.stickyNotes.find((item) => item.id === id);
-  if (note) { Object.assign(note, changes); saveState(); }
-}
-function deleteStickyNote(id) {
-  state.data.stickyNotes = state.data.stickyNotes.filter((note) => note.id !== id); saveState(); renderStickyNotes();
 }
 
 function renderNavigation() {
@@ -740,7 +688,7 @@ function renderNavigation() {
 
   const activeGroup = state.view === 'tasks' || state.view === 'task-archive'
     ? 'tasks'
-    : ['channels', 'channel-history', 'channel-summary', 'update-list'].includes(state.view)
+    : state.view === 'channels' || state.view === 'channel-history'
       ? 'channels'
       : '';
 
@@ -4004,16 +3952,5 @@ els.dataBackupFile?.addEventListener('change', (event) => {
   importDashboardBackup(file);
   event.target.value = '';
 });
-
-els.stickyNotesToggle?.addEventListener('click', () => { state.stickyNotesOpen = !state.stickyNotesOpen; renderStickyNotes(); });
-els.stickyNotesCloseBtn?.addEventListener('click', () => { state.stickyNotesOpen = false; renderStickyNotes(); });
-els.stickyNoteAddBtn?.addEventListener('click', addStickyNote);
-els.stickyNotesList?.addEventListener('input', (event) => { const card = event.target.closest('[data-id]'); if (card && event.target.matches('[data-action="edit-sticky-note"]')) updateStickyNote(card.dataset.id, { text: event.target.value }); });
-els.stickyNotesList?.addEventListener('change', (event) => {
-  const card = event.target.closest('[data-id]'); if (!card) return;
-  if (event.target.matches('[data-action="complete-sticky-note"]')) { updateStickyNote(card.dataset.id, { completed: event.target.checked }); renderStickyNotes(); }
-  if (event.target.matches('[data-action="color-sticky-note"]')) { updateStickyNote(card.dataset.id, { color: event.target.value }); renderStickyNotes(); }
-});
-els.stickyNotesList?.addEventListener('click', (event) => { const card = event.target.closest('[data-id]'); if (card && event.target.matches('[data-action="delete-sticky-note"]') && confirm('要刪除這張便利貼嗎？')) deleteStickyNote(card.dataset.id); });
 
 render();
