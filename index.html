@@ -1166,6 +1166,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
           if (json) {
             try {
               const parsed = JSON.parse(json);
+              parsed.order = Array.isArray(parsed.order) ? parsed.order : [];
               parsed.hidden = Array.isArray(parsed.hidden) ? parsed.hidden : [];
               parsed.titles = parsed.titles && typeof parsed.titles === 'object' ? parsed.titles : {};
               parsed.groupOrder = parsed.groupOrder && typeof parsed.groupOrder === 'object' ? parsed.groupOrder : {};
@@ -1470,18 +1471,31 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
           if (toggleBtn) toggleBtn.textContent = navEditing ? '完成' : '編輯功能列';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        function initializeNavEditor() {
           navConfig = loadNavConfig();
           applyNavConfig(navConfig);
           initEditIcons();
           const currentNav = document.querySelector('.nav');
-          currentNav.querySelectorAll('.nav-group, .nav-button').forEach((el) => { const key = getNavKey(el); if (key) applyHiddenState(el, key); });
+          currentNav.querySelectorAll('.nav-group, .nav-button').forEach((el) => {
+            const key = getNavKey(el);
+            if (key) applyHiddenState(el, key);
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
           const editToggleBtn = document.getElementById('nav-edit-toggle');
           if (editToggleBtn) {
             editToggleBtn.addEventListener('click', (e) => {
               e.preventDefault();
               toggleNavEdit();
             });
+          }
+          try {
+            initializeNavEditor();
+          } catch (error) {
+            console.error('Navigation editor initialization failed; rebuilding settings.', error);
+            localStorage.removeItem(NAV_CONFIG_KEY);
+            initializeNavEditor();
           }
         });
       })();
