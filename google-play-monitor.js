@@ -120,12 +120,14 @@
       if (!response.ok) throw new Error('尚未產生第一次檢查結果');
       var payload = await response.json();
       var items = Array.isArray(payload.items) ? payload.items : [];
+      var savedByAppId = {};
+      monitors().forEach(function (item) { savedByAppId[item.appId] = item; });
       state.data.googlePlayMonitors = normalizeGooglePlayMonitors(items.map(function (result) {
         return {
           id: result.appId,
           url: result.url,
           appId: result.appId,
-          label: result.note || '',
+          label: savedByAppId[result.appId]?.label || result.note || '',
           title: result.title || '',
           installs: result.installs == null ? '' : String(result.installs),
           previousInstalls: result.previousInstalls == null ? '' : String(result.previousInstalls),
@@ -288,6 +290,16 @@
     var permission = await Notification.requestPermission();
     els.notification.textContent = permission === 'granted' ? '桌面通知已開啟' : '桌面通知未允許';
   });
+  els.body.addEventListener('input', function (event) {
+    var input = event.target.closest('[data-google-play-note]');
+    var row = event.target.closest('[data-google-play-id]');
+    if (!input || !row) return;
+    var item = monitors().find(function (candidate) { return candidate.id === row.dataset.googlePlayId; });
+    if (!item) return;
+    item.label = String(input.value || '').trim();
+    saveState();
+  });
+
   els.body.addEventListener('change', function (event) {
     var input = event.target.closest('[data-google-play-note]');
     var row = event.target.closest('[data-google-play-id]');
