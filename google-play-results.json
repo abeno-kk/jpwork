@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-14T04:40:05.015Z",
+  "updatedAt": "2026-07-14T05:39:01.795Z",
   "items": [
     {
       "ok": true,
@@ -8,9 +8,9 @@
       "note": "Sea Ice Fishing:Shooting",
       "title": "Sea Ice Fishing:Shooting",
       "installs": "0",
-      "previousInstalls": "",
+      "previousInstalls": "0",
       "changed": false,
-      "checkedAt": "2026-07-14T04:39:59.680Z",
+      "checkedAt": "2026-07-14T05:38:56.434Z",
       "error": ""
     },
     {
@@ -20,9 +20,9 @@
       "note": "Fishing Challenge QA Ice",
       "title": "Fishing Challenge QA Ice",
       "installs": "0",
-      "previousInstalls": "",
+      "previousInstalls": "0",
       "changed": false,
-      "checkedAt": "2026-07-14T04:40:02.379Z",
+      "checkedAt": "2026-07-14T05:38:59.173Z",
       "error": ""
     }
   ]
