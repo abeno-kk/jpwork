@@ -1,3 +1,6 @@
+
+
+
 :root {
   --bg: #f4efe7;
   --panel: #fffdf8;
@@ -446,7 +449,9 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 8px;
+
   padding: 0;
   border: 0;
   background: transparent;
@@ -895,7 +900,9 @@ body.capture-mode .app-shell {
 
 body.capture-mode #channels-view {
   display: block;
+
 }
+
 
 body.capture-mode .main-content {
   padding: 8px 10px;
@@ -1345,7 +1352,9 @@ body.capture-mode #channel-selected-sum-pill {
   display: none !important;
 }
 
+
 .sticky-notes-toggle { position: fixed; right: 24px; bottom: 24px; z-index: 80; display: inline-flex; align-items: center; gap: 8px; border: none; border-radius: 999px; padding: 13px 18px; background: linear-gradient(135deg, #d88f32, #bd7116); color: #fff; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 14px 30px rgba(91, 57, 17, .25); }
+
 .sticky-notes-count { min-width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 999px; padding: 0 6px; background: #fff; color: #9b5a0e; font-size: 12px; }
 .sticky-notes-panel { position: fixed; right: 24px; bottom: 86px; z-index: 79; width: min(390px, calc(100vw - 32px)); max-height: min(680px, calc(100vh - 120px)); overflow: hidden; border: 1px solid rgba(36,79,120,.14); border-radius: 20px; padding: 18px; background: #fffdf8; box-shadow: 0 24px 60px rgba(58,43,24,.22); }
 .sticky-notes-header, .sticky-notes-header-actions, .sticky-note-actions { display: flex; align-items: center; }
@@ -1499,7 +1508,8 @@ body.capture-mode .sticky-notes-toggle, body.capture-mode .sticky-notes-panel { 
   width: 100%;
   border: 1px solid #d8c7aa;
   border-radius: 10px;
-  padding: 10px 12px;
+ 
+ padding: 10px 12px;
   box-sizing: border-box;
   background: #fff;
 }
@@ -1744,3 +1754,163 @@ body.capture-mode .sticky-notes-toggle, body.capture-mode .sticky-notes-panel { 
     grid-column: 1 / -1;
   }
 }
+
+
+/* Google Play 下載級距監控 */
+.google-play-monitor-panel {
+  padding: 18px;
+}
+
+.google-play-add-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 2fr) minmax(220px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.google-play-add-grid label,
+.google-play-monitor-toolbar label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.google-play-add-grid input,
+.google-play-monitor-toolbar select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  color: var(--ink);
+}
+
+.google-play-monitor-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--panel-alt);
+}
+
+.google-play-monitor-toolbar select {
+  min-width: 150px;
+}
+
+
+.google-play-service-status {
+  padding: 9px 12px;
+  border-radius: 999px;
+
+  background: white;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.google-play-service-status.is-error {
+  background: var(--danger);
+  color: #8b2f2f;
+}
+
+.google-play-public-note {
+  flex: 1 1 340px;
+  align-self: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.google-play-empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.google-play-monitor-table th,
+.google-play-monitor-table td {
+  vertical-align: middle;
+}
+
+.google-play-monitor-table .google-play-app-cell {
+  min-width: 280px;
+}
+
+.google-play-app-title {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.google-play-app-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.google-play-install-badge {
+  display: inline-flex;
+  min-width: 72px;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--green);
+  color: #265a30;
+  font-weight: 800;
+}
+
+.google-play-install-badge.is-empty {
+  background: var(--gray);
+  color: var(--muted);
+}
+
+.google-play-row-status {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.google-play-row-status.is-changed {
+  color: #a85d00;
+  font-weight: 700;
+}
+
+.google-play-row-status.is-error {
+  color: #a33a3a;
+}
+
+.google-play-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 210px;
+}
+
+@media (max-width: 900px) {
+  .google-play-add-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.google-play-note-cell {
+  min-width: 220px;
+}
+
+.google-play-note-input {
+  width: 100% !important;
+  min-width: 180px;
+  padding: 9px 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: var(--ink);
+}
+
+.google-play-note-input:focus {
+  outline: 2px solid rgba(36, 79, 120, 0.15);
+  border-color: rgba(36, 79, 120, 0.42) !important;
+}
+

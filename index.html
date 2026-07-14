@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
@@ -39,6 +42,7 @@
               <button class="nav-button" data-view="channel-history">歷史批次</button>
               <button class="nav-button" data-view="channel-summary">渠道統整表</button>
               <button class="nav-button" data-view="update-list">更新列表</button>
+              <button class="nav-button" data-view="google-play-monitor">Google Play 監控</button>
             </div>
           </div>
 
@@ -240,7 +244,8 @@
             <div id="channel-summary-message" class="channel-summary-message" hidden></div>
             <div id="channel-summary-help" class="channel-summary-help">
               這張 Google Sheet 是私人權限時，前端頁面不能直接讀取。
-              已經幫你在專案裡準備好 <code>channel_summary_api.gs</code>。
+          
+    已經幫你在專案裡準備好 <code>channel_summary_api.gs</code>。
               你只要把它貼到 Google Apps Script，部署成 Web App，再把網址貼到上面即可同步私有表。
             </div>
 
@@ -394,7 +399,9 @@
             </div>
           </div>
 
+
           <section class="panel">
+
             <div class="panel-header">
               <div>
               <h3>更新記錄表</h3>
@@ -420,6 +427,70 @@
               <table class="spreadsheet-table update-list-table">
                 <thead id="update-list-table-head"></thead>
                 <tbody id="update-list-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="google-play-monitor-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">Google Play 監控</h3>
+              <p class="task-topbar-text">貼上商店網址，直接查看目前公開下載數。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">監控數：<strong id="google-play-monitor-count">0</strong></span>
+              <span class="summary-pill">有變動：<strong id="google-play-change-count">0</strong></span>
+              <button id="google-play-notification-btn" class="secondary-button compact-button" type="button">開啟桌面通知</button>
+              <button id="google-play-check-all-btn" class="primary-button compact-button" type="button">全部立即檢查</button>
+            </div>
+          </div>
+
+          <section class="panel google-play-monitor-panel">
+            <div class="google-play-add-grid">
+              <label>
+                <span>Google Play 網址</span>
+                <input id="google-play-url-input" type="url" placeholder="貼上 https://play.google.com/store/apps/details?id=..." />
+              </label>
+              <label>
+                <span>備註（選填）</span>
+                <input id="google-play-label-input" type="text" placeholder="例如：217、競品 A、需要追蹤" />
+              </label>
+              <button id="google-play-add-btn" class="primary-button" type="button">加入監控</button>
+            </div>
+
+            <div class="google-play-monitor-toolbar">
+              <label>
+                <span>自動檢查</span>
+                <select id="google-play-interval-select">
+                  <option value="0">關閉</option>
+                  <option value="15">每 15 分鐘</option>
+                  <option value="30">每 30 分鐘</option>
+                  <option value="60">每 1 小時</option>
+                  <option value="180">每 3 小時</option>
+                  <option value="360">每 6 小時</option>
+                </select>
+              </label>
+              <span id="google-play-service-status" class="google-play-service-status">尚未檢查</span>
+              <span class="google-play-public-note">商店顯示 0+ 時，這裡直接顯示 0；顯示 10+ 時，這裡顯示 10。</span>
+            </div>
+
+            <div id="google-play-empty" class="google-play-empty" hidden>尚未加入監控網址。</div>
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table google-play-monitor-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>App</th>
+                    <th>備註</th>
+                    <th>目前下載數</th>
+                    <th>上次下載數</th>
+                    <th>最後檢查</th>
+                    <th>狀態</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="google-play-monitor-body"></tbody>
               </table>
             </div>
           </section>
@@ -498,7 +569,8 @@
                   </div>
                   <div class="dialog-copy-actions" aria-label="複製話術">
                     <button id="dialog-copy-zh-btn" class="secondary-button" type="button">複製中文</button>
-                    <button id="dialog-copy-en-btn" class="secondary-button" type="button">複製英文</button>
+                    <button id="dialog-cop
+y-en-btn" class="secondary-button" type="button">複製英文</button>
                     <button id="dialog-copy-hi-btn" class="secondary-button" type="button">複製印度文</button>
                   </div>
                 </div>
@@ -617,6 +689,7 @@
     <button id="capture-exit-btn" class="primary-button capture-exit-button" type="button" hidden>返回首頁</button>
 
     <script src="./app.js"></script>
+    <script src="./google-play-monitor.js"></script>
     <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->
     <script>
       (function() {
@@ -728,7 +801,9 @@
           col.name = newName;
           saveColumns();
           renderTable();
+
         }
+
 
         function sortBy(key) {
           if (sortKey === key) {
@@ -816,6 +891,7 @@
             const selCb = document.createElement('input');
             selCb.type = 'checkbox';
             selCb.checked = !!order.__selected;
+
             selCb.addEventListener('change', () => {
               order.__selected = selCb.checked;
               // 更新全選狀態
@@ -1091,6 +1167,17 @@
             try {
               const parsed = JSON.parse(json);
               parsed.hidden = Array.isArray(parsed.hidden) ? parsed.hidden : [];
+              parsed.titles = parsed.titles && typeof parsed.titles === 'object' ? parsed.titles : {};
+              parsed.groupOrder = parsed.groupOrder && typeof parsed.groupOrder === 'object' ? parsed.groupOrder : {};
+              const channelKey = 'group-channels';
+              const channelOrder = Array.isArray(parsed.groupOrder[channelKey]) ? parsed.groupOrder[channelKey] : [];
+              if (!channelOrder.includes('google-play-monitor')) {
+                const updateIndex = channelOrder.indexOf('update-list');
+                channelOrder.splice(updateIndex >= 0 ? updateIndex + 1 : channelOrder.length, 0, 'google-play-monitor');
+              }
+              parsed.groupOrder[channelKey] = channelOrder;
+              if (!parsed.titles['google-play-monitor']) parsed.titles['google-play-monitor'] = 'Google Play 監控';
+              localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(parsed));
               return parsed;
             } catch (e) {
               console.error('navConfig parse error', e);
@@ -1115,9 +1202,11 @@
           }
         }
 
+
         function toggleItemHidden(el) {
           const key = getNavKey(el);
           if (!key) return;
+
           navConfig.hidden = Array.isArray(navConfig.hidden) ? navConfig.hidden : [];
           const index = navConfig.hidden.indexOf(key);
           if (index >= 0) navConfig.hidden.splice(index, 1);
@@ -1127,7 +1216,8 @@
         }
 
         // 取得元素對應的 key
-        function getNavKey(el) {
+      
+  function getNavKey(el) {
           if (el.classList.contains('nav-group')) {
             return 'group-' + el.dataset.group;
           }
@@ -1398,3 +1488,4 @@
     </script>
   </body>
 </html>
+

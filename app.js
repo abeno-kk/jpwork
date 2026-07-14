@@ -1,3 +1,5 @@
+
+
 const STORAGE_KEY = 'local-dashboard-app-v1';
 const STORAGE_BACKUP_KEY = 'local-dashboard-app-v1-backup';
 const STORAGE_FALLBACK_KEYS = [
@@ -416,6 +418,8 @@ function createDefaultState() {
     // 隱藏渠道名稱：同名渠道在新增批次後也會自動隱藏
     hiddenChannelKeys: [],
     stickyNotes: [],
+    googlePlayMonitors: normalizeGooglePlayMonitors(undefined),
+    googlePlayMonitorSettings: normalizeGooglePlayMonitorSettings({}),
     dialogDb: normalizeDialogDb({}),
   };
 }
@@ -472,6 +476,43 @@ function normalizeStickyNotes(notes) {
   }));
 }
 
+function normalizeGooglePlayMonitors(monitors) {
+  const source = monitors === undefined
+    ? [{
+        url: 'https://play.google.com/store/apps/details?id=com.icefishinggame.spacequikhubcc',
+        label: 'Sea Ice Fishing:Shooting',
+      }]
+    : monitors;
+  if (!Array.isArray(source)) return [];
+  return source.map((item) => ({
+    id: String(item?.id || crypto.randomUUID()),
+    url: String(item?.url || '').trim(),
+    appId: String(item?.appId || '').trim(),
+    label: String(item?.label || '').trim(),
+    title: String(item?.title || '').trim(),
+    installs: String(item?.installs || '').trim(),
+    previousInstalls: String(item?.previousInstalls || '').trim(),
+    lastCheckedAt: String(item?.lastCheckedAt || ''),
+    lastChangedAt: String(item?.lastChangedAt || ''),
+    status: ['idle', 'checking', 'ok', 'changed', 'error'].includes(item?.status) ? item.status : 'idle',
+    error: String(item?.error || ''),
+    history: Array.isArray(item?.history)
+      ? item.history.slice(-100).map((entry) => ({
+
+          at: String(entry?.at || ''),
+          installs: String(entry?.installs || '').trim(),
+        })).filter((entry) => entry.at && entry.installs)
+      : [],
+  })).filter((item) => item.url);
+}
+
+function normalizeGooglePlayMonitorSettings(settings) {
+  const interval = Number(settings?.intervalMinutes);
+  return {
+    intervalMinutes: [0, 15, 30, 60, 180, 360].includes(interval) ? interval : 60,
+  };
+}
+
 function normalizeState(input) {
   const normalizedChannels = Array.isArray(input.channels) ? input.channels.map(normalizeChannel) : [];
   return {
@@ -490,6 +531,8 @@ function normalizeState(input) {
     hiddenChannelRows: Array.isArray(input.hiddenChannelRows) ? [...input.hiddenChannelRows] : [],
     hiddenChannelKeys: Array.isArray(input.hiddenChannelKeys) ? [...new Set(input.hiddenChannelKeys.map((item) => String(item).trim().toLowerCase()).filter(Boolean))] : [],
     stickyNotes: normalizeStickyNotes(input.stickyNotes),
+    googlePlayMonitors: normalizeGooglePlayMonitors(input.googlePlayMonitors),
+    googlePlayMonitorSettings: normalizeGooglePlayMonitorSettings(input.googlePlayMonitorSettings),
     dialogDb: normalizeDialogDb(input.dialogDb),
   };
 }
@@ -785,7 +828,7 @@ function renderNavigation() {
 
   const activeGroup = state.view === 'tasks' || state.view === 'task-archive'
     ? 'tasks'
-    : ['channels', 'channel-history', 'channel-summary', 'update-list'].includes(state.view)
+    : ['channels', 'channel-history', 'channel-summary', 'update-list', 'google-play-monitor'].includes(state.view)
       ? 'channels'
       : '';
 
@@ -823,6 +866,8 @@ function renderNavigation() {
         ? '發單解析'
       : state.view === 'update-list'
         ? '更新列表'
+      : state.view === 'google-play-monitor'
+        ? 'Google Play 監控'
       : state.view === 'conversation-db'
         ? '對話資料庫'
         : '歷史批次';
@@ -953,6 +998,7 @@ function loadGoogleSheetRows() {
       cleanup();
       try {
         const rows = parseChannelSummaryResponse(response);
+
         resolve(rows);
       } catch (error) {
         reject(error);
@@ -1452,6 +1498,7 @@ function getRowCellUrl(row, header) {
 
 function toNumericValue(value) {
   const cleaned = String(value ?? '').replace(/,/g, '').trim();
+
   const number = Number(cleaned);
   return Number.isFinite(number) ? number : 0;
 }
@@ -1951,6 +1998,7 @@ function applyTaskTypeBadge(row, task) {
   const taskTypeIndex = visibleColumns.findIndex((column) => column.type === 'taskType');
   if (taskTypeIndex === -1) return;
 
+
   const cell = row.children[taskTypeIndex + 1];
   const select = cell?.querySelector('select[data-field="type"]');
   const badgeClasses = ['badge-yellow', 'badge-gray', 'badge-purple', 'badge-green', 'badge-red'];
@@ -1977,6 +2025,7 @@ function getFilteredArchivedTasks() {
 }
 
 function renderTaskArchiveHead() {
+
   if (!els.taskArchiveTableHead) return;
   const tr = document.createElement('tr');
   const visibleColumns = getVisibleColumns('tasks').filter((column) => column.type !== 'history');
@@ -2376,6 +2425,7 @@ function onRowDragOver(event) {
   if (!state.draggedRow) return;
   if (state.draggedRow.tableType !== event.currentTarget.dataset.tableType) return;
   event.preventDefault();
+
   event.currentTarget.classList.add('drag-over-row');
 }
 
@@ -2449,6 +2499,7 @@ function buildChannelCell(column, channel) {
   }
 
   if (column.type === 'source') {
+
     const select = document.createElement('select');
     select.dataset.field = column.id;
     state.data.dropdownOptions.source.forEach((optionValue) => {
@@ -2949,6 +3000,7 @@ function getFilteredHistoryBatchTimes() {
   const start = state.historyRangeStart ? new Date(state.historyRangeStart).getTime() : null;
   const end = state.historyRangeEnd ? new Date(state.historyRangeEnd).getTime() : null;
 
+
   batchTimes = batchTimes.filter((time) => {
     const ts = new Date(time).getTime();
     if (Number.isNaN(ts)) return false;
@@ -3447,6 +3499,7 @@ function updateColumnLabel(tableType, columnId, value) {
 
 function deleteColumn(tableType, columnId) {
   const key = tableType === 'tasks' ? 'taskColumns' : 'channelColumns';
+
   const column = state.data[key].find((item) => item.id === columnId);
   if (!column) return;
 
@@ -3946,6 +3999,7 @@ els.channelSummarySyncSaveBtn?.addEventListener('click', () => {
 });
 els.channelSummarySearch?.addEventListener('input', () => {
   state.channelSummary.search = els.channelSummarySearch.value || '';
+
   renderChannelSummaryView();
 });
 els.channelSummaryChannelFilter?.addEventListener('change', () => {
@@ -4444,6 +4498,7 @@ function persistDialogDbRootFix() {
 
   function addDialogCategory() {
     ensureDialogState();
+
     const name = prompt('請輸入新分類名稱：');
     if (!name) return;
     const clean = name.trim();
@@ -4728,3 +4783,4 @@ window.addEventListener('load', () => {
     }
   }, 300);
 });
+
