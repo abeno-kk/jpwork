@@ -1360,11 +1360,19 @@ body.capture-mode #channel-selected-sum-pill {
 .sticky-notes-header, .sticky-notes-header-actions, .sticky-note-actions { display: flex; align-items: center; }
 .sticky-notes-header { justify-content: space-between; gap: 12px; } .sticky-notes-header h3 { margin: 2px 0 0; } .sticky-notes-header-actions { gap: 6px; }
 .sticky-notes-hint { margin: 10px 0 14px; color: var(--muted); font-size: 13px; }
-.sticky-notes-list { display: grid; gap: 12px; max-height: calc(100vh - 260px); overflow-y: auto; padding-right: 3px; }
+.sticky-notes-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; padding: 4px; border-radius: 12px; background: #f3ede3; }
+.sticky-notes-tab { border: none; border-radius: 9px; padding: 8px 10px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.sticky-notes-tab.is-active { background: #fff; color: var(--ink); box-shadow: 0 2px 8px rgba(58,43,24,.10); }
+.sticky-notes-tab span { display: inline-grid; min-width: 20px; place-items: center; margin-left: 3px; border-radius: 999px; background: rgba(216,143,50,.14); color: #995c13; }
+.sticky-notes-search { display: block; margin-bottom: 10px; }
+.sticky-notes-search[hidden] { display: none; }
+.sticky-notes-search input { width: 100%; border: 1px solid rgba(36,79,120,.16); border-radius: 11px; padding: 9px 11px; background: #fff; color: var(--ink); font: inherit; }
+.sticky-notes-list { display: grid; gap: 12px; max-height: calc(100vh - 350px); overflow-y: auto; padding-right: 3px; }
 .sticky-notes-empty { padding: 30px 16px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; }
 .sticky-note-card { border: 1px solid rgba(91,57,17,.14); border-radius: 15px; padding: 12px; }
 .sticky-note-yellow { background: #fff2bd; } .sticky-note-pink { background: #f8dddd; } .sticky-note-blue { background: #dcecf8; }
 .sticky-note-card.is-completed { opacity: .66; } .sticky-note-card.is-completed textarea { text-decoration: line-through; }
+.sticky-note-saved { margin: -2px 0 6px; color: #39724b; font-size: 12px; font-weight: 700; text-align: right; }
 .sticky-note-text { width: 100%; min-height: 92px; resize: vertical; border: none; outline: none; padding: 2px; background: transparent; color: var(--ink); font: inherit; line-height: 1.55; }
 .sticky-note-actions { justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 13px; }
 .sticky-note-complete { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }

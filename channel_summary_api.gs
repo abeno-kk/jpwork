@@ -11,38 +11,21 @@ const SHEETS = {
   },
 };
 
-const CHANNEL_MAP = {
-  APPID: ['APPID', 'APP ID', 'app_id'],
-  '渠道&名稱': ['包名', '渠道&名稱', '渠道名稱'],
-  渠道: ['应用渠道', '應用渠道', '渠道'],
-  包名稱: ['包名称', '包名稱'],
-  版本: ['版本'],
-  firebase: ['firebase'],
-  昨日新增: ['昨日新增'],
-  昨日DAU: ['昨日DAU'],
-  昨日充值: ['昨日充值'],
-  版本確認: ['版本确认', '版本確認'],
-  登入B面: ['登入B面'],
-  拉充值: ['拉充值'],
-  遊戲遊玩: ['遊戲遊玩'],
-  CDN測試: ['CDN測試'],
-};
-
 function doGet(e) {
+  const callback = String(e?.parameter?.callback || '').trim();
   try {
     const type = String(e?.parameter?.type || 'channel').trim();
-    const callback = String(e?.parameter?.callback || '').trim();
     const config = SHEETS[type];
 
     if (!config) {
-      return output_({ ok: false, error: 'type錯誤，只能用 channel 或 updates', rows: [] }, callback);
+      return output_({ ok: false, error: 'type錯誤，只能用 channel 或 updates', headers: [], rows: [] }, callback);
     }
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = getSheetByGid_(ss, config.gid) || ss.getSheetByName(config.name);
 
     if (!sheet) {
-      return output_({ ok: false, error: '找不到分頁：' + config.name, rows: [] }, callback);
+      return output_({ ok: false, error: '找不到分頁：' + config.name, headers: [], rows: [] }, callback);
     }
 
     const range = sheet.getDataRange();
@@ -50,50 +33,48 @@ function doGet(e) {
     const richValues = range.getRichTextValues();
 
     if (!values || !values.length) {
-      return output_({ ok: true, type, rows: [], meta: { sheetName: sheet.getName(), gid: sheet.getSheetId(), rowCount: 0 } }, callback);
+      return output_({
+        ok: true,
+        schemaVersion: 2,
+        type,
+        headers: [],
+        rows: [],
+        meta: { sheetName: sheet.getName(), gid: sheet.getSheetId(), rowCount: 0, columnCount: 0 },
+      }, callback);
     }
 
-    const headers = values[0].map(v => String(v || '').trim());
-
+    const headers = values[0].map(value => String(value || '').trim());
+    const visibleHeaders = headers.filter(Boolean);
     const rows = values.slice(1)
       .filter(row => row.some(cell => String(cell || '').trim() !== ''))
-      .map((row, r) => {
-        const raw = {};
-
-        headers.forEach((h, c) => {
-          if (!h) return;
-          const text = String(row[c] || '').trim();
-          const rich = richValues[r + 1][c];
+      .map((row, rowIndex) => {
+        const record = {};
+        headers.forEach((header, columnIndex) => {
+          if (!header) return;
+          const text = String(row[columnIndex] || '').trim();
+          const rich = richValues[rowIndex + 1]?.[columnIndex];
           const url = getRichTextUrl_(rich);
-          raw[h] = text;
-          if (url) raw[h + '_url'] = url;
+          record[header] = text;
+          if (url) record[header + '_url'] = url;
         });
-
-        if (type === 'channel') {
-          const item = {};
-          Object.keys(CHANNEL_MAP).forEach(key => {
-            item[key] = getByAlias_(raw, CHANNEL_MAP[key]);
-          });
-          return item;
-        }
-
-        return raw;
+        return record;
       });
 
     return output_({
       ok: true,
+      schemaVersion: 2,
       type,
+      headers: visibleHeaders,
       rows,
       meta: {
         sheetName: sheet.getName(),
         gid: sheet.getSheetId(),
         rowCount: rows.length,
+        columnCount: visibleHeaders.length,
       },
     }, callback);
-
   } catch (err) {
-    const callback = String(e?.parameter?.callback || '').trim();
-    return output_({ ok: false, error: err.message || String(err), rows: [] }, callback);
+    return output_({ ok: false, error: err.message || String(err), headers: [], rows: [] }, callback);
   }
 }
 
@@ -102,16 +83,9 @@ function getRichTextUrl_(rich) {
   const direct = rich.getLinkUrl();
   if (direct) return direct;
   const runs = rich.getRuns ? rich.getRuns() : [];
-  for (let i = 0; i < runs.length; i++) {
-    const url = runs[i].getLinkUrl();
+  for (let index = 0; index < runs.length; index += 1) {
+    const url = runs[index].getLinkUrl();
     if (url) return url;
-  }
-  return '';
-}
-
-function getByAlias_(obj, aliases) {
-  for (const name of aliases) {
-    if (obj[name] !== undefined) return obj[name];
   }
   return '';
 }

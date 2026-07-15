@@ -2,6 +2,7 @@
 
 const STORAGE_KEY = 'local-dashboard-app-v1';
 const STORAGE_BACKUP_KEY = 'local-dashboard-app-v1-backup';
+const STICKY_NOTES_STORAGE_KEY = 'local-dashboard-sticky-notes-v1';
 const STORAGE_FALLBACK_KEYS = [
   'local-dashboard-app-v1',
   'local-dashboard-app',
@@ -184,6 +185,7 @@ const state = {
     channels: true,
   },
   channelSummary: {
+    columns: structuredClone(CHANNEL_SUMMARY_COLUMNS),
     rows: [],
     loading: false,
     error: '',
@@ -211,6 +213,8 @@ const state = {
   // 儲存目前勾選的渠道 ID，用於計算最新金額的總和（不會被持久化）
   selectedChannelIds: new Set(),
   stickyNotesOpen: false,
+  stickyNotesView: 'active',
+  stickyNotesSearch: '',
 };
 
 const els = {
@@ -314,6 +318,12 @@ const els = {
   stickyNotesEmpty: document.getElementById('sticky-notes-empty'),
   stickyNoteAddBtn: document.getElementById('sticky-note-add-btn'),
   stickyNotesCloseBtn: document.getElementById('sticky-notes-close-btn'),
+  stickyNotesActiveTab: document.getElementById('sticky-notes-active-tab'),
+  stickyNotesArchiveTab: document.getElementById('sticky-notes-archive-tab'),
+  stickyNotesActiveTotal: document.getElementById('sticky-notes-active-total'),
+  stickyNotesArchiveTotal: document.getElementById('sticky-notes-archive-total'),
+  stickyNotesSearchWrap: document.getElementById('sticky-notes-search-wrap'),
+  stickyNotesSearch: document.getElementById('sticky-notes-search'),
 };
 
 function parseStoredState(raw) {
@@ -358,6 +368,12 @@ function findBestStoredState() {
   return best;
 }
 
+function restoreStickyNotesBackup(data) {
+  const stickyNotesBackup = parseStoredState(localStorage.getItem(STICKY_NOTES_STORAGE_KEY));
+  if (!Array.isArray(stickyNotesBackup)) return data;
+  return { ...data, stickyNotes: normalizeStickyNotes(stickyNotesBackup) };
+}
+
 function loadState() {
   const primary = parseStoredState(localStorage.getItem(STORAGE_KEY));
   const primaryScore = estimateStateScore(primary);
@@ -372,10 +388,10 @@ function loadState() {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
           localStorage.setItem(STORAGE_BACKUP_KEY, JSON.stringify(normalized));
         } catch (error) {}
-        return normalized;
+        return restoreStickyNotesBackup(normalized);
       }
     }
-    return normalizeState(primary);
+    return restoreStickyNotesBackup(normalizeState(primary));
   }
 
   const recovered = findBestStoredState();
@@ -385,10 +401,10 @@ function loadState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
       localStorage.setItem(STORAGE_BACKUP_KEY, JSON.stringify(normalized));
     } catch (error) {}
-    return normalized;
+    return restoreStickyNotesBackup(normalized);
   }
 
-  return createDefaultState();
+  return restoreStickyNotesBackup(createDefaultState());
 }
 
 function createDefaultState() {
@@ -473,6 +489,7 @@ function normalizeStickyNotes(notes) {
     completed: Boolean(note?.completed),
     color: ['yellow', 'pink', 'blue'].includes(note?.color) ? note.color : 'yellow',
     createdAt: note?.createdAt || new Date().toISOString(),
+    completedAt: note?.completedAt || '',
   }));
 }
 
@@ -706,6 +723,11 @@ function normalizeChannelColumns(columns) {
 function saveState() {
   const serialized = JSON.stringify(state.data);
   try {
+    localStorage.setItem(STICKY_NOTES_STORAGE_KEY, JSON.stringify(state.data.stickyNotes || []));
+  } catch (error) {
+    console.error('Sticky notes backup could not be saved.', error);
+  }
+  try {
     localStorage.setItem(STORAGE_KEY, serialized);
   } catch (error) {
     // Backup is another full copy, so free it and retry before reporting quota failure.
@@ -767,8 +789,6 @@ function importDashboardBackup(file) {
 
 function render() {
   renderNavigation();
-  maybeRefreshChannelSummary();
-  maybeRefreshUpdateList();
   syncTaskAnchorInput();
   syncChannelBatchTime();
   syncChannelBatchNote();
@@ -791,25 +811,48 @@ function render() {
 
 function renderStickyNotes() {
   if (!els.stickyNotesList) return;
-  const notes = state.data.stickyNotes || [];
+  const allNotes = state.data.stickyNotes || [];
+  const activeNotes = allNotes.filter((note) => !note.completed);
+  const completedNotes = allNotes
+    .filter((note) => note.completed)
+    .sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
+  const isArchive = state.stickyNotesView === 'archive';
+  const keyword = state.stickyNotesSearch.trim().toLowerCase();
+  const notes = isArchive && keyword
+    ? completedNotes.filter((note) => note.text.toLowerCase().includes(keyword))
+    : isArchive ? completedNotes : activeNotes;
   els.stickyNotesPanel.hidden = !state.stickyNotesOpen;
   els.stickyNotesToggle.setAttribute('aria-expanded', String(state.stickyNotesOpen));
-  els.stickyNotesCount.textContent = String(notes.filter((note) => !note.completed).length);
-  els.stickyNotesCount.hidden = notes.length === 0;
+  els.stickyNotesCount.textContent = String(activeNotes.length);
+  els.stickyNotesCount.hidden = activeNotes.length === 0;
+  els.stickyNotesActiveTotal.textContent = String(activeNotes.length);
+  els.stickyNotesArchiveTotal.textContent = String(completedNotes.length);
+  els.stickyNotesActiveTab.classList.toggle('is-active', !isArchive);
+  els.stickyNotesArchiveTab.classList.toggle('is-active', isArchive);
+  els.stickyNotesActiveTab.setAttribute('aria-selected', String(!isArchive));
+  els.stickyNotesArchiveTab.setAttribute('aria-selected', String(isArchive));
+  els.stickyNotesSearchWrap.hidden = !isArchive;
+  if (els.stickyNotesSearch.value !== state.stickyNotesSearch) els.stickyNotesSearch.value = state.stickyNotesSearch;
   els.stickyNotesEmpty.hidden = notes.length > 0;
+  els.stickyNotesEmpty.textContent = isArchive
+    ? keyword ? '找不到符合的已完成便利貼。' : '尚無已完成便利貼。'
+    : '還沒有進行中的便利貼，按「新增」開始記錄。';
   els.stickyNotesList.innerHTML = '';
   notes.forEach((note) => {
     const card = document.createElement('article');
     card.className = `sticky-note-card sticky-note-${note.color}${note.completed ? ' is-completed' : ''}`;
     card.dataset.id = note.id;
-    card.innerHTML = `<textarea class="sticky-note-text" data-action="edit-sticky-note" placeholder="輸入臨時記事…" aria-label="便利貼內容"></textarea><div class="sticky-note-actions"><label class="sticky-note-complete"><input type="checkbox" data-action="complete-sticky-note" ${note.completed ? 'checked' : ''} /> 完成</label><select data-action="color-sticky-note"><option value="yellow" ${note.color === 'yellow' ? 'selected' : ''}>黃色</option><option value="pink" ${note.color === 'pink' ? 'selected' : ''}>粉色</option><option value="blue" ${note.color === 'blue' ? 'selected' : ''}>藍色</option></select><button class="sticky-note-delete" data-action="delete-sticky-note" type="button">刪除</button></div>`;
+    const completedAt = note.completedAt
+      ? new Date(note.completedAt).toLocaleString('zh-Hant', { dateStyle: 'short', timeStyle: 'short' })
+      : '';
+    card.innerHTML = `${note.completed ? `<div class="sticky-note-saved" role="status">✓ 已保存${completedAt ? `・${completedAt}` : ''}</div>` : ''}<textarea class="sticky-note-text" data-action="edit-sticky-note" placeholder="輸入臨時記事…" aria-label="便利貼內容"></textarea><div class="sticky-note-actions"><label class="sticky-note-complete"><input type="checkbox" data-action="complete-sticky-note" ${note.completed ? 'checked' : ''} /> ${note.completed ? '恢復' : '完成'}</label><select data-action="color-sticky-note"><option value="yellow" ${note.color === 'yellow' ? 'selected' : ''}>黃色</option><option value="pink" ${note.color === 'pink' ? 'selected' : ''}>粉色</option><option value="blue" ${note.color === 'blue' ? 'selected' : ''}>藍色</option></select><button class="sticky-note-delete" data-action="delete-sticky-note" type="button">刪除</button></div>`;
     card.querySelector('textarea').value = note.text;
     els.stickyNotesList.appendChild(card);
   });
 }
 function addStickyNote() {
   const note = normalizeStickyNotes([{ text: '' }])[0];
-  state.data.stickyNotes.unshift(note); state.stickyNotesOpen = true; saveState(); renderStickyNotes();
+  state.data.stickyNotes.unshift(note); state.stickyNotesOpen = true; state.stickyNotesView = 'active'; saveState(); renderStickyNotes();
   els.stickyNotesList.querySelector(`[data-id="${note.id}"] textarea`)?.focus();
 }
 function updateStickyNote(id, changes) {
@@ -887,31 +930,17 @@ function renderCaptureMode() {
   }
 }
 
-function maybeRefreshChannelSummary(force = false) {
-  if (state.view !== 'channel-summary') return;
-  const staleMs = 60 * 1000;
-  if (!force && state.channelSummary.loading) return;
-  if (!force && state.channelSummary.rows.length && Date.now() - state.channelSummary.lastFetchedAt < staleMs) return;
-  void refreshChannelSummary();
-}
-
-// 更新列表：在切換到更新列表頁或隔一段時間後自動重新整理
-function maybeRefreshUpdateList(force = false) {
-  if (state.view !== 'update-list') return;
-  const staleMs = 60 * 1000;
-  if (!force && state.updateList.loading) return;
-  if (!force && state.updateList.rows.length && Date.now() - state.updateList.lastFetchedAt < staleMs) return;
-  void refreshUpdateList();
-}
-
 function refreshChannelSummary() {
   state.channelSummary.loading = true;
   state.channelSummary.error = '';
   renderChannelSummaryView();
 
   return loadGoogleSheetRows()
-    .then((rows) => {
-      state.channelSummary.rows = rows;
+    .then((result) => {
+      state.channelSummary.columns = Array.isArray(result?.columns) && result.columns.length
+        ? result.columns
+        : structuredClone(CHANNEL_SUMMARY_COLUMNS);
+      state.channelSummary.rows = Array.isArray(result?.rows) ? result.rows : [];
       state.channelSummary.lastFetchedAt = Date.now();
       state.channelSummary.error = '';
     })
@@ -1024,18 +1053,23 @@ function parseChannelSummaryResponse(response) {
     throw new Error('Google Sheet 目前需要登入或允許 Cookie，前端頁面無法直接同步這張表。若要即時同步，請改用公開 CSV 連結或 Apps Script API。');
   }
 
-  return rows
+  const headers = (response?.table?.cols || []).map((column, index) =>
+    String(column?.label || column?.id || `欄位 ${index + 1}`).trim()
+  );
+  const columns = buildChannelSummaryColumns(headers);
+  const mappedRows = rows
     .map((row, index) => {
       const cells = Array.isArray(row?.c) ? row.c : [];
       const record = { id: `sheet_${index}` };
-      CHANNEL_SUMMARY_COLUMNS.forEach((column) => {
+      columns.forEach((column) => {
         record[column.id] = readGvizCell(cells[column.index]);
       });
       return record;
     })
-    .filter((row) => Object.values(row).some((value) => String(value || '').trim()));
-}
+    .filter((row) => columns.some((column) => String(row[column.id] || '').trim()));
 
+  return { columns, rows: mappedRows };
+}
 function readGvizCell(cell) {
   if (!cell) return '';
   if (cell.f !== null && cell.f !== undefined && cell.f !== '') return String(cell.f);
@@ -1045,20 +1079,24 @@ function readGvizCell(cell) {
 
 function parseChannelSummaryCsv(csvText) {
   const rows = parseCsvRows(csvText);
-  if (!rows.length) return [];
+  if (!rows.length) return { columns: [], rows: [] };
   return mapChannelSummaryRowsByHeaders(rows);
 }
 
 function parseChannelSummaryApiResponse(payload) {
+  if (payload?.ok === false) throw new Error(payload.error || 'Apps Script API 回傳錯誤。');
+  const headers = Array.isArray(payload?.headers) ? payload.headers : [];
+
   if (Array.isArray(payload)) return mapChannelSummaryObjectRows(payload);
   if (Array.isArray(payload?.rows)) {
-    if (Array.isArray(payload.rows[0])) return mapChannelSummaryRowsByHeaders(payload.rows);
-    return mapChannelSummaryObjectRows(payload.rows);
+    if (Array.isArray(payload.rows[0])) {
+      return mapChannelSummaryRowsByHeaders(headers.length ? [headers, ...payload.rows] : payload.rows);
+    }
+    return mapChannelSummaryObjectRows(payload.rows, headers);
   }
   if (Array.isArray(payload?.values)) return mapChannelSummaryRowsByHeaders(payload.values);
-  throw new Error('Apps Script API 回傳格式不支援，請回傳 rows 陣列或 values 二維陣列。');
+  throw new Error('Apps Script API 回傳格式不支援，請回傳 headers 與 rows，或 values 二維陣列。');
 }
-
 /**
  * 將原始二維陣列轉換為更新列表資料。
  * 第一列為表頭，後續列為資料列。每個資料列會產生一個物件，其鍵為表頭文字，值為對應儲存格的內容。
@@ -1324,86 +1362,93 @@ function parseCsvRows(text) {
   return rows;
 }
 
+function normalizeChannelSummaryHeaderKey(value) {
+  return String(value || '').trim().toLowerCase().replace(/[\s_\-–—&＆/\\()（）]+/g, '');
+}
+
+function hashChannelSummaryHeader(value) {
+  let hash = 2166136261;
+  const text = String(value || '');
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function findKnownChannelSummaryColumn(header) {
+  const normalized = normalizeChannelSummaryHeaderKey(header);
+  return CHANNEL_SUMMARY_COLUMNS.find((column) =>
+    [column.id, column.label, ...(column.aliases || [])]
+      .some((candidate) => normalizeChannelSummaryHeaderKey(candidate) === normalized)
+  ) || null;
+}
+
+function buildChannelSummaryColumns(headers) {
+  const usedIds = new Map();
+  return (Array.isArray(headers) ? headers : [])
+    .map((header, index) => ({ label: String(header || '').trim(), index }))
+    .filter((item) => item.label)
+    .map(({ label, index }) => {
+      const known = findKnownChannelSummaryColumn(label);
+      const baseId = known?.id || `sheet_${hashChannelSummaryHeader(normalizeChannelSummaryHeaderKey(label) || `column_${index}`)}`;
+      const occurrence = (usedIds.get(baseId) || 0) + 1;
+      usedIds.set(baseId, occurrence);
+      return {
+        id: occurrence === 1 ? baseId : `${baseId}_${occurrence}`,
+        label,
+        index,
+        aliases: [label],
+        numeric: Boolean(known && CHANNEL_SUMMARY_NUMERIC_COLUMNS.has(known.id)),
+      };
+    });
+}
+
+function getChannelSummaryColumns() {
+  return Array.isArray(state.channelSummary.columns) && state.channelSummary.columns.length
+    ? state.channelSummary.columns
+    : CHANNEL_SUMMARY_COLUMNS;
+}
+
 function mapChannelSummaryRowsByHeaders(rows) {
+  if (!Array.isArray(rows) || !rows.length) return { columns: [], rows: [] };
   const [headerRow, ...dataRows] = rows;
-  // 建立表頭名稱至欄位索引的對照
-  const headerMap = new Map((headerRow || []).map((header, index) => [String(header || '').trim(), index]));
-  return dataRows
+  const columns = buildChannelSummaryColumns(headerRow || []);
+  const mappedRows = dataRows
     .map((row, index) => {
       const record = { id: `sheet_${index}` };
-      CHANNEL_SUMMARY_COLUMNS.forEach((column) => {
-        let values = [];
-        // 優先以正式 label 對應
-        const primaryIndex = headerMap.get(column.label);
-        if (primaryIndex !== undefined) {
-          const v = row[primaryIndex];
-          if (v !== undefined && v !== null && String(v).trim() !== '') {
-            values.push(String(v).trim());
-          }
-        }
-        // 若 primary 未匹配到或值為空，則依照 aliases 比對
-        if ((!values.length || column.joinAliases) && Array.isArray(column.aliases)) {
-          column.aliases.forEach((alias) => {
-            const idx = headerMap.get(alias);
-            if (idx !== undefined) {
-              const v = row[idx];
-              if (v !== undefined && v !== null && String(v).trim() !== '') {
-                values.push(String(v).trim());
-              }
-            }
-          });
-        }
-        // 將取得的值依需求組合：若有 joinAliases 則串接全部，否則取第一個值
-        let result = '';
-        if (values.length > 0) {
-          if (column.joinAliases) {
-            result = values.join('');
-          } else {
-            result = values[0];
-          }
-        }
-        record[column.id] = result;
+      columns.forEach((column) => {
+        const value = row?.[column.index];
+        record[column.id] = value !== undefined && value !== null ? String(value).trim() : '';
       });
       return record;
     })
-    .filter((row) => Object.values(row).some((value) => String(value || '').trim()));
+    .filter((row) => columns.some((column) => String(row[column.id] || '').trim()));
+  return { columns, rows: mappedRows };
 }
 
-function mapChannelSummaryObjectRows(rows) {
-  return rows
+function mapChannelSummaryObjectRows(rows, preferredHeaders = []) {
+  if (!Array.isArray(rows)) return { columns: [], rows: [] };
+  const firstRow = rows.find((row) => row && typeof row === 'object') || {};
+  const headers = (Array.isArray(preferredHeaders) && preferredHeaders.length ? preferredHeaders : Object.keys(firstRow))
+    .map((header) => String(header || '').trim())
+    .filter((header) => header && !header.endsWith('_url'));
+  const columns = buildChannelSummaryColumns(headers);
+  const mappedRows = rows
     .map((row, index) => {
       const record = { id: `sheet_${index}` };
-      CHANNEL_SUMMARY_COLUMNS.forEach((column) => {
-        const values = [];
-        // 優先以 id 或 label 對應
-        const primaryVal = row?.[column.id] ?? row?.[column.label];
-        if (primaryVal !== undefined && primaryVal !== null && String(primaryVal).trim() !== '') {
-          values.push(String(primaryVal).trim());
-        }
-        // 若需要合併或 primary 未匹配到/為空，則檢查 aliases
-        if ((!values.length || column.joinAliases) && Array.isArray(column.aliases)) {
-          column.aliases.forEach((alias) => {
-            const v = row?.[alias];
-            if (v !== undefined && v !== null && String(v).trim() !== '') {
-              values.push(String(v).trim());
-            }
-          });
-        }
-        let result = '';
-        if (values.length > 0) {
-          if (column.joinAliases) {
-            result = values.join('');
-          } else {
-            result = values[0];
-          }
-        }
-        record[column.id] = result;
+      columns.forEach((column) => {
+        const header = headers[column.index];
+        const value = row?.[header];
+        record[column.id] = value !== undefined && value !== null ? String(value).trim() : '';
+        const url = row?.[`${header}_url`];
+        if (url) record[`${column.id}_url`] = String(url).trim();
       });
       return record;
     })
-    .filter((row) => Object.values(row).some((value) => String(value || '').trim()));
+    .filter((row) => columns.some((column) => String(row[column.id] || '').trim()));
+  return { columns, rows: mappedRows };
 }
-
 function getFilteredChannelSummaryRows() {
   const search = state.channelSummary.search.trim().toLowerCase();
   const filteredRows = state.channelSummary.rows.filter((row) => {
@@ -1411,7 +1456,7 @@ function getFilteredChannelSummaryRows() {
     if (state.channelSummary.version && row.version !== state.channelSummary.version) return false;
     if (state.channelSummary.versionChecked && row.versionChecked !== state.channelSummary.versionChecked) return false;
     if (!search) return true;
-    return CHANNEL_SUMMARY_COLUMNS.some((column) => String(row[column.id] || '').toLowerCase().includes(search));
+    return getChannelSummaryColumns().some((column) => String(row[column.id] || '').toLowerCase().includes(search));
   });
 
   if (!state.channelSummary.sortKey) {
@@ -1430,9 +1475,18 @@ function parseChannelSummarySortValue(value, numeric) {
   return Number.isFinite(number) ? number : null;
 }
 
+function isChannelSummaryNumericColumn(columnId) {
+  if (CHANNEL_SUMMARY_NUMERIC_COLUMNS.has(columnId)) return true;
+  const column = getChannelSummaryColumns().find((item) => item.id === columnId);
+  if (column?.numeric) return true;
+  const values = state.channelSummary.rows
+    .map((row) => String(row[columnId] ?? '').trim())
+    .filter(Boolean);
+  return values.length > 0 && values.every((value) => Number.isFinite(Number(value.replace(/,/g, ''))));
+}
 function compareChannelSummaryRows(rowA, rowB) {
   const { sortKey, sortDirection } = state.channelSummary;
-  const numeric = CHANNEL_SUMMARY_NUMERIC_COLUMNS.has(sortKey);
+  const numeric = isChannelSummaryNumericColumn(sortKey);
   const valueA = parseChannelSummarySortValue(rowA[sortKey], numeric);
   const valueB = parseChannelSummarySortValue(rowB[sortKey], numeric);
 
@@ -1656,7 +1710,7 @@ function renderChannelSummaryView() {
   if (state.channelSummary.loading) {
     els.channelSummarySyncStatus.textContent = '同步中';
   } else if (state.channelSummary.lastFetchedAt) {
-    els.channelSummarySyncStatus.textContent = `更新 ${new Date(state.channelSummary.lastFetchedAt).toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
+    els.channelSummarySyncStatus.textContent = `更新 ${new Date(state.channelSummary.lastFetchedAt).toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}・${getChannelSummaryColumns().length} 欄`;
   } else {
     els.channelSummarySyncStatus.textContent = '尚未同步';
   }
@@ -1682,7 +1736,7 @@ function renderChannelSummaryView() {
   els.channelSummaryTableBody.innerHTML = '';
   filteredRows.forEach((row) => {
     const tr = document.createElement('tr');
-    CHANNEL_SUMMARY_COLUMNS.forEach((column) => {
+    getChannelSummaryColumns().forEach((column) => {
       // Skip columns hidden by user settings
       if (isColumnHidden('channelSummary', column.id)) return;
       const td = document.createElement('td');
@@ -1695,7 +1749,7 @@ function renderChannelSummaryView() {
 
 function renderChannelSummaryHead() {
   const tr = document.createElement('tr');
-  CHANNEL_SUMMARY_COLUMNS.forEach((column) => {
+  getChannelSummaryColumns().forEach((column) => {
     // Skip hidden columns in header
     if (isColumnHidden('channelSummary', column.id)) return;
     const th = document.createElement('th');
@@ -3361,6 +3415,7 @@ function addField(tableType) {
 
 function openFieldSettings(tableType) {
   state.fieldSettingsTarget = tableType;
+  els.addFieldFromModalBtn.hidden = tableType === 'channelSummary';
   if (tableType === 'channelSummary') {
     // Channel summary columns have their own settings (only visibility)
     els.fieldSettingsTitle.textContent = '統整表欄位設定';
@@ -3447,7 +3502,7 @@ function renderFieldSettingsList() {
 function renderChannelSummaryFieldSettingsList() {
   if (!els.fieldSettingsList) return;
   els.fieldSettingsList.innerHTML = '';
-  CHANNEL_SUMMARY_COLUMNS.forEach((column) => {
+  getChannelSummaryColumns().forEach((column) => {
     const row = document.createElement('div');
     row.className = 'settings-item';
     // Label: show column label without input (cannot rename)
@@ -3992,6 +4047,7 @@ els.channelSummarySyncSaveBtn?.addEventListener('click', () => {
     url: String(els.channelSummarySyncUrl?.value || '').trim(),
   };
   saveState();
+  state.channelSummary.columns = structuredClone(CHANNEL_SUMMARY_COLUMNS);
   state.channelSummary.rows = [];
   state.channelSummary.error = '';
   state.channelSummary.lastFetchedAt = 0;
@@ -4032,7 +4088,7 @@ els.channelSummaryTableHead?.addEventListener('click', (event) => {
     state.channelSummary.sortDirection = state.channelSummary.sortDirection === 'asc' ? 'desc' : 'asc';
   } else {
     state.channelSummary.sortKey = sortKey;
-    state.channelSummary.sortDirection = CHANNEL_SUMMARY_NUMERIC_COLUMNS.has(sortKey) ? 'desc' : 'asc';
+    state.channelSummary.sortDirection = isChannelSummaryNumericColumn(sortKey) ? 'desc' : 'asc';
   }
 
   renderChannelSummaryView();
@@ -4088,15 +4144,6 @@ els.captureNextPageBtn?.addEventListener('click', () => {
 window.addEventListener('resize', () => {
   if (state.captureMode) updateCaptureFit();
 });
-window.setInterval(() => {
-  if (state.view === 'channel-summary') {
-    void refreshChannelSummary();
-  }
-  if (state.view === 'update-list') {
-    void refreshUpdateList();
-  }
-}, 60000);
-
 
 els.dataBackupExportBtn?.addEventListener('click', exportDashboardBackup);
 els.dataBackupImportBtn?.addEventListener('click', () => els.dataBackupFile?.click());
@@ -4109,10 +4156,19 @@ els.dataBackupFile?.addEventListener('change', (event) => {
 els.stickyNotesToggle?.addEventListener('click', () => { state.stickyNotesOpen = !state.stickyNotesOpen; renderStickyNotes(); });
 els.stickyNotesCloseBtn?.addEventListener('click', () => { state.stickyNotesOpen = false; renderStickyNotes(); });
 els.stickyNoteAddBtn?.addEventListener('click', addStickyNote);
+els.stickyNotesActiveTab?.addEventListener('click', () => { state.stickyNotesView = 'active'; renderStickyNotes(); });
+els.stickyNotesArchiveTab?.addEventListener('click', () => { state.stickyNotesView = 'archive'; renderStickyNotes(); });
+els.stickyNotesSearch?.addEventListener('input', (event) => { state.stickyNotesSearch = event.target.value; renderStickyNotes(); });
 els.stickyNotesList?.addEventListener('input', (event) => { const card = event.target.closest('[data-id]'); if (card && event.target.matches('[data-action="edit-sticky-note"]')) updateStickyNote(card.dataset.id, { text: event.target.value }); });
 els.stickyNotesList?.addEventListener('change', (event) => {
   const card = event.target.closest('[data-id]'); if (!card) return;
-  if (event.target.matches('[data-action="complete-sticky-note"]')) { updateStickyNote(card.dataset.id, { completed: event.target.checked }); renderStickyNotes(); }
+  if (event.target.matches('[data-action="complete-sticky-note"]')) {
+    updateStickyNote(card.dataset.id, {
+      completed: event.target.checked,
+      completedAt: event.target.checked ? new Date().toISOString() : '',
+    });
+    renderStickyNotes();
+  }
   if (event.target.matches('[data-action="color-sticky-note"]')) { updateStickyNote(card.dataset.id, { color: event.target.value }); renderStickyNotes(); }
 });
 els.stickyNotesList?.addEventListener('click', (event) => { const card = event.target.closest('[data-id]'); if (card && event.target.matches('[data-action="delete-sticky-note"]') && confirm('要刪除這張便利貼嗎？')) deleteStickyNote(card.dataset.id); });
