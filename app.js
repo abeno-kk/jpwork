@@ -154,6 +154,12 @@ const CHANNEL_SUMMARY_COLUMNS = [
     index: 13,
     aliases: ['CDN測試', 'CDN测试'],
   },
+  {
+    id: 'jointChannel',
+    label: '聯運渠道',
+    index: 14,
+    aliases: ['聯運渠道', '联运渠道'],
+  },
 ];
 
 const CHANNEL_SUMMARY_NUMERIC_COLUMNS = new Set([
@@ -194,6 +200,7 @@ const state = {
     channel: '',
     version: '',
     versionChecked: '',
+    jointChannel: '',
     sortKey: '',
     sortDirection: 'asc',
   },
@@ -274,6 +281,7 @@ const els = {
   channelSummaryChannelFilter: document.getElementById('channel-summary-channel-filter'),
   channelSummaryVersionFilter: document.getElementById('channel-summary-version-filter'),
   channelSummaryConfirmFilter: document.getElementById('channel-summary-confirm-filter'),
+  channelSummaryJointChannelFilter: document.getElementById('channel-summary-joint-channel-filter'),
   channelSummaryClearBtn: document.getElementById('channel-summary-clear-btn'),
   channelSummaryMessage: document.getElementById('channel-summary-message'),
   channelSummaryHelp: document.getElementById('channel-summary-help'),
@@ -1455,6 +1463,7 @@ function getFilteredChannelSummaryRows() {
     if (state.channelSummary.channel && row.channel !== state.channelSummary.channel) return false;
     if (state.channelSummary.version && row.version !== state.channelSummary.version) return false;
     if (state.channelSummary.versionChecked && row.versionChecked !== state.channelSummary.versionChecked) return false;
+    if (state.channelSummary.jointChannel && row.jointChannel !== state.channelSummary.jointChannel) return false;
     if (!search) return true;
     return getChannelSummaryColumns().some((column) => String(row[column.id] || '').toLowerCase().includes(search));
   });
@@ -1779,15 +1788,17 @@ function renderChannelSummaryHead() {
 }
 
 function syncChannelSummaryFilters() {
-  if (!els.channelSummaryChannelFilter || !els.channelSummaryVersionFilter || !els.channelSummaryConfirmFilter) return;
+  if (!els.channelSummaryChannelFilter || !els.channelSummaryVersionFilter || !els.channelSummaryConfirmFilter || !els.channelSummaryJointChannelFilter) return;
 
   const channels = [...new Set(state.channelSummary.rows.map((row) => row.channel).filter(Boolean))];
   const versions = [...new Set(state.channelSummary.rows.map((row) => row.version).filter(Boolean))];
   const checks = [...new Set(state.channelSummary.rows.map((row) => row.versionChecked).filter(Boolean))];
+  const jointChannels = [...new Set(state.channelSummary.rows.map((row) => row.jointChannel).filter(Boolean))];
 
   fillSelectOptions(els.channelSummaryChannelFilter, '全部渠道', channels, state.channelSummary.channel);
   fillSelectOptions(els.channelSummaryVersionFilter, '全部版本', versions, state.channelSummary.version);
   fillSelectOptions(els.channelSummaryConfirmFilter, '全部確認狀態', checks, state.channelSummary.versionChecked);
+  fillSelectOptions(els.channelSummaryJointChannelFilter, '全部聯運渠道', jointChannels, state.channelSummary.jointChannel);
   els.channelSummarySearch.value = state.channelSummary.search;
 }
 
@@ -4070,11 +4081,16 @@ els.channelSummaryConfirmFilter?.addEventListener('change', () => {
   state.channelSummary.versionChecked = els.channelSummaryConfirmFilter.value || '';
   renderChannelSummaryView();
 });
+els.channelSummaryJointChannelFilter?.addEventListener('change', () => {
+  state.channelSummary.jointChannel = els.channelSummaryJointChannelFilter.value || '';
+  renderChannelSummaryView();
+});
 els.channelSummaryClearBtn?.addEventListener('click', () => {
   state.channelSummary.search = '';
   state.channelSummary.channel = '';
   state.channelSummary.version = '';
   state.channelSummary.versionChecked = '';
+  state.channelSummary.jointChannel = '';
   renderChannelSummaryView();
 });
 els.channelSummaryTableHead?.addEventListener('click', (event) => {
