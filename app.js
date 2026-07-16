@@ -4470,6 +4470,14 @@ function persistDialogDbRootFix() {
     return state.data.dialogDb.templates.find((item) => item.id === state.data.dialogDb.selectedId) || null;
   }
 
+  function dialogCategoryContainsTemplate(category, item) {
+    if (!item) return false;
+    if (category === '\u5168\u90e8') return true;
+    if (category === '\u6536\u85cf') return Boolean(item.favorite);
+    if (category === '\u6700\u8fd1\u4f7f\u7528') return (state.data.dialogDb.recentIds || []).includes(item.id);
+    return item.category === category;
+  }
+
   function setDialogRecent(id) {
     ensureDialogState();
     state.data.dialogDb.recentIds = [id, ...(state.data.dialogDb.recentIds || []).filter((item) => item !== id)].slice(0, 20);
@@ -4521,6 +4529,11 @@ function persistDialogDbRootFix() {
     }
 
     let item = getSelectedDialogTemplate();
+    const selectedCategory = state.data.dialogDb.selectedCategory || '\u5168\u90e8';
+    if (item && !dialogCategoryContainsTemplate(selectedCategory, item)) {
+      item = null;
+      state.data.dialogDb.selectedId = '';
+    }
     if (!item) {
       item = { id: uidDialog(), createdAt: new Date().toISOString(), favorite: false };
       state.data.dialogDb.templates.unshift(item);
@@ -4626,6 +4639,18 @@ function persistDialogDbRootFix() {
     setDialogEditorStatus('新增模式：填寫完成後按「儲存話術」', 'draft');
   }
 
+  function selectDialogCategory(category) {
+    ensureDialogState();
+    if (category === state.data.dialogDb.selectedCategory) return;
+    if (!confirmDiscardDialogChanges()) return;
+
+    dialogEditorDirty = false;
+    state.data.dialogDb.selectedCategory = category;
+    state.data.dialogDb.selectedId = '';
+    saveState();
+    renderDialogDb();
+  }
+
   function filteredDialogTemplates() {
     ensureDialogState();
     const els = getDialogEls();
@@ -4702,7 +4727,16 @@ function persistDialogDbRootFix() {
     els.categoryCount && (els.categoryCount.textContent = state.data.dialogDb.categories.length);
     els.templateCount && (els.templateCount.textContent = state.data.dialogDb.templates.length);
 
-    if (!dialogEditorDirty) fillDialogEditor(getSelectedDialogTemplate());
+    if (!dialogEditorDirty) {
+      const selectedItem = getSelectedDialogTemplate();
+      if (selectedItem && !dialogCategoryContainsTemplate(state.data.dialogDb.selectedCategory || '\u5168\u90e8', selectedItem)) {
+        state.data.dialogDb.selectedId = '';
+        saveState();
+        fillDialogEditor(null);
+      } else {
+        fillDialogEditor(selectedItem);
+      }
+    }
   };
 
   
@@ -4720,10 +4754,7 @@ function ensureDialogNavButton() {
 
     const cat = event.target.closest('[data-dialog-category]');
     if (cat) {
-      ensureDialogState();
-      state.data.dialogDb.selectedCategory = cat.dataset.dialogCategory;
-      saveState();
-      renderDialogDb();
+      selectDialogCategory(cat.dataset.dialogCategory);
       return;
     }
 
