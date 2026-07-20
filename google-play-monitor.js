@@ -219,7 +219,7 @@
     try {
       var parsed = parsePlayUrl(els.url.value);
       if (githubMode) {
-        window.alert('GitHub 每日監控網址需加入網址清單。接著會開啟清單編輯頁，加入後按 Commit changes。');
+        window.alert('GitHub 自動監控網址需加入網址清單。接著會開啟清單編輯頁，加入後按 Commit changes。');
         window.open(githubConfigUrl, '_blank', 'noopener,noreferrer');
         return;
       }
@@ -330,7 +330,7 @@
   if (githubMode) {
     els.interval.disabled = true;
     els.checkAll.textContent = '前往 GitHub 立即檢查';
-    setServiceStatus('每日早上 8:00 由 GitHub 自動檢查', false);
+    setServiceStatus('每小時由 GitHub 自動檢查', false);
     void syncFromGitHub();
   }
   window.setInterval(maybeAutoCheck, 60 * 1000);

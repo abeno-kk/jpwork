@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-20T03:41:23.302Z",
+  "updatedAt": "2026-07-20T08:19:41.617Z",
   "items": [
     {
       "ok": true,
@@ -10,7 +10,7 @@
       "installs": "1K",
       "previousInstalls": "1K",
       "changed": false,
-      "checkedAt": "2026-07-20T03:41:17.994Z",
+      "checkedAt": "2026-07-20T08:19:33.591Z",
       "error": ""
     },
     {
@@ -20,10 +20,22 @@
       "note": "Fishing Challenge QA Ice",
       "title": "Fishing Challenge QA Ice",
       "installs": "1K",
-      "previousInstalls": "100",
-      "changed": true,
-      "checkedAt": "2026-07-20T03:41:20.699Z",
+      "previousInstalls": "1K",
+      "changed": false,
+      "checkedAt": "2026-07-20T08:19:36.359Z",
       "error": ""
+    },
+    {
+      "ok": false,
+      "appId": "com.aviaworldwar.orbitravelvcc",
+      "url": "https://play.google.com/store/apps/details?id=com.aviaworldwar.orbitravelvcc",
+      "note": "212",
+      "title": "com.aviaworldwar.orbitravelvcc",
+      "installs": "",
+      "previousInstalls": "",
+      "changed": false,
+      "checkedAt": "2026-07-20T08:19:39.026Z",
+      "error": "Google Play returned HTTP 404"
     }
   ]
 }
