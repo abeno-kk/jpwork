@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-19T03:27:52.827Z",
+  "updatedAt": "2026-07-20T03:41:23.302Z",
   "items": [
     {
       "ok": true,
@@ -8,9 +8,9 @@
       "note": "Sea Ice Fishing:Shooting",
       "title": "Sea Ice Fishing:Shooting",
       "installs": "1K",
-      "previousInstalls": "500",
-      "changed": true,
-      "checkedAt": "2026-07-19T03:27:47.237Z",
+      "previousInstalls": "1K",
+      "changed": false,
+      "checkedAt": "2026-07-20T03:41:17.994Z",
       "error": ""
     },
     {
@@ -19,10 +19,10 @@
       "url": "https://play.google.com/store/apps/details?id=com.icefishinglumo.rightlemon",
       "note": "Fishing Challenge QA Ice",
       "title": "Fishing Challenge QA Ice",
-      "installs": "100",
-      "previousInstalls": "0",
+      "installs": "1K",
+      "previousInstalls": "100",
       "changed": true,
-      "checkedAt": "2026-07-19T03:27:49.931Z",
+      "checkedAt": "2026-07-20T03:41:20.699Z",
       "error": ""
     }
   ]
