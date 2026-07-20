@@ -21,7 +21,6 @@
   var checkingAll = false;
   var githubMode = location.hostname === 'abeno-kk.github.io';
   var githubWorkflowUrl = 'https://github.com/abeno-kk/jpwork/actions/workflows/google-play-monitor.yml';
-  var githubConfigUrl = 'https://github.com/abeno-kk/jpwork/edit/main/google-play-urls.json';
   var githubResultsUrl = 'https://raw.githubusercontent.com/abeno-kk/jpwork/main/google-play-results.json';
 
   function monitors() {
@@ -219,8 +218,27 @@
     try {
       var parsed = parsePlayUrl(els.url.value);
       if (githubMode) {
-        window.alert('GitHub 自動監控網址需加入網址清單。接著會開啟清單編輯頁，加入後按 Commit changes。');
-        window.open(githubConfigUrl, '_blank', 'noopener,noreferrer');
+        var request = {
+          url: parsed.url,
+          note: els.label.value.trim()
+        };
+        var issueBody = [
+          '請確認以下資料後按 Submit new issue。GitHub 會自動加入監控並抓取下載數。',
+          '',
+          'Google Play: ' + request.url,
+          '備註: ' + (request.note || '無'),
+          '',
+          '<!-- google-play-monitor-request',
+          JSON.stringify(request),
+          '-->'
+        ].join('\n');
+        var issueUrl = 'https://github.com/abeno-kk/jpwork/issues/new'
+          + '?title=' + encodeURIComponent('[Google Play Monitor] Add app')
+          + '&body=' + encodeURIComponent(issueBody);
+        window.open(issueUrl, '_blank', 'noopener,noreferrer');
+        setServiceStatus('已開啟自動加入申請；按 Submit new issue 後會自動寫入', false);
+        els.url.value = '';
+        els.label.value = '';
         return;
       }
       var existing = monitors().find(function (item) {

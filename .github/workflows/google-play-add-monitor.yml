@@ -1,0 +1,72 @@
+name: Add Google Play monitor
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: google-play-monitor
+  cancel-in-progress: false
+
+jobs:
+  add:
+    if: >-
+      github.event.issue.title == '[Google Play Monitor] Add app' &&
+      github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate and add monitor
+        id: add
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: node scripts/add-google-play-monitor.mjs
+
+      - name: Fetch latest download counts
+        if: steps.add.outputs.status == 'added'
+        run: node scripts/check-google-play.mjs
+
+      - name: Save monitor
+        if: steps.add.outputs.status == 'added'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add google-play-urls.json google-play-results.json
+          git commit -m "Add Google Play monitor: ${{ steps.add.outputs.app_id }}"
+          git push
+
+      - name: Confirm and close request
+        uses: actions/github-script@v7
+        env:
+          RESULT_STATUS: ${{ steps.add.outputs.status }}
+          APP_ID: ${{ steps.add.outputs.app_id }}
+        with:
+          script: |
+            const added = process.env.RESULT_STATUS === 'added';
+            const body = added
+              ? `Added \`${process.env.APP_ID}\` and completed the first download count check.`
+              : `\`${process.env.APP_ID}\` is already monitored; no duplicate was added.`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
