@@ -40,19 +40,46 @@
       .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
   }
 
+  function isGoogleSheetUrl(value) {
+    try {
+      var url = new URL(String(value || '').trim(), window.location.href);
+      return url.hostname === 'docs.google.com' && url.pathname.includes('/spreadsheets/d/');
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function normalizeSyncConfig(config) {
+    var url = String(config && config.url || '').trim();
+    var mode = config && config.mode || 'apps-script';
+    if (isGoogleSheetUrl(url)) mode = 'sheet-direct';
+    return { mode: mode, url: url };
+  }
+
+  function resolveDirectSource() {
+    var result = { spreadsheetId: SOURCE.spreadsheetId, gid: SOURCE.gid };
+    if (!isGoogleSheetUrl(syncConfig.url)) return result;
+    var url = new URL(syncConfig.url, window.location.href);
+    var pathParts = url.pathname.split('/spreadsheets/d/');
+    if (pathParts[1]) result.spreadsheetId = pathParts[1].split('/')[0];
+    var gid = url.searchParams.get('gid');
+    if (!gid && url.hash) gid = new URLSearchParams(url.hash.replace(/^#/, '')).get('gid');
+    if (gid) result.gid = gid;
+    return result;
+  }
   function loadSettings() {
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
     catch (error) { saved = {}; }
     state.hiddenHeaders = new Set(Array.isArray(saved.hiddenHeaders) ? saved.hiddenHeaders : []);
-    if (saved.sync && saved.sync.url) return saved.sync;
+    if (saved.sync && saved.sync.url) return normalizeSyncConfig(saved.sync);
     try {
       var dashboard = JSON.parse(localStorage.getItem('local-dashboard-app-v1') || '{}') || {};
       if (dashboard.channelSummarySync && dashboard.channelSummarySync.url) {
-        return { mode: dashboard.channelSummarySync.mode || 'apps-script', url: dashboard.channelSummarySync.url };
+        return normalizeSyncConfig({ mode: dashboard.channelSummarySync.mode || 'apps-script', url: dashboard.channelSummarySync.url });
       }
     } catch (error) {}
-    return { mode: 'apps-script', url: '' };
+    return normalizeSyncConfig({ mode: 'apps-script', url: '' });
   }
 
   var syncConfig = loadSettings();
@@ -304,6 +331,7 @@
   }
 
   function loadRows() {
+    syncConfig = normalizeSyncConfig(syncConfig);
     if (syncConfig.mode === 'public-csv') {
       if (!syncConfig.url) return Promise.reject(new Error('\u8acb\u5148\u8cbc\u4e0a\u516c\u958b CSV \u9023\u7d50'));
       return fetch(syncConfig.url).then(function (response) {
@@ -312,10 +340,11 @@
       }).then(parseCsv);
     }
     if (syncConfig.mode === 'sheet-direct') {
+      var directSource = resolveDirectSource();
       return jsonp(function (callbackName) {
         var tqx = encodeURIComponent('out:json;responseHandler:' + callbackName);
-        return 'https://docs.google.com/spreadsheets/d/' + SOURCE.spreadsheetId +
-          '/gviz/tq?gid=' + SOURCE.gid + '&headers=1&tqx=' + tqx;
+        return 'https://docs.google.com/spreadsheets/d/' + directSource.spreadsheetId +
+          '/gviz/tq?gid=' + directSource.gid + '&headers=1&tqx=' + tqx;
       }, '__poisonMonitorSheet_', rowsFromGviz);
     }
     if (!syncConfig.url) {
@@ -358,7 +387,7 @@
 
   els.refresh.addEventListener('click', refresh);
   els.syncSave.addEventListener('click', function () {
-    syncConfig = { mode: els.syncMode.value || 'apps-script', url: String(els.syncUrl.value || '').trim() };
+    syncConfig = normalizeSyncConfig({ mode: els.syncMode.value || 'apps-script', url: String(els.syncUrl.value || '').trim() });
     saveSettings();
     refresh();
   });
