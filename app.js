@@ -201,6 +201,7 @@ const state = {
     version: '',
     versionChecked: '',
     jointChannel: '',
+    packageName: '',
     sortKey: '',
     sortDirection: 'asc',
   },
@@ -282,6 +283,7 @@ const els = {
   channelSummaryVersionFilter: document.getElementById('channel-summary-version-filter'),
   channelSummaryConfirmFilter: document.getElementById('channel-summary-confirm-filter'),
   channelSummaryJointChannelFilter: document.getElementById('channel-summary-joint-channel-filter'),
+  channelSummaryPackageNameFilter: document.getElementById('channel-summary-package-name-filter'),
   channelSummaryClearBtn: document.getElementById('channel-summary-clear-btn'),
   channelSummaryMessage: document.getElementById('channel-summary-message'),
   channelSummaryHelp: document.getElementById('channel-summary-help'),
@@ -1464,6 +1466,7 @@ function getFilteredChannelSummaryRows() {
     if (state.channelSummary.version && row.version !== state.channelSummary.version) return false;
     if (state.channelSummary.versionChecked && row.versionChecked !== state.channelSummary.versionChecked) return false;
     if (state.channelSummary.jointChannel && row.jointChannel !== state.channelSummary.jointChannel) return false;
+    if (state.channelSummary.packageName && row.packageName !== state.channelSummary.packageName) return false;
     if (!search) return true;
     return getChannelSummaryColumns().some((column) => String(row[column.id] || '').toLowerCase().includes(search));
   });
@@ -1788,17 +1791,19 @@ function renderChannelSummaryHead() {
 }
 
 function syncChannelSummaryFilters() {
-  if (!els.channelSummaryChannelFilter || !els.channelSummaryVersionFilter || !els.channelSummaryConfirmFilter || !els.channelSummaryJointChannelFilter) return;
+  if (!els.channelSummaryChannelFilter || !els.channelSummaryVersionFilter || !els.channelSummaryConfirmFilter || !els.channelSummaryJointChannelFilter || !els.channelSummaryPackageNameFilter) return;
 
   const channels = [...new Set(state.channelSummary.rows.map((row) => row.channel).filter(Boolean))];
   const versions = [...new Set(state.channelSummary.rows.map((row) => row.version).filter(Boolean))];
   const checks = [...new Set(state.channelSummary.rows.map((row) => row.versionChecked).filter(Boolean))];
   const jointChannels = [...new Set(state.channelSummary.rows.map((row) => row.jointChannel).filter(Boolean))];
+  const packageNames = [...new Set(state.channelSummary.rows.map((row) => row.packageName).filter(Boolean))];
 
   fillSelectOptions(els.channelSummaryChannelFilter, '全部渠道', channels, state.channelSummary.channel);
   fillSelectOptions(els.channelSummaryVersionFilter, '全部版本', versions, state.channelSummary.version);
   fillSelectOptions(els.channelSummaryConfirmFilter, '全部確認狀態', checks, state.channelSummary.versionChecked);
   fillSelectOptions(els.channelSummaryJointChannelFilter, '全部聯運渠道', jointChannels, state.channelSummary.jointChannel);
+  fillSelectOptions(els.channelSummaryPackageNameFilter, '全部包名稱', packageNames, state.channelSummary.packageName);
   els.channelSummarySearch.value = state.channelSummary.search;
 }
 
@@ -4085,12 +4090,17 @@ els.channelSummaryJointChannelFilter?.addEventListener('change', () => {
   state.channelSummary.jointChannel = els.channelSummaryJointChannelFilter.value || '';
   renderChannelSummaryView();
 });
+els.channelSummaryPackageNameFilter?.addEventListener('change', () => {
+  state.channelSummary.packageName = els.channelSummaryPackageNameFilter.value || '';
+  renderChannelSummaryView();
+});
 els.channelSummaryClearBtn?.addEventListener('click', () => {
   state.channelSummary.search = '';
   state.channelSummary.channel = '';
   state.channelSummary.version = '';
   state.channelSummary.versionChecked = '';
   state.channelSummary.jointChannel = '';
+  state.channelSummary.packageName = '';
   renderChannelSummaryView();
 });
 els.channelSummaryTableHead?.addEventListener('click', (event) => {
