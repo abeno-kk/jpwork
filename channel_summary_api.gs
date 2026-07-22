@@ -5,6 +5,10 @@ const SHEETS = {
     gid: 1318283124,
     name: '渠道APPID總表-測試',
   },
+  'poison-monitor': {
+    gid: 1177376120,
+    name: '報毒監控',
+  },
   updates: {
     gid: 994439579,
     name: '更新記錄',
@@ -18,7 +22,7 @@ function doGet(e) {
     const config = SHEETS[type];
 
     if (!config) {
-      return output_({ ok: false, error: 'type錯誤，只能用 channel 或 updates', headers: [], rows: [] }, callback);
+      return output_({ ok: false, error: 'Unsupported data type: ' + type, headers: [], rows: [] }, callback);
     }
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);

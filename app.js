@@ -881,7 +881,7 @@ function renderNavigation() {
 
   const activeGroup = state.view === 'tasks' || state.view === 'task-archive'
     ? 'tasks'
-    : ['channels', 'channel-history', 'channel-summary', 'update-list', 'google-play-monitor'].includes(state.view)
+    : ['channels', 'channel-history', 'channel-summary', 'poison-monitor', 'update-list', 'google-play-monitor'].includes(state.view)
       ? 'channels'
       : '';
 
@@ -917,6 +917,8 @@ function renderNavigation() {
         ? '資料工具'
       : state.view === 'orders'
         ? '發單解析'
+      : state.view === 'poison-monitor'
+        ? '報毒控表'
       : state.view === 'update-list'
         ? '更新列表'
       : state.view === 'google-play-monitor'

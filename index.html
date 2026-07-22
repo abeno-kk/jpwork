@@ -42,6 +42,7 @@
               <button class="nav-button" data-view="channel-history">歷史批次</button>
               <button class="nav-button" data-view="channel-summary">渠道統整表</button>
               <button class="nav-button" data-view="update-list">更新列表</button>
+              <button class="nav-button" data-view="poison-monitor">&#22577;&#27602;&#25511;&#34920;</button>
               <button class="nav-button" data-view="google-play-monitor">Google Play 監控</button>
             </div>
           </div>
@@ -434,6 +435,69 @@
           </section>
         </section>
 
+        <section id="poison-monitor-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">&#22577;&#27602;&#25511;&#34920;</h3>
+              <p class="task-topbar-text">&#21516;&#27493; Google Sheet&#12300;&#22577;&#27602;&#30435;&#25511;&#12301;&#20998;&#38913;&#65292;&#21487;&#25628;&#23563;&#12289;&#25490;&#24207;&#33287;&#31721;&#36984;&#22577;&#27602;&#29376;&#24907;&#12290;</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">&#20358;&#28304;&#65306;<strong>&#22577;&#27602;&#30435;&#25511;</strong></span>
+              <span class="summary-pill">&#31558;&#25976;&#65306;<strong id="poison-monitor-count">0</strong></span>
+              <span class="summary-pill">&#24050;&#22577;&#27602;&#65306;<strong id="poison-monitor-poison-count">0</strong></span>
+              <span id="poison-monitor-sync-status" class="summary-pill">&#23578;&#26410;&#21516;&#27493;</span>
+              <button id="poison-monitor-refresh-btn" class="secondary-button compact-button" type="button">&#37325;&#26032;&#25972;&#29702;</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div><h3>Google Sheet &#22577;&#27602;&#30435;&#25511;&#34920;</h3></div>
+              <div class="history-toolbar">
+                <select id="poison-monitor-sync-mode" class="date-input channel-summary-filter">
+                  <option value="apps-script">Apps Script API</option>
+                  <option value="public-csv">&#20844;&#38283; CSV &#36899;&#32080;</option>
+                  <option value="sheet-direct">Google Sheet &#30452;&#25509;&#35712;&#21462;</option>
+                </select>
+                <input id="poison-monitor-sync-url" type="text" class="date-input channel-summary-sync-url" placeholder="&#33258;&#21205;&#27839;&#29992;&#28192;&#36947;&#32113;&#25972;&#34920;&#30340; Apps Script API &#32178;&#22336;" />
+                <button id="poison-monitor-sync-save-btn" class="secondary-button compact-mini-button" type="button">&#20786;&#23384;&#21516;&#27493;&#20358;&#28304;</button>
+                <input id="poison-monitor-search" type="text" class="date-input channel-summary-search" placeholder="&#25628;&#23563; APPID&#12289;&#36938;&#25138;&#21517;&#31281;&#12289;&#21253;&#21517;&#25110;&#20854;&#20182;&#27396;&#20301;" />
+                <select id="poison-monitor-online-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-developer-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-mechanism-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-poison-filter" class="date-input channel-summary-filter">
+                  <option value="">&#20840;&#37096;&#22577;&#27602;&#29376;&#24907;</option>
+                  <option value="poisoned">&#24050;&#22577;&#27602;</option>
+                  <option value="clean">&#26410;&#22577;&#27602;</option>
+                </select>
+                <button id="poison-monitor-clear-btn" class="secondary-button compact-mini-button" type="button">&#28165;&#38500;&#26781;&#20214;</button>
+                <button id="poison-monitor-field-settings-btn" class="secondary-button compact-mini-button" type="button">&#27396;&#20301;&#35373;&#23450;</button>
+              </div>
+            </div>
+            <div id="poison-monitor-message" class="channel-summary-message" hidden></div>
+            <div class="channel-summary-help">
+              &#27492;&#38913;&#33258;&#21205;&#27839;&#29992;&#28192;&#36947;&#32113;&#25972;&#34920;&#30340; Apps Script &#32178;&#22336;&#65292;&#20006;&#20197; <code>type=poison-monitor</code> &#35712;&#21462;&#12300;&#22577;&#27602;&#30435;&#25511;&#12301;&#20998;&#38913;&#12290;
+              &#26356;&#26032; <code>channel_summary_api.gs</code> &#24460;&#35531;&#37325;&#26032;&#37096;&#32626; Apps Script &#32178;&#38913;&#25033;&#29992;&#31243;&#24335;&#12290;
+            </div>
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table poison-monitor-table">
+                <thead id="poison-monitor-table-head"></thead>
+                <tbody id="poison-monitor-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <dialog id="poison-monitor-field-dialog" class="settings-modal">
+            <form method="dialog" class="settings-modal-card">
+              <div class="settings-modal-head">
+                <div><p class="panel-label">Field Settings</p><h3>&#22577;&#27602;&#25511;&#34920;&#27396;&#20301;&#35373;&#23450;</h3></div>
+                <button class="icon-button" value="cancel" aria-label="&#38364;&#38281;">&#10005;</button>
+              </div>
+              <div id="poison-monitor-field-list" class="settings-list"></div>
+            </form>
+          </dialog>
+        </section>
+
         <section id="google-play-monitor-view" class="view">
           <div class="task-topbar">
             <div>
@@ -698,6 +762,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
     <button id="capture-exit-btn" class="primary-button capture-exit-button" type="button" hidden>返回首頁</button>
 
     <script src="./app.js"></script>
+    <script src="./poison-monitor.js"></script>
     <script src="./google-play-monitor.js"></script>
     <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->
     <script>
@@ -1181,11 +1246,16 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
               parsed.groupOrder = parsed.groupOrder && typeof parsed.groupOrder === 'object' ? parsed.groupOrder : {};
               const channelKey = 'group-channels';
               const channelOrder = Array.isArray(parsed.groupOrder[channelKey]) ? parsed.groupOrder[channelKey] : [];
+              if (!channelOrder.includes('poison-monitor')) {
+                const updateIndex = channelOrder.indexOf('update-list');
+                channelOrder.splice(updateIndex >= 0 ? updateIndex + 1 : channelOrder.length, 0, 'poison-monitor');
+              }
               if (!channelOrder.includes('google-play-monitor')) {
                 const updateIndex = channelOrder.indexOf('update-list');
                 channelOrder.splice(updateIndex >= 0 ? updateIndex + 1 : channelOrder.length, 0, 'google-play-monitor');
               }
               parsed.groupOrder[channelKey] = channelOrder;
+              if (!parsed.titles['poison-monitor']) parsed.titles['poison-monitor'] = '報毒控表';
               if (!parsed.titles['google-play-monitor']) parsed.titles['google-play-monitor'] = 'Google Play 監控';
               localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(parsed));
               return parsed;

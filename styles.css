@@ -1922,3 +1922,23 @@ body.capture-mode .sticky-notes-toggle, body.capture-mode .sticky-notes-panel { 
   border-color: rgba(36, 79, 120, 0.42) !important;
 }
 
+
+/* Poison monitor */
+.poison-monitor-table tbody tr.is-poisoned td {
+  background: #fff1ee;
+}
+
+.poison-monitor-table td {
+  max-width: 360px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.poison-monitor-table td a {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
+.poison-monitor-settings-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
