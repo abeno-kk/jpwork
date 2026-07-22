@@ -439,10 +439,10 @@
           <div class="task-topbar">
             <div>
               <h3 class="task-topbar-title">&#22577;&#27602;&#25511;&#34920;</h3>
-              <p class="task-topbar-text">&#21516;&#27493; Google Sheet&#12300;&#22577;&#27602;&#30435;&#25511;&#12301;&#20998;&#38913;&#65292;&#21487;&#25628;&#23563;&#12289;&#25490;&#24207;&#33287;&#31721;&#36984;&#22577;&#27602;&#29376;&#24907;&#12290;</p>
+              <p class="task-topbar-text">&#21516;&#27493; Google Sheet&#12300;&#24375;&#24369;&#36681;&#35320;&#30332;&#12301;&#20998;&#38913;&#65292;&#21487;&#25628;&#23563;&#12289;&#25490;&#24207;&#33287;&#31721;&#36984;&#22577;&#27602;&#29376;&#24907;&#12290;</p>
             </div>
             <div class="task-topbar-actions">
-              <span class="summary-pill">&#20358;&#28304;&#65306;<strong>&#22577;&#27602;&#30435;&#25511;</strong></span>
+              <span class="summary-pill">&#20358;&#28304;&#65306;<strong>&#24375;&#24369;&#36681;&#35320;&#30332;</strong></span>
               <span class="summary-pill">&#31558;&#25976;&#65306;<strong id="poison-monitor-count">0</strong></span>
               <span class="summary-pill">&#24050;&#22577;&#27602;&#65306;<strong id="poison-monitor-poison-count">0</strong></span>
               <span id="poison-monitor-sync-status" class="summary-pill">&#23578;&#26410;&#21516;&#27493;</span>
@@ -452,7 +452,7 @@
 
           <section class="panel">
             <div class="panel-header">
-              <div><h3>Google Sheet &#22577;&#27602;&#30435;&#25511;&#34920;</h3></div>
+              <div><h3>Google Sheet &#24375;&#24369;&#36681;&#35320;&#30332;&#34920;</h3></div>
               <div class="history-toolbar">
                 <select id="poison-monitor-sync-mode" class="date-input channel-summary-filter">
                   <option value="apps-script">Apps Script API</option>
@@ -462,9 +462,9 @@
                 <input id="poison-monitor-sync-url" type="text" class="date-input channel-summary-sync-url" placeholder="&#33258;&#21205;&#27839;&#29992;&#28192;&#36947;&#32113;&#25972;&#34920;&#30340; Apps Script API &#32178;&#22336;" />
                 <button id="poison-monitor-sync-save-btn" class="secondary-button compact-mini-button" type="button">&#20786;&#23384;&#21516;&#27493;&#20358;&#28304;</button>
                 <input id="poison-monitor-search" type="text" class="date-input channel-summary-search" placeholder="&#25628;&#23563; APPID&#12289;&#36938;&#25138;&#21517;&#31281;&#12289;&#21253;&#21517;&#25110;&#20854;&#20182;&#27396;&#20301;" />
-                <select id="poison-monitor-online-filter" class="date-input channel-summary-filter"></select>
-                <select id="poison-monitor-developer-filter" class="date-input channel-summary-filter"></select>
-                <select id="poison-monitor-mechanism-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-channel-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-version-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-category-filter" class="date-input channel-summary-filter"></select>
                 <select id="poison-monitor-poison-filter" class="date-input channel-summary-filter">
                   <option value="">&#20840;&#37096;&#22577;&#27602;&#29376;&#24907;</option>
                   <option value="poisoned">&#24050;&#22577;&#27602;</option>
@@ -476,7 +476,7 @@
             </div>
             <div id="poison-monitor-message" class="channel-summary-message" hidden></div>
             <div class="channel-summary-help">
-              &#27492;&#38913;&#33258;&#21205;&#27839;&#29992;&#28192;&#36947;&#32113;&#25972;&#34920;&#30340; Apps Script &#32178;&#22336;&#65292;&#20006;&#20197; <code>type=poison-monitor</code> &#35712;&#21462;&#12300;&#22577;&#27602;&#30435;&#25511;&#12301;&#20998;&#38913;&#12290;
+              &#27492;&#38913;&#33258;&#21205;&#27839;&#29992;&#28192;&#36947;&#32113;&#25972;&#34920;&#30340; Apps Script &#32178;&#22336;&#65292;&#20006;&#20197; <code>type=poison-monitor</code> &#35712;&#21462;&#12300;&#24375;&#24369;&#36681;&#35320;&#30332;&#12301;&#20998;&#38913;&#12290;
               &#26356;&#26032; <code>channel_summary_api.gs</code> &#24460;&#35531;&#37325;&#26032;&#37096;&#32626; Apps Script &#32178;&#38913;&#25033;&#29992;&#31243;&#24335;&#12290;
             </div>
             <div class="table-wrap spreadsheet-wrap">

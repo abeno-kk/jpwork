@@ -6,8 +6,8 @@ const SHEETS = {
     name: '渠道APPID總表-測試',
   },
   'poison-monitor': {
-    gid: 1177376120,
-    name: '報毒監控',
+    gid: 1961758864,
+    name: '\u5f37\u5f31\u8f49\u89f8\u767c',
   },
   updates: {
     gid: 994439579,

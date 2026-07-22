@@ -3,12 +3,12 @@
 
   var SOURCE = {
     spreadsheetId: '1B298mjXY1HBAz4ohtNr1pletE9xTE44uYzL0932RRFU',
-    gid: '1177376120'
+    gid: '1961758864'
   };
   var STORAGE_KEY = 'dashboard-poison-monitor-v1';
   var state = {
     headers: [], rows: [], loading: false, error: '', lastFetchedAt: 0,
-    search: '', online: '', developerStatus: '', mechanism: '', poisonStatus: '',
+    search: '', channel: '', version: '', category: '', poisonStatus: '',
     sortHeader: '', sortDirection: 'asc', hiddenHeaders: new Set()
   };
   var els = {
@@ -20,9 +20,9 @@
     syncUrl: document.getElementById('poison-monitor-sync-url'),
     syncSave: document.getElementById('poison-monitor-sync-save-btn'),
     search: document.getElementById('poison-monitor-search'),
-    online: document.getElementById('poison-monitor-online-filter'),
-    developerStatus: document.getElementById('poison-monitor-developer-filter'),
-    mechanism: document.getElementById('poison-monitor-mechanism-filter'),
+    channel: document.getElementById('poison-monitor-channel-filter'),
+    version: document.getElementById('poison-monitor-version-filter'),
+    category: document.getElementById('poison-monitor-category-filter'),
     poisonStatus: document.getElementById('poison-monitor-poison-filter'),
     clear: document.getElementById('poison-monitor-clear-btn'),
     fieldSettings: document.getElementById('poison-monitor-field-settings-btn'),
@@ -74,7 +74,7 @@
 
   function isPoisoned(row) {
     var explicit = readValue(row, ['\u5831\u6bd2', '\u62a5\u6bd2', '\u5831\u6bd2\u72c0\u614b', '\u62a5\u6bd2\u72b6\u6001']);
-    if (explicit) return !/^(\u5426|\u672a\u5831\u6bd2|\u672a\u62a5\u6bd2|false|0)$/i.test(explicit);
+    if (explicit) return !/(\u672a\u5831\u6bd2|\u672a\u62a5\u6bd2)/i.test(explicit) && /(\u5831\u6bd2|\u62a5\u6bd2)/i.test(explicit);
     return /(\u5831\u6bd2|\u62a5\u6bd2)/i.test(
       readValue(row, ['\u5099\u8a3b', '\u5907\u6ce8', 'remark', 'remarks', 'note'])
     );
@@ -98,12 +98,12 @@
   }
 
   function syncFilters() {
-    fillSelect(els.online, '\u5168\u90e8\u5728\u7dda\u72c0\u614b',
-      uniqueValues(['\u662f\u5426\u5728\u7dda', '\u662f\u5426\u5728\u7ebf']), state.online);
-    fillSelect(els.developerStatus, '\u5168\u90e8\u5c01\u865f\u72c0\u614b',
-      uniqueValues(['\u958b\u767c\u8005\u662f\u5426\u5c01\u865f', '\u5f00\u53d1\u8005\u662f\u5426\u5c01\u53f7']), state.developerStatus);
-    fillSelect(els.mechanism, '\u5168\u90e8\u5305\u6a5f\u5236',
-      uniqueValues(['\u5305\u6a5f\u5236', '\u5305\u673a\u5236']), state.mechanism);
+    fillSelect(els.channel, '\u5168\u90e8\u6e20\u9053',
+      uniqueValues(['\u6e20\u9053']), state.channel);
+    fillSelect(els.version, '\u5168\u90e8\u7248\u672c',
+      uniqueValues(['\u7248\u672c']), state.version);
+    fillSelect(els.category, '\u5168\u90e8\u5206\u985e',
+      uniqueValues(['\u5206\u985e', '\u5206\u7c7b']), state.category);
     els.poisonStatus.value = state.poisonStatus;
     els.search.value = state.search;
   }
@@ -111,9 +111,9 @@
   function filteredRows() {
     var search = state.search.trim().toLowerCase();
     var rows = state.rows.filter(function (row) {
-      if (state.online && readValue(row, ['\u662f\u5426\u5728\u7dda', '\u662f\u5426\u5728\u7ebf']) !== state.online) return false;
-      if (state.developerStatus && readValue(row, ['\u958b\u767c\u8005\u662f\u5426\u5c01\u865f', '\u5f00\u53d1\u8005\u662f\u5426\u5c01\u53f7']) !== state.developerStatus) return false;
-      if (state.mechanism && readValue(row, ['\u5305\u6a5f\u5236', '\u5305\u673a\u5236']) !== state.mechanism) return false;
+      if (state.channel && readValue(row, ['\u6e20\u9053']) !== state.channel) return false;
+      if (state.version && readValue(row, ['\u7248\u672c']) !== state.version) return false;
+      if (state.category && readValue(row, ['\u5206\u985e', '\u5206\u7c7b']) !== state.category) return false;
       if (state.poisonStatus === 'poisoned' && !isPoisoned(row)) return false;
       if (state.poisonStatus === 'clean' && isPoisoned(row)) return false;
       if (!search) return true;
@@ -363,15 +363,15 @@
     refresh();
   });
   els.search.addEventListener('input', function () { state.search = els.search.value || ''; render(); });
-  els.online.addEventListener('change', function () { state.online = els.online.value || ''; render(); });
-  els.developerStatus.addEventListener('change', function () { state.developerStatus = els.developerStatus.value || ''; render(); });
-  els.mechanism.addEventListener('change', function () { state.mechanism = els.mechanism.value || ''; render(); });
+  els.channel.addEventListener('change', function () { state.channel = els.channel.value || ''; render(); });
+  els.version.addEventListener('change', function () { state.version = els.version.value || ''; render(); });
+  els.category.addEventListener('change', function () { state.category = els.category.value || ''; render(); });
   els.poisonStatus.addEventListener('change', function () { state.poisonStatus = els.poisonStatus.value || ''; render(); });
   els.clear.addEventListener('click', function () {
     state.search = '';
-    state.online = '';
-    state.developerStatus = '';
-    state.mechanism = '';
+    state.channel = '';
+    state.version = '';
+    state.category = '';
     state.poisonStatus = '';
     render();
   });
