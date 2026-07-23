@@ -6,9 +6,11 @@
     gid: '1961758864'
   };
   var STORAGE_KEY = 'dashboard-poison-monitor-v1';
+  var EMPTY_FILTER_VALUE = '__poison_monitor_blank__';
   var state = {
     headers: [], rows: [], loading: false, error: '', lastFetchedAt: 0,
     search: '', channel: '', version: '', category: '', poisonStatus: '',
+    storeOnline: '', offlineDate: '', marketingSpend: '',
     sortHeader: '', sortDirection: 'asc', hiddenHeaders: new Set()
   };
   var els = {
@@ -24,6 +26,9 @@
     version: document.getElementById('poison-monitor-version-filter'),
     category: document.getElementById('poison-monitor-category-filter'),
     poisonStatus: document.getElementById('poison-monitor-poison-filter'),
+    storeOnline: document.getElementById('poison-monitor-store-online-filter'),
+    offlineDate: document.getElementById('poison-monitor-offline-date-filter'),
+    marketingSpend: document.getElementById('poison-monitor-marketing-spend-filter'),
     clear: document.getElementById('poison-monitor-clear-btn'),
     fieldSettings: document.getElementById('poison-monitor-field-settings-btn'),
     message: document.getElementById('poison-monitor-message'),
@@ -145,11 +150,24 @@
     });
   }
 
+  function uniqueFilterValues(aliases) {
+    var values = uniqueValues(aliases);
+    var hasBlank = state.rows.some(function (row) { return !readValue(row, aliases); });
+    return hasBlank ? [EMPTY_FILTER_VALUE].concat(values) : values;
+  }
+
+  function matchesFilter(row, aliases, selected) {
+    if (!selected) return true;
+    var value = readValue(row, aliases);
+    return selected === EMPTY_FILTER_VALUE ? !value : value === selected;
+  }
+
   function fillSelect(select, placeholder, values, current) {
     if (!select) return;
     select.innerHTML = ['<option value="">' + escapeHtml(placeholder) + '</option>']
       .concat(values.map(function (value) {
-        return '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + '</option>';
+        var label = value === EMPTY_FILTER_VALUE ? '\uff08\u7a7a\u767d\uff09' : value;
+        return '<option value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</option>';
       })).join('');
     select.value = current || '';
   }
@@ -161,6 +179,12 @@
       uniqueValues(['\u7248\u672c']), state.version);
     fillSelect(els.category, '\u5168\u90e8\u5206\u985e',
       uniqueValues(['\u5206\u985e', '\u5206\u7c7b']), state.category);
+    fillSelect(els.storeOnline, '\u5168\u90e8\u5546\u5e97\u5728\u7dda',
+      uniqueFilterValues(['\u5546\u5e97\u5728\u7dda', '\u5546\u5e97\u5728\u7ebf']), state.storeOnline);
+    fillSelect(els.offlineDate, '\u5168\u90e8\u4e0b\u7dda\u65e5\u671f',
+      uniqueFilterValues(['\u4e0b\u7dda\u65e5\u671f', '\u4e0b\u7ebf\u65e5\u671f']), state.offlineDate);
+    fillSelect(els.marketingSpend, '\u5168\u90e8\u884c\u92b7\u82b1\u8cbb',
+      uniqueFilterValues(['\u884c\u92b7\u82b1\u8cbb', '\u884c\u9500\u82b1\u8d39']), state.marketingSpend);
     els.poisonStatus.value = state.poisonStatus;
     els.search.value = state.search;
   }
@@ -171,6 +195,9 @@
       if (state.channel && readValue(row, ['\u6e20\u9053']) !== state.channel) return false;
       if (state.version && readValue(row, ['\u7248\u672c']) !== state.version) return false;
       if (state.category && readValue(row, ['\u5206\u985e', '\u5206\u7c7b']) !== state.category) return false;
+      if (!matchesFilter(row, ['\u5546\u5e97\u5728\u7dda', '\u5546\u5e97\u5728\u7ebf'], state.storeOnline)) return false;
+      if (!matchesFilter(row, ['\u4e0b\u7dda\u65e5\u671f', '\u4e0b\u7ebf\u65e5\u671f'], state.offlineDate)) return false;
+      if (!matchesFilter(row, ['\u884c\u92b7\u82b1\u8cbb', '\u884c\u9500\u82b1\u8d39'], state.marketingSpend)) return false;
       if (state.poisonStatus === 'poisoned' && !isPoisoned(row)) return false;
       if (state.poisonStatus === 'clean' && isPoisoned(row)) return false;
       if (!search) return true;
@@ -459,12 +486,18 @@
   els.version.addEventListener('change', function () { state.version = els.version.value || ''; render(); });
   els.category.addEventListener('change', function () { state.category = els.category.value || ''; render(); });
   els.poisonStatus.addEventListener('change', function () { state.poisonStatus = els.poisonStatus.value || ''; render(); });
+  els.storeOnline.addEventListener('change', function () { state.storeOnline = els.storeOnline.value || ''; render(); });
+  els.offlineDate.addEventListener('change', function () { state.offlineDate = els.offlineDate.value || ''; render(); });
+  els.marketingSpend.addEventListener('change', function () { state.marketingSpend = els.marketingSpend.value || ''; render(); });
   els.clear.addEventListener('click', function () {
     state.search = '';
     state.channel = '';
     state.version = '';
     state.category = '';
     state.poisonStatus = '';
+    state.storeOnline = '';
+    state.offlineDate = '';
+    state.marketingSpend = '';
     render();
   });
   els.head.addEventListener('click', function (event) {
