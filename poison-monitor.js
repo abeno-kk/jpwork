@@ -11,7 +11,7 @@
     headers: [], rows: [], loading: false, error: '', lastFetchedAt: 0,
     search: '', channel: '', version: '', category: '', poisonStatus: '',
     storeOnline: '', offlineDate: '', marketingSpend: '',
-    sortHeader: '', sortDirection: 'asc', hiddenHeaders: new Set()
+    sortHeader: '', sortDirection: 'asc', hiddenHeaders: new Set(), columnWidths: {}
   };
   var els = {
     count: document.getElementById('poison-monitor-count'),
@@ -100,6 +100,8 @@
     try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
     catch (error) { saved = {}; }
     state.hiddenHeaders = new Set(Array.isArray(saved.hiddenHeaders) ? saved.hiddenHeaders : []);
+    state.columnWidths = saved.columnWidths && typeof saved.columnWidths === 'object'
+      ? saved.columnWidths : {};
     if (saved.sync && saved.sync.url) {
       var savedConfig = normalizeSyncConfig(saved.sync);
       var existingApi = findExistingAppsScriptUrl();
@@ -122,7 +124,8 @@
   function saveSettings() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       sync: syncConfig,
-      hiddenHeaders: Array.from(state.hiddenHeaders)
+      hiddenHeaders: Array.from(state.hiddenHeaders),
+      columnWidths: state.columnWidths
     }));
   }
 
@@ -223,14 +226,24 @@
     return escapeHtml(text).replaceAll('\n', '<br>');
   }
 
+  function columnCellAttributes(header, index) {
+    var width = Number(state.columnWidths[header]);
+    var style = Number.isFinite(width) && width > 0
+      ? ' style="width:' + width + 'px;min-width:' + width + 'px;max-width:' + width + 'px"'
+      : '';
+    return ' data-poison-column-index="' + index + '"' + style;
+  }
+
   function renderHead() {
     var visible = state.headers.filter(function (header) { return !state.hiddenHeaders.has(header); });
-    els.head.innerHTML = '<tr>' + visible.map(function (header) {
+    els.head.innerHTML = '<tr>' + visible.map(function (header, index) {
       var arrow = state.sortHeader === header
         ? (state.sortDirection === 'asc' ? ' \u2191' : ' \u2193')
         : ' \u2195';
-      return '<th><button type="button" class="sort-button" data-poison-sort="' + escapeHtml(header) + '">' +
-        escapeHtml(header) + '<span aria-hidden="true">' + arrow + '</span></button></th>';
+      return '<th' + columnCellAttributes(header, index) + '><button type="button" class="sort-button" data-poison-sort="' + escapeHtml(header) + '">' +
+        escapeHtml(header) + '<span aria-hidden="true">' + arrow + '</span></button>' +
+        '<span class="poison-column-resizer" data-poison-resize-header="' + escapeHtml(header) + '"' +
+        ' data-poison-resize-index="' + index + '" title="\u62d6\u66f3\u8abf\u6574\u6b04\u5bec\uff0c\u96d9\u64ca\u6062\u5fa9\u81ea\u52d5"></span></th>';
     }).join('') + '</tr>';
   }
 
@@ -244,7 +257,9 @@
     }
     els.body.innerHTML = rows.map(function (row) {
       return '<tr class="' + (isPoisoned(row) ? 'is-poisoned' : '') + '">' +
-        visible.map(function (header) { return '<td>' + cellHtml(row[header]) + '</td>'; }).join('') +
+        visible.map(function (header, index) {
+          return '<td' + columnCellAttributes(header, index) + '>' + cellHtml(row[header]) + '</td>';
+        }).join('') +
         '</tr>';
     }).join('');
   }
@@ -498,6 +513,44 @@
     state.storeOnline = '';
     state.offlineDate = '';
     state.marketingSpend = '';
+    render();
+  });
+  els.head.addEventListener('pointerdown', function (event) {
+    var handle = event.target.closest('[data-poison-resize-header]');
+    if (!handle) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var header = handle.dataset.poisonResizeHeader;
+    var index = Number(handle.dataset.poisonResizeIndex);
+    var cell = handle.closest('th');
+    var startX = event.clientX;
+    var startWidth = cell ? cell.getBoundingClientRect().width : Number(state.columnWidths[header]) || 110;
+    function move(moveEvent) {
+      var width = Math.max(70, Math.min(720, Math.round(startWidth + moveEvent.clientX - startX)));
+      state.columnWidths[header] = width;
+      document.querySelectorAll('.poison-monitor-table [data-poison-column-index="' + index + '"]').forEach(function (item) {
+        item.style.width = width + 'px';
+        item.style.minWidth = width + 'px';
+        item.style.maxWidth = width + 'px';
+      });
+    }
+    function end() {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', end);
+      document.body.classList.remove('poison-column-resizing');
+      saveSettings();
+    }
+    document.body.classList.add('poison-column-resizing');
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', end);
+  });
+  els.head.addEventListener('dblclick', function (event) {
+    var handle = event.target.closest('[data-poison-resize-header]');
+    if (!handle) return;
+    event.preventDefault();
+    event.stopPropagation();
+    delete state.columnWidths[handle.dataset.poisonResizeHeader];
+    saveSettings();
     render();
   });
   els.head.addEventListener('click', function (event) {

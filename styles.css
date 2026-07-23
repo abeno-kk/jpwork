@@ -1924,6 +1924,43 @@ body.capture-mode .sticky-notes-toggle, body.capture-mode .sticky-notes-panel { 
 
 
 /* Poison monitor */
+.poison-monitor-table th {
+  position: relative;
+}
+
+.poison-column-resizer {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  z-index: 4;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.poison-column-resizer::after {
+  content: "";
+  position: absolute;
+  top: 18%;
+  bottom: 18%;
+  left: 4px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.poison-monitor-table th:hover .poison-column-resizer::after,
+.poison-column-resizer:hover::after {
+  background: rgba(36, 79, 120, 0.45);
+}
+
+body.poison-column-resizing,
+body.poison-column-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
 .poison-monitor-table tbody tr.is-poisoned td {
   background: #fff1ee;
 }
