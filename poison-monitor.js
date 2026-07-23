@@ -299,6 +299,15 @@
       throw new Error(payload && payload.error ? payload.error : 'Apps Script API \u8fd4\u56de\u932f\u8aa4');
     }
     var headers = Array.isArray(payload.headers) ? payload.headers.map(String) : [];
+    if (!headers.length && Array.isArray(payload.rows)) {
+      headers = payload.rows.reduce(function (result, row) {
+        if (!row || Array.isArray(row) || typeof row !== 'object') return result;
+        Object.keys(row).forEach(function (header) {
+          if (!/_url$/i.test(header) && !result.includes(header)) result.push(header);
+        });
+        return result;
+      }, []);
+    }
     var rows = Array.isArray(payload.rows) ? payload.rows.map(function (sourceRow) {
       var record = {};
       headers.forEach(function (header) {
