@@ -49,6 +49,29 @@
     }
   }
 
+  function isAppsScriptUrl(value) {
+    try {
+      var url = new URL(String(value || '').trim(), window.location.href);
+      return url.hostname === 'script.google.com' && url.pathname.endsWith('/exec');
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function findExistingAppsScriptUrl() {
+    var channelInput = document.getElementById('channel-summary-sync-url');
+    var visibleValue = String(channelInput && channelInput.value || '').trim();
+    if (isAppsScriptUrl(visibleValue)) return visibleValue;
+    try {
+      var dashboard = JSON.parse(localStorage.getItem('local-dashboard-app-v1') || '{}') || {};
+      var candidates = [dashboard.channelSummarySync, dashboard.updateListSync];
+      for (var index = 0; index < candidates.length; index += 1) {
+        var candidate = String(candidates[index] && candidates[index].url || '').trim();
+        if (isAppsScriptUrl(candidate)) return candidate;
+      }
+    } catch (error) {}
+    return '';
+  }
   function normalizeSyncConfig(config) {
     var url = String(config && config.url || '').trim();
     var mode = config && config.mode || 'apps-script';
@@ -72,7 +95,14 @@
     try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
     catch (error) { saved = {}; }
     state.hiddenHeaders = new Set(Array.isArray(saved.hiddenHeaders) ? saved.hiddenHeaders : []);
-    if (saved.sync && saved.sync.url) return normalizeSyncConfig(saved.sync);
+    if (saved.sync && saved.sync.url) {
+      var savedConfig = normalizeSyncConfig(saved.sync);
+      var existingApi = findExistingAppsScriptUrl();
+      if (savedConfig.mode === 'sheet-direct' && existingApi) {
+        return { mode: 'apps-script', url: existingApi };
+      }
+      return savedConfig;
+    }
     try {
       var dashboard = JSON.parse(localStorage.getItem('local-dashboard-app-v1') || '{}') || {};
       if (dashboard.channelSummarySync && dashboard.channelSummarySync.url) {
@@ -341,11 +371,18 @@
     }
     if (syncConfig.mode === 'sheet-direct') {
       var directSource = resolveDirectSource();
-      return jsonp(function (callbackName) {
+      var directRequest = jsonp(function (callbackName) {
         var tqx = encodeURIComponent('out:json;responseHandler:' + callbackName);
         return 'https://docs.google.com/spreadsheets/d/' + directSource.spreadsheetId +
           '/gviz/tq?gid=' + directSource.gid + '&headers=1&tqx=' + tqx;
       }, '__poisonMonitorSheet_', rowsFromGviz);
+      var fallbackApi = findExistingAppsScriptUrl();
+      if (!fallbackApi) return directRequest;
+      return directRequest.catch(function () {
+        syncConfig = { mode: 'apps-script', url: fallbackApi };
+        saveSettings();
+        return loadRows();
+      });
     }
     if (!syncConfig.url) {
       return Promise.reject(new Error(
