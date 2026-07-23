@@ -318,6 +318,18 @@
     return { headers: headers, rows: rows };
   }
 
+  function ensureTriggerMonitorResult(result) {
+    var headers = Array.isArray(result && result.headers) ? result.headers.map(function (header) {
+      return String(header || '').trim();
+    }) : [];
+    var hasUid = headers.some(function (header) { return /^UID$/i.test(header); });
+    var hasPoison = headers.some(function (header) { return /^(\u5831\u6bd2|\u62a5\u6bd2)$/.test(header); });
+    if (!hasUid || !hasPoison) {
+      throw new Error('Apps Script \u5c1a\u672a\u6307\u5411\u300c\u5f37\u5f31\u8f49\u89f8\u767c\u300d\u5206\u9801\uff0c\u8acb\u66f4\u65b0\u4e26\u91cd\u65b0\u90e8\u7f72 channel_summary_api.gs');
+    }
+    return result;
+  }
+
   function readGvizCell(cell) {
     if (!cell) return '';
     if (cell.f !== null && cell.f !== undefined && cell.f !== '') return String(cell.f);
@@ -398,12 +410,17 @@
         '\u8acb\u5148\u5728\u6e20\u9053\u7d71\u6574\u8868\u5132\u5b58 Apps Script API \u7db2\u5740\uff0c\u6216\u5728\u672c\u9801\u8cbc\u4e0a\u7db2\u5740'
       ));
     }
-    return jsonp(function (callbackName) {
-      var url = new URL(syncConfig.url, window.location.href);
-      url.searchParams.set('type', 'poison-monitor');
-      url.searchParams.set('callback', callbackName);
-      return url.toString();
-    }, '__poisonMonitorApi_', rowsFromApi);
+    function requestMonitorType(type, callbackPrefix) {
+      return jsonp(function (callbackName) {
+        var url = new URL(syncConfig.url, window.location.href);
+        url.searchParams.set('type', type);
+        url.searchParams.set('callback', callbackName);
+        return url.toString();
+      }, callbackPrefix, rowsFromApi).then(ensureTriggerMonitorResult);
+    }
+    return requestMonitorType('trigger-monitor', '__triggerMonitorApi_').catch(function () {
+      return requestMonitorType('poison-monitor', '__poisonMonitorApi_');
+    });
   }
 
   function refresh() {

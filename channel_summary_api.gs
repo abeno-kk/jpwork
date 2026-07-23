@@ -5,6 +5,10 @@ const SHEETS = {
     gid: 1318283124,
     name: '渠道APPID總表-測試',
   },
+  'trigger-monitor': {
+    gid: 1961758864,
+    name: '\u5f37\u5f31\u8f49\u89f8\u767c',
+  },
   'poison-monitor': {
     gid: 1961758864,
     name: '\u5f37\u5f31\u8f49\u89f8\u767c',
