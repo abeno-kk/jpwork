@@ -766,6 +766,33 @@ function saveState() {
   els.saveStatus.classList.add('flash');
   return true;
 }
+function syncStateFromStorage(raw = localStorage.getItem(STORAGE_KEY), shouldRender = true) {
+  const stored = parseStoredState(raw);
+  if (!stored || estimateStateScore(stored) < 0) return false;
+
+  const normalized = normalizeState(stored);
+  if (JSON.stringify(normalized) === JSON.stringify(state.data)) return false;
+
+  state.data = normalized;
+  if (shouldRender) render();
+  els.saveStatus.classList.remove('save-error');
+  els.saveStatus.textContent = `\u5df2\u540c\u6b65 ${new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
+  return true;
+}
+
+window.addEventListener('storage', (event) => {
+  if (event.storageArea !== localStorage || event.key !== STORAGE_KEY || !event.newValue) return;
+  syncStateFromStorage(event.newValue);
+});
+
+window.addEventListener('pageshow', () => {
+  syncStateFromStorage();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncStateFromStorage();
+});
+
 
 
 function exportDashboardBackup() {
@@ -2861,6 +2888,9 @@ function updateTask(id, field, value) {
 }
 
 function updateTaskHistory(id, dateKey, value) {
+  // A different tab may have saved after this tab loaded. Start from the latest
+  // persisted copy so this checkbox cannot overwrite newer task history.
+  syncStateFromStorage(localStorage.getItem(STORAGE_KEY), false);
   const task = state.data.tasks.find((item) => item.id === id);
   if (!task) return;
   task.history[dateKey] = Boolean(value);
