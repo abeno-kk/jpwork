@@ -992,8 +992,46 @@ function refreshChannelSummary() {
     });
 }
 
-function loadGoogleSheetRows() {
-  const syncConfig = state.data.channelSummarySync || { mode: 'apps-script', url: '' };
+function normalizeSyncSource(mode, rawUrl) {
+  const normalizedMode = ['apps-script', 'public-csv', 'sheet-direct'].includes(mode)
+    ? mode
+    : 'apps-script';
+  const url = String(rawUrl || '').trim();
+
+  if (normalizedMode === 'sheet-direct') {
+    return { mode: normalizedMode, url: '' };
+  }
+  if (!url) {
+    throw new Error(normalizedMode === 'apps-script'
+      ? '請貼上 Apps Script Web App 的 /exec 網址。'
+      : '請貼上公開 CSV 連結。');
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+  } catch (error) {
+    throw new Error('網址格式不正確，請貼上完整的 https:// 網址。');
+  }
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    throw new Error('同步網址必須使用 http:// 或 https://。');
+  }
+
+  if (normalizedMode === 'apps-script') {
+    const isAppsScriptExec = parsedUrl.hostname === 'script.google.com'
+      && /^\/macros\/s\/[^/]+\/exec\/?$/.test(parsedUrl.pathname);
+    if (!isAppsScriptExec) {
+      throw new Error('這不是有效的 Apps Script Web App /exec 網址，請重新部署後貼上最新網址。');
+    }
+    parsedUrl.searchParams.delete('callback');
+    parsedUrl.searchParams.delete('type');
+    parsedUrl.hash = '';
+  }
+
+  return { mode: normalizedMode, url: parsedUrl.toString() };
+}
+
+function loadGoogleSheetRows(syncConfig = state.data.channelSummarySync || { mode: 'apps-script', url: '' }) {
 
   if (syncConfig.mode === 'public-csv') {
     if (!syncConfig.url) {
@@ -1013,12 +1051,11 @@ function loadGoogleSheetRows() {
     }
     return new Promise((resolve, reject) => {
       const callbackName = `__channelSummaryAppsScript_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const separator = syncConfig.url.includes('?') ? '&' : '?';
       const script = document.createElement('script');
       const timeout = window.setTimeout(() => {
         cleanup();
         reject(new Error('Apps Script API 讀取逾時，請確認已重新部署且網址正確。'));
-      }, 12000);
+      }, 45000);
 
       function cleanup() {
         window.clearTimeout(timeout);
@@ -1041,7 +1078,10 @@ function loadGoogleSheetRows() {
         reject(new Error('Apps Script API 無法連線，請確認已部署為網頁應用程式，並使用最新 exec 網址。'));
       };
 
-      script.src = `${syncConfig.url}${separator}callback=${encodeURIComponent(callbackName)}`;
+      const requestUrl = new URL(syncConfig.url, window.location.href);
+      requestUrl.searchParams.set('type', 'channel');
+      requestUrl.searchParams.set('callback', callbackName);
+      script.src = requestUrl.toString();
       document.body.appendChild(script);
     });
   }
@@ -1244,8 +1284,7 @@ function parseUpdateListResponse(response) {
  *
  * @returns {Promise<{headers: string[], rows: object[]}>} 返回標題與資料陣列
  */
-function loadUpdateListRows() {
-  const syncConfig = state.data.updateListSync || state.data.channelSummarySync || { mode: 'apps-script', url: '' };
+function loadUpdateListRows(syncConfig = state.data.updateListSync || state.data.channelSummarySync || { mode: 'apps-script', url: '' }) {
   // 直接讀取公開 CSV
   if (syncConfig.mode === 'public-csv') {
     if (!syncConfig.url) {
@@ -1275,7 +1314,7 @@ function loadUpdateListRows() {
       const timeout = window.setTimeout(() => {
         cleanup();
         reject(new Error('Apps Script API 讀取逾時，請確認已重新部署且網址正確。'));
-      }, 12000);
+      }, 45000);
 
       function cleanup() {
         window.clearTimeout(timeout);
@@ -1659,6 +1698,8 @@ function renderUpdateListView() {
   // 更新同步狀態文字
   if (state.updateList.loading) {
     els.updateListSyncStatus.textContent = '同步中';
+  } else if (state.updateList.error) {
+    els.updateListSyncStatus.textContent = '同步失敗';
   } else if (state.updateList.lastFetchedAt) {
     els.updateListSyncStatus.textContent = `更新 ${new Date(state.updateList.lastFetchedAt).toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
   } else {
@@ -1750,6 +1791,8 @@ function renderChannelSummaryView() {
 
   if (state.channelSummary.loading) {
     els.channelSummarySyncStatus.textContent = '同步中';
+  } else if (state.channelSummary.error) {
+    els.channelSummarySyncStatus.textContent = '同步失敗';
   } else if (state.channelSummary.lastFetchedAt) {
     els.channelSummarySyncStatus.textContent = `更新 ${new Date(state.channelSummary.lastFetchedAt).toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}・${getChannelSummaryColumns().length} 欄`;
   } else {
@@ -4089,17 +4132,55 @@ els.channelHistoryClearBtn.addEventListener('click', () => {
 els.channelSummaryRefreshBtn?.addEventListener('click', () => {
   void refreshChannelSummary();
 });
-els.channelSummarySyncSaveBtn?.addEventListener('click', () => {
-  state.data.channelSummarySync = {
-    mode: els.channelSummarySyncMode?.value || 'sheet-direct',
-    url: String(els.channelSummarySyncUrl?.value || '').trim(),
-  };
-  saveState();
-  state.channelSummary.columns = structuredClone(CHANNEL_SUMMARY_COLUMNS);
-  state.channelSummary.rows = [];
+els.channelSummarySyncSaveBtn?.addEventListener('click', async () => {
+  const rawMode = els.channelSummarySyncMode?.value || 'sheet-direct';
+  const rawUrl = String(els.channelSummarySyncUrl?.value || '').trim();
+  let candidate;
+  try {
+    candidate = normalizeSyncSource(rawMode, rawUrl);
+  } catch (error) {
+    state.channelSummary.error = `未儲存：${error?.message || '同步來源格式不正確。'}`;
+    renderChannelSummaryView();
+    if (els.channelSummarySyncMode) els.channelSummarySyncMode.value = rawMode;
+    if (els.channelSummarySyncUrl) els.channelSummarySyncUrl.value = rawUrl;
+    return;
+  }
+
+  const button = els.channelSummarySyncSaveBtn;
+  if (button) {
+    button.disabled = true;
+    button.textContent = '測試中…';
+  }
+  state.channelSummary.loading = true;
   state.channelSummary.error = '';
-  state.channelSummary.lastFetchedAt = 0;
-  void refreshChannelSummary();
+  renderChannelSummaryView();
+  if (els.channelSummarySyncMode) els.channelSummarySyncMode.value = rawMode;
+  if (els.channelSummarySyncUrl) els.channelSummarySyncUrl.value = rawUrl;
+
+  try {
+    const result = await loadGoogleSheetRows(candidate);
+    state.data.channelSummarySync = candidate;
+    saveState();
+    state.channelSummary.columns = Array.isArray(result?.columns) && result.columns.length
+      ? result.columns
+      : structuredClone(CHANNEL_SUMMARY_COLUMNS);
+    state.channelSummary.rows = Array.isArray(result?.rows) ? result.rows : [];
+    state.channelSummary.lastFetchedAt = Date.now();
+    state.channelSummary.error = '';
+  } catch (error) {
+    state.channelSummary.error = `未儲存，原資料已保留：${error?.message || '同步測試失敗。'}`;
+  } finally {
+    state.channelSummary.loading = false;
+    if (button) {
+      button.disabled = false;
+      button.textContent = '儲存同步來源';
+    }
+    renderChannelSummaryView();
+    if (state.channelSummary.error) {
+      if (els.channelSummarySyncMode) els.channelSummarySyncMode.value = rawMode;
+      if (els.channelSummarySyncUrl) els.channelSummarySyncUrl.value = rawUrl;
+    }
+  }
 });
 els.channelSummarySearch?.addEventListener('input', () => {
   state.channelSummary.search = els.channelSummarySearch.value || '';
@@ -4155,17 +4236,53 @@ els.channelSummaryTableHead?.addEventListener('click', (event) => {
 els.updateListRefreshBtn?.addEventListener('click', () => {
   void refreshUpdateList();
 });
-els.updateListSyncSaveBtn?.addEventListener('click', () => {
-  state.data.updateListSync = {
-    mode: els.updateListSyncMode?.value || 'apps-script',
-    url: String(els.updateListSyncUrl?.value || '').trim(),
-  };
-  saveState();
-  state.updateList.headers = [];
-  state.updateList.rows = [];
+els.updateListSyncSaveBtn?.addEventListener('click', async () => {
+  const rawMode = els.updateListSyncMode?.value || 'apps-script';
+  const rawUrl = String(els.updateListSyncUrl?.value || '').trim();
+  let candidate;
+  try {
+    candidate = normalizeSyncSource(rawMode, rawUrl);
+  } catch (error) {
+    state.updateList.error = `未儲存：${error?.message || '同步來源格式不正確。'}`;
+    renderUpdateListView();
+    if (els.updateListSyncMode) els.updateListSyncMode.value = rawMode;
+    if (els.updateListSyncUrl) els.updateListSyncUrl.value = rawUrl;
+    return;
+  }
+
+  const button = els.updateListSyncSaveBtn;
+  if (button) {
+    button.disabled = true;
+    button.textContent = '測試中…';
+  }
+  state.updateList.loading = true;
   state.updateList.error = '';
-  state.updateList.lastFetchedAt = 0;
-  void refreshUpdateList();
+  renderUpdateListView();
+  if (els.updateListSyncMode) els.updateListSyncMode.value = rawMode;
+  if (els.updateListSyncUrl) els.updateListSyncUrl.value = rawUrl;
+
+  try {
+    const result = await loadUpdateListRows(candidate);
+    state.data.updateListSync = candidate;
+    saveState();
+    state.updateList.headers = Array.isArray(result?.headers) ? result.headers : [];
+    state.updateList.rows = Array.isArray(result?.rows) ? result.rows : [];
+    state.updateList.lastFetchedAt = Date.now();
+    state.updateList.error = '';
+  } catch (error) {
+    state.updateList.error = `未儲存，原資料已保留：${error?.message || '同步測試失敗。'}`;
+  } finally {
+    state.updateList.loading = false;
+    if (button) {
+      button.disabled = false;
+      button.textContent = '儲存同步來源';
+    }
+    renderUpdateListView();
+    if (state.updateList.error) {
+      if (els.updateListSyncMode) els.updateListSyncMode.value = rawMode;
+      if (els.updateListSyncUrl) els.updateListSyncUrl.value = rawUrl;
+    }
+  }
 });
 els.updateListSearch?.addEventListener('input', () => {
   state.updateList.search = els.updateListSearch.value || '';
