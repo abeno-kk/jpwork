@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-01T12:05:59.680Z",
+  "updatedAt": "2026-08-01T14:37:50.977Z",
   "items": [
     {
       "ok": true,
@@ -10,7 +10,7 @@
       "installs": "1K",
       "previousInstalls": "1K",
       "changed": false,
-      "checkedAt": "2026-08-01T12:05:51.712Z",
+      "checkedAt": "2026-08-01T14:37:43.100Z",
       "error": ""
     },
     {
@@ -22,7 +22,7 @@
       "installs": "1K",
       "previousInstalls": "1K",
       "changed": false,
-      "checkedAt": "2026-08-01T12:05:54.440Z",
+      "checkedAt": "2026-08-01T14:37:45.792Z",
       "error": ""
     },
     {
@@ -34,7 +34,7 @@
       "installs": "",
       "previousInstalls": "",
       "changed": false,
-      "checkedAt": "2026-08-01T12:05:57.093Z",
+      "checkedAt": "2026-08-01T14:37:48.416Z",
       "error": "Google Play returned HTTP 404"
     }
   ]
