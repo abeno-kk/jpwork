@@ -225,6 +225,11 @@ const state = {
   stickyNotesSearch: '',
 };
 
+// Keep a dashboard tab that stays open overnight aligned with the real date.
+// This only auto-advances a view that was already following "today", so a
+// manually selected historical date remains untouched.
+let taskViewTodayKey = getDateKey(new Date());
+
 const els = {
   pageTitle: document.getElementById('page-title'),
   saveStatus: document.getElementById('save-status'),
@@ -785,12 +790,37 @@ window.addEventListener('storage', (event) => {
   syncStateFromStorage(event.newValue);
 });
 
-window.addEventListener('pageshow', () => {
+function refreshTaskDateRangeForToday(force = false) {
+  const today = new Date();
+  const todayKey = getDateKey(today);
+  const anchorKey = getDateKey(state.taskAnchorDate);
+  const wasFollowingToday = anchorKey === taskViewTodayKey;
+  const dayChanged = todayKey !== taskViewTodayKey;
+
+  taskViewTodayKey = todayKey;
+  if (!force && (!dayChanged || !wasFollowingToday)) return false;
+  if (anchorKey === todayKey) return false;
+
+  state.taskAnchorDate = today;
+  syncTaskAnchorInput();
+  renderTaskHeaderDates();
+  renderTaskSummary();
+  renderTaskTable();
+  return true;
+}
+
+window.addEventListener('pageshow', (event) => {
   syncStateFromStorage();
+  // A reload starts from the newest date. A back/forward-cache restoration only
+  // rolls forward when the tab crossed midnight while following today.
+  refreshTaskDateRangeForToday(!event.persisted);
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') syncStateFromStorage();
+  if (document.visibilityState === 'visible') {
+    syncStateFromStorage();
+    refreshTaskDateRangeForToday();
+  }
 });
 
 
