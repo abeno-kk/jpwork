@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-09T23:37:29.820Z",
+  "updatedAt": "2026-08-10T02:21:02.384Z",
   "items": [
     {
       "ok": true,
@@ -7,10 +7,10 @@
       "url": "https://play.google.com/store/apps/details?id=com.icefishinggame.spacequikhubcc",
       "note": "Sea Ice Fishing:Shooting",
       "title": "Sea Ice Fishing:Shooting",
-      "installs": "1K",
+      "installs": "5K",
       "previousInstalls": "1K",
-      "changed": false,
-      "checkedAt": "2026-08-09T23:37:21.937Z",
+      "changed": true,
+      "checkedAt": "2026-08-10T02:20:54.347Z",
       "error": ""
     },
     {
@@ -22,7 +22,7 @@
       "installs": "1K",
       "previousInstalls": "1K",
       "changed": false,
-      "checkedAt": "2026-08-09T23:37:24.639Z",
+      "checkedAt": "2026-08-10T02:20:57.146Z",
       "error": ""
     },
     {
@@ -34,7 +34,7 @@
       "installs": "",
       "previousInstalls": "",
       "changed": false,
-      "checkedAt": "2026-08-09T23:37:27.259Z",
+      "checkedAt": "2026-08-10T02:20:59.790Z",
       "error": "Google Play returned HTTP 404"
     }
   ]
