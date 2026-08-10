@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-10T02:21:02.384Z",
+  "updatedAt": "2026-08-10T04:44:25.025Z",
   "items": [
     {
       "ok": true,
@@ -8,9 +8,9 @@
       "note": "Sea Ice Fishing:Shooting",
       "title": "Sea Ice Fishing:Shooting",
       "installs": "5K",
-      "previousInstalls": "1K",
-      "changed": true,
-      "checkedAt": "2026-08-10T02:20:54.347Z",
+      "previousInstalls": "5K",
+      "changed": false,
+      "checkedAt": "2026-08-10T04:44:16.969Z",
       "error": ""
     },
     {
@@ -22,7 +22,7 @@
       "installs": "1K",
       "previousInstalls": "1K",
       "changed": false,
-      "checkedAt": "2026-08-10T02:20:57.146Z",
+      "checkedAt": "2026-08-10T04:44:19.762Z",
       "error": ""
     },
     {
@@ -34,7 +34,7 @@
       "installs": "",
       "previousInstalls": "",
       "changed": false,
-      "checkedAt": "2026-08-10T02:20:59.790Z",
+      "checkedAt": "2026-08-10T04:44:22.407Z",
       "error": "Google Play returned HTTP 404"
     }
   ]
