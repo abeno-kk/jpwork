@@ -979,7 +979,7 @@ function renderNavigation() {
       : state.view === 'update-list'
         ? '更新列表'
       : state.view === 'google-play-monitor'
-        ? 'Google Play 監控'
+        ? '每日自動查詢'
       : state.view === 'conversation-db'
         ? '對話資料庫'
         : '歷史批次';

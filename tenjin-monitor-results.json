@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "runOk": true,
+  "version": 1,
+  "appIds": [
+    "135010216"
+  ],
+  "checks": [
+    {
+      "appId": "135010216",
+      "date": "2026-08-12",
+      "slot": "manual",
+      "count": 0,
+      "c4EnterOptCount": 1,
+      "checkedAt": "2026-08-12T10:28:07.000Z",
+      "start": "2026-08-11",
+      "end": "2026-08-12",
+      "error": ""
+    },
+    {
+      "appId": "135010216",
+      "date": "2026-08-12",
+      "slot": "manual",
+      "count": 0,
+      "c4EnterOptCount": 1,
+      "checkedAt": "2026-08-12T10:51:20.513Z",
+      "start": "2026-08-11",
+      "end": "2026-08-12",
+      "error": ""
+    }
+  ],
+  "date": "2026-08-12",
+  "timezone": "Asia/Shanghai",
+  "slots": [
+    "10:00",
+    "15:00"
+  ],
+  "updatedAt": "2026-08-12T10:51:21.080Z"
+}

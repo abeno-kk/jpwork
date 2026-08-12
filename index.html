@@ -43,7 +43,7 @@
               <button class="nav-button" data-view="channel-summary">渠道統整表</button>
               <button class="nav-button" data-view="update-list">更新列表</button>
               <button class="nav-button" data-view="poison-monitor">&#22577;&#27602;&#25511;&#34920;</button>
-              <button class="nav-button" data-view="google-play-monitor">Google Play 監控</button>
+              <button class="nav-button" data-view="google-play-monitor">每日自動查詢</button>
             </div>
           </div>
 
@@ -503,64 +503,50 @@
         <section id="google-play-monitor-view" class="view">
           <div class="task-topbar">
             <div>
-              <h3 class="task-topbar-title">Google Play 監控</h3>
-              <p class="task-topbar-text">貼上商店網址，直接查看目前公開下載數。</p>
-            </div>
-            <div class="task-topbar-actions">
-              <span class="summary-pill">監控數：<strong id="google-play-monitor-count">0</strong></span>
-              <span class="summary-pill">有變動：<strong id="google-play-change-count">0</strong></span>
-              <button id="google-play-notification-btn" class="secondary-button compact-button" type="button">開啟桌面通知</button>
-              <button id="google-play-check-all-btn" class="primary-button compact-button" type="button">全部立即檢查</button>
+              <h3 class="task-topbar-title">每日自動查詢</h3>
+              <p class="task-topbar-text">輸入 APPID，固定於每日 10:00 與 15:00 查詢 Tenjin 註冊結果。</p>
             </div>
           </div>
 
-          <section class="panel google-play-monitor-panel">
-            <div class="google-play-add-grid">
-              <label>
-                <span>Google Play 網址</span>
-                <input id="google-play-url-input" type="url" placeholder="貼上 https://play.google.com/store/apps/details?id=..." />
-              </label>
-              <label>
-                <span>備註（選填）</span>
-                <input id="google-play-label-input" type="text" placeholder="例如：217、競品 A、需要追蹤" />
-              </label>
-              <button id="google-play-add-btn" class="primary-button" type="button">加入監控</button>
+          <section class="panel tenjin-monitor-panel">
+            <div class="tenjin-monitor-heading">
+              <div>
+                <p class="section-eyebrow">Tenjin 註冊數監控</p>
+                <h3>每日自動查詢註冊結果</h3>
+                <p class="task-topbar-text">北京時間 10:00 與 15:00 查詢昨日至今日，最近結果顯示完成註冊與進入驗證碼頁的數量。</p>
+              </div>
+              <div class="tenjin-monitor-actions">
+                <span id="tenjin-monitor-status" class="google-play-service-status">正在讀取…</span>
+                <button id="tenjin-check-now-btn" class="secondary-button compact-button" type="button">前往立即執行</button>
+              </div>
             </div>
 
-            <div class="google-play-monitor-toolbar">
+            <div class="tenjin-monitor-config">
               <label>
-                <span>自動檢查</span>
-                <select id="google-play-interval-select">
-                  <option value="0">關閉</option>
-                  <option value="15">每 15 分鐘</option>
-                  <option value="30">每 30 分鐘</option>
-                  <option value="60">每 1 小時</option>
-                  <option value="180">每 3 小時</option>
-                  <option value="360">每 6 小時</option>
-                </select>
+                <span>APPID（可一次設定多個）</span>
+                <textarea id="tenjin-appids-input" rows="3" placeholder="135010216&#10;可用空格、逗號或換行分隔" readonly></textarea>
               </label>
-              <span id="google-play-service-status" class="google-play-service-status">尚未檢查</span>
-              <span class="google-play-public-note">商店顯示 0+ 時，這裡直接顯示 0；顯示 10+ 時，這裡顯示 10。</span>
+              <button id="tenjin-save-appids-btn" class="primary-button" type="button">前往 GitHub 設定 APPID</button>
             </div>
-
-            <div id="google-play-empty" class="google-play-empty" hidden>尚未加入監控網址。</div>
+            <div id="tenjin-monitor-message" class="channel-summary-message" hidden></div>
             <div class="table-wrap spreadsheet-wrap">
-              <table class="spreadsheet-table google-play-monitor-table">
+              <table class="spreadsheet-table tenjin-monitor-table">
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>App</th>
-                    <th>備註</th>
-                    <th>目前下載數</th>
-                    <th>上次下載數</th>
-                    <th>最後檢查</th>
+                    <th>APPID</th>
+                    <th>10:00 執行時間</th>
+                    <th>15:00 執行時間</th>
+                    <th>最近結果</th>
+                    <th>最後查詢</th>
                     <th>狀態</th>
                     <th>操作</th>
                   </tr>
                 </thead>
-                <tbody id="google-play-monitor-body"></tbody>
+                <tbody id="tenjin-monitor-body"></tbody>
               </table>
             </div>
+            <div id="tenjin-monitor-empty" class="google-play-empty">尚未設定 APPID。</div>
           </section>
         </section>
 
@@ -765,7 +751,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
 
     <script src="./app.js?v=20260805-date-sync"></script>
     <script src="./poison-monitor.js"></script>
-    <script src="./google-play-monitor.js"></script>
+    <script src="./tenjin-monitor.js"></script>
     <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->
     <script>
       (function() {
@@ -1258,7 +1244,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
               }
               parsed.groupOrder[channelKey] = channelOrder;
               if (!parsed.titles['poison-monitor']) parsed.titles['poison-monitor'] = '報毒控表';
-              if (!parsed.titles['google-play-monitor']) parsed.titles['google-play-monitor'] = 'Google Play 監控';
+              parsed.titles['google-play-monitor'] = '每日自動查詢';
               localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(parsed));
               return parsed;
             } catch (e) {

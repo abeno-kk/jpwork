@@ -1,0 +1,71 @@
+name: Tenjin Daily Monitor
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tenjin-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Resolve run slot
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          slot="manual"
+          if [ "$EVENT_NAME" = "schedule" ] && [ "$EVENT_SCHEDULE" = "0 2 * * *" ]; then
+            slot="10:00"
+          elif [ "$EVENT_NAME" = "schedule" ] && [ "$EVENT_SCHEDULE" = "0 7 * * *" ]; then
+            slot="15:00"
+          fi
+          echo "TENJIN_SLOT=$slot" >> "$GITHUB_ENV"
+
+      - name: Query Tenjin
+        id: tenjin
+        continue-on-error: true
+        run: node scripts/check-tenjin.mjs
+
+      - name: Save result and history
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tenjin-monitor-results.json
+          if git diff --cached --quiet; then
+            echo "No result changes"
+            exit 0
+          fi
+          git commit -m "Update Tenjin result: ${TENJIN_SLOT}"
+          branch="${GITHUB_REF_NAME}"
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$branch"
+            if git push origin "HEAD:$branch"; then exit 0; fi
+            sleep $((attempt * 2))
+          done
+          exit 1
+
+      - name: Report query failure
+        if: steps.tenjin.outcome == 'failure'
+        run: exit 1

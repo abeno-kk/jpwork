@@ -1922,6 +1922,115 @@ body.capture-mode .sticky-notes-toggle, body.capture-mode .sticky-notes-panel { 
   border-color: rgba(36, 79, 120, 0.42) !important;
 }
 
+/* Tenjin 每日自動查詢 */
+.tenjin-monitor-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.tenjin-monitor-heading,
+.tenjin-monitor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tenjin-monitor-heading h3 {
+  margin: 2px 0 4px;
+}
+
+.tenjin-monitor-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.tenjin-monitor-config {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--panel-alt);
+}
+
+.tenjin-monitor-config label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+}
+
+.tenjin-monitor-config textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 76px;
+}
+
+.tenjin-monitor-table th,
+.tenjin-monitor-table td {
+  vertical-align: middle;
+}
+
+.tenjin-appid {
+  white-space: nowrap;
+}
+
+.tenjin-count-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 38px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #ebe7df;
+}
+
+.tenjin-count-badge.is-latest {
+  background: #dcefd6;
+  color: #265a30;
+}
+
+.tenjin-metric-lines {
+  display: grid;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.tenjin-metric-lines > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.tenjin-metric-lines small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tenjin-schedule-time,
+.tenjin-schedule-pending,
+.tenjin-schedule-error {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tenjin-schedule-pending { color: var(--muted); }
+.tenjin-schedule-error { color: #a33a3a; }
+
+#tenjin-monitor-message { margin-bottom: 12px; }
+
+.tenjin-action-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .tenjin-monitor-config { grid-template-columns: 1fr; }
+  .tenjin-monitor-heading { align-items: flex-start; flex-direction: column; }
+}
+
 
 /* Poison monitor */
 .poison-monitor-table th {
