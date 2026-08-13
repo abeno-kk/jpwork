@@ -3,7 +3,7 @@
 
   var REPO_URL = 'https://github.com/abeno-kk/jpwork';
   var CONFIG_URL = REPO_URL + '/edit/main/tenjin-appids.json';
-  var RAW_RESULTS_URL = 'https://raw.githubusercontent.com/abeno-kk/jpwork/main/tenjin-monitor-results.json';
+  var CONTENTS_API_URL = 'https://api.github.com/repos/abeno-kk/jpwork/contents/tenjin-monitor-results.json?ref=main';
   var els = {
     input: document.getElementById('tenjin-appids-input'),
     configure: document.getElementById('tenjin-save-appids-btn'),
@@ -108,18 +108,39 @@
   }
 
   async function refresh(quiet) {
+    if (!quiet) {
+      els.run.disabled = true;
+      els.run.textContent = '讀取最新結果中…';
+      setMessage('正在讀取 GitHub main 的最新結果…', false);
+    }
     try {
-      var resultsUrl = location.hostname.endsWith('github.io')
-        ? RAW_RESULTS_URL + '?t=' + Date.now()
+      var githubMode = location.hostname.endsWith('github.io');
+      var resultsUrl = githubMode
+        ? CONTENTS_API_URL + '&t=' + Date.now()
         : './tenjin-monitor-results.json?t=' + Date.now();
-      var response = await fetch(resultsUrl, { cache: 'no-store' });
+      var response = await fetch(resultsUrl, {
+        cache: 'no-store',
+        headers: githubMode ? { Accept: 'application/vnd.github+json' } : {}
+      });
       if (!response.ok) throw new Error('HTTP ' + response.status);
-      snapshot = await response.json();
+      if (githubMode) {
+        var file = await response.json();
+        var binary = window.atob(String(file.content || '').replace(/\s/g, ''));
+        var bytes = Uint8Array.from(binary, function (char) { return char.charCodeAt(0); });
+        snapshot = JSON.parse(new TextDecoder().decode(bytes));
+      } else {
+        snapshot = await response.json();
+      }
       render();
-      if (!quiet) setMessage('', false);
+      if (!quiet) setMessage('已讀取 GitHub 最新結果。', false);
     } catch (error) {
       els.status.textContent = 'GitHub 查詢結果讀取失敗';
       setMessage('目前無法讀取 Tenjin 結果：' + (error.message || error), true);
+    } finally {
+      if (!quiet) {
+        els.run.disabled = false;
+        els.run.textContent = '重新整理結果';
+      }
     }
   }
 
