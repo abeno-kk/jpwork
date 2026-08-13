@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "runOk": true,
+  "runOk": false,
   "version": 1,
   "appIds": [
     "135010215",
@@ -83,6 +83,28 @@
       "start": "2026-08-12",
       "end": "2026-08-13",
       "error": ""
+    },
+    {
+      "appId": "135010215",
+      "date": "2026-08-13",
+      "slot": "manual",
+      "count": null,
+      "c4EnterOptCount": null,
+      "checkedAt": "2026-08-13T02:10:54.676Z",
+      "start": "2026-08-12",
+      "end": "2026-08-13",
+      "error": "Tenjin report page returned HTTP 403"
+    },
+    {
+      "appId": "135010216",
+      "date": "2026-08-13",
+      "slot": "manual",
+      "count": null,
+      "c4EnterOptCount": null,
+      "checkedAt": "2026-08-13T02:10:58.698Z",
+      "start": "2026-08-12",
+      "end": "2026-08-13",
+      "error": "Tenjin report page returned HTTP 403"
     }
   ],
   "date": "2026-08-13",
@@ -91,5 +113,5 @@
     "10:00",
     "15:00"
   ],
-  "updatedAt": "2026-08-13T02:05:26.162Z"
+  "updatedAt": "2026-08-13T02:11:02.625Z"
 }
