@@ -21,6 +21,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure GitHub Actions commit identity
+        shell: cmd
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Query Tenjin from Kevin PC
         shell: cmd
         run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\run-tenjin-local-sync.ps1 -Slot manual
