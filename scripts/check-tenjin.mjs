@@ -3,6 +3,11 @@ import { readFile, writeFile } from 'node:fs/promises';
 const configPath = new URL('../tenjin-appids.json', import.meta.url);
 const resultsPath = new URL('../tenjin-monitor-results.json', import.meta.url);
 const apiBase = 'https://cchttps.twelvepacks.top/';
+const reportPageUrl = `${apiBase}html/tenjin_report.html`;
+const browserHeaders = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8'
+};
 const slot = ['10:00', '15:00', 'manual'].includes(process.env.TENJIN_SLOT)
   ? process.env.TENJIN_SLOT
   : 'manual';
@@ -27,12 +32,32 @@ async function fetchWithRetry(url) {
   let lastError;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 GitHub-Actions Tenjin-Monitor/1.0' },
+      const pageResponse = await fetch(reportPageUrl, {
+        headers: { ...browserHeaders, Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' },
+        redirect: 'follow',
         signal: AbortSignal.timeout(20000)
       });
-      if (!response.ok) throw new Error(`Tenjin returned HTTP ${response.status}`);
-      return await response.text();
+      if (!pageResponse.ok) throw new Error(`Tenjin report page returned HTTP ${pageResponse.status}`);
+      await pageResponse.arrayBuffer();
+      const cookies = typeof pageResponse.headers.getSetCookie === 'function'
+        ? pageResponse.headers.getSetCookie().map((value) => value.split(';', 1)[0]).join('; ')
+        : '';
+      const response = await fetch(url, {
+        headers: {
+          ...browserHeaders,
+          Accept: 'text/csv,text/plain;q=0.9,*/*;q=0.8',
+          Referer: reportPageUrl,
+          ...(cookies ? { Cookie: cookies } : {})
+        },
+        redirect: 'follow',
+        signal: AbortSignal.timeout(20000)
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        const detail = text.replace(/\s+/g, ' ').trim().slice(0, 160);
+        throw new Error(`Tenjin returned HTTP ${response.status}${detail ? `: ${detail}` : ''}`);
+      }
+      return text;
     } catch (error) {
       lastError = error;
       if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 1000));

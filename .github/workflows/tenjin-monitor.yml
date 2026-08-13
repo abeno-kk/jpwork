@@ -5,6 +5,12 @@ on:
     - cron: "0 2 * * *"
     - cron: "0 7 * * *"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/check-tenjin.mjs"
+      - ".github/workflows/tenjin-monitor.yml"
+      - "tenjin-appids.json"
 
 permissions:
   contents: write
