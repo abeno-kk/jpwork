@@ -1,117 +1,139 @@
 {
-  "ok": true,
-  "runOk": false,
-  "version": 1,
-  "appIds": [
-    "135010215",
-    "135010216"
-  ],
-  "checks": [
-    {
-      "appId": "135010216",
-      "date": "2026-08-12",
-      "slot": "manual",
-      "count": 0,
-      "c4EnterOptCount": 1,
-      "checkedAt": "2026-08-12T10:28:07.000Z",
-      "start": "2026-08-11",
-      "end": "2026-08-12",
-      "error": ""
-    },
-    {
-      "appId": "135010216",
-      "date": "2026-08-12",
-      "slot": "manual",
-      "count": 0,
-      "c4EnterOptCount": 1,
-      "checkedAt": "2026-08-12T10:51:20.513Z",
-      "start": "2026-08-11",
-      "end": "2026-08-12",
-      "error": ""
-    },
-    {
-      "appId": "135010216",
-      "date": "2026-08-12",
-      "slot": "manual",
-      "count": null,
-      "c4EnterOptCount": null,
-      "checkedAt": "2026-08-12T10:59:50.522Z",
-      "start": "2026-08-11",
-      "end": "2026-08-12",
-      "error": "Tenjin returned HTTP 403"
-    },
-    {
-      "appId": "135010215",
-      "date": "2026-08-13",
-      "slot": "manual",
-      "count": null,
-      "c4EnterOptCount": null,
-      "checkedAt": "2026-08-13T02:02:24.598Z",
-      "start": "2026-08-12",
-      "end": "2026-08-13",
-      "error": "Tenjin returned HTTP 403"
-    },
-    {
-      "appId": "135010216",
-      "date": "2026-08-13",
-      "slot": "manual",
-      "count": null,
-      "c4EnterOptCount": null,
-      "checkedAt": "2026-08-13T02:02:28.763Z",
-      "start": "2026-08-12",
-      "end": "2026-08-13",
-      "error": "Tenjin returned HTTP 403"
-    },
-    {
-      "appId": "135010215",
-      "date": "2026-08-13",
-      "slot": "manual",
-      "count": 0,
-      "c4EnterOptCount": 0,
-      "checkedAt": "2026-08-13T02:05:25.228Z",
-      "start": "2026-08-12",
-      "end": "2026-08-13",
-      "error": ""
-    },
-    {
-      "appId": "135010216",
-      "date": "2026-08-13",
-      "slot": "manual",
-      "count": 1,
-      "c4EnterOptCount": 1,
-      "checkedAt": "2026-08-13T02:05:25.752Z",
-      "start": "2026-08-12",
-      "end": "2026-08-13",
-      "error": ""
-    },
-    {
-      "appId": "135010215",
-      "date": "2026-08-13",
-      "slot": "manual",
-      "count": null,
-      "c4EnterOptCount": null,
-      "checkedAt": "2026-08-13T02:10:54.676Z",
-      "start": "2026-08-12",
-      "end": "2026-08-13",
-      "error": "Tenjin report page returned HTTP 403"
-    },
-    {
-      "appId": "135010216",
-      "date": "2026-08-13",
-      "slot": "manual",
-      "count": null,
-      "c4EnterOptCount": null,
-      "checkedAt": "2026-08-13T02:10:58.698Z",
-      "start": "2026-08-12",
-      "end": "2026-08-13",
-      "error": "Tenjin report page returned HTTP 403"
-    }
-  ],
-  "date": "2026-08-13",
-  "timezone": "Asia/Shanghai",
-  "slots": [
-    "10:00",
-    "15:00"
-  ],
-  "updatedAt": "2026-08-13T02:11:02.625Z"
+    "ok":  true,
+    "runOk":  true,
+    "version":  1,
+    "appIds":  [
+                   "135010215",
+                   "135010216"
+               ],
+    "checks":  [
+                   {
+                       "appId":  "135010216",
+                       "date":  "2026-08-12",
+                       "slot":  "manual",
+                       "count":  0,
+                       "c4EnterOptCount":  1,
+                       "checkedAt":  "2026-08-12T10:28:07.000Z",
+                       "start":  "2026-08-11",
+                       "end":  "2026-08-12",
+                       "error":  ""
+                   },
+                   {
+                       "appId":  "135010216",
+                       "date":  "2026-08-12",
+                       "slot":  "manual",
+                       "count":  0,
+                       "c4EnterOptCount":  1,
+                       "checkedAt":  "2026-08-12T10:51:20.513Z",
+                       "start":  "2026-08-11",
+                       "end":  "2026-08-12",
+                       "error":  ""
+                   },
+                   {
+                       "appId":  "135010216",
+                       "date":  "2026-08-12",
+                       "slot":  "manual",
+                       "count":  null,
+                       "c4EnterOptCount":  null,
+                       "checkedAt":  "2026-08-12T10:59:50.522Z",
+                       "start":  "2026-08-11",
+                       "end":  "2026-08-12",
+                       "error":  "Tenjin returned HTTP 403"
+                   },
+                   {
+                       "appId":  "135010215",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  null,
+                       "c4EnterOptCount":  null,
+                       "checkedAt":  "2026-08-13T02:02:24.598Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  "Tenjin returned HTTP 403"
+                   },
+                   {
+                       "appId":  "135010216",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  null,
+                       "c4EnterOptCount":  null,
+                       "checkedAt":  "2026-08-13T02:02:28.763Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  "Tenjin returned HTTP 403"
+                   },
+                   {
+                       "appId":  "135010215",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  0,
+                       "c4EnterOptCount":  0,
+                       "checkedAt":  "2026-08-13T02:05:25.228Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  ""
+                   },
+                   {
+                       "appId":  "135010216",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  1,
+                       "c4EnterOptCount":  1,
+                       "checkedAt":  "2026-08-13T02:05:25.752Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  ""
+                   },
+                   {
+                       "appId":  "135010215",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  null,
+                       "c4EnterOptCount":  null,
+                       "checkedAt":  "2026-08-13T02:10:54.676Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  "Tenjin report page returned HTTP 403"
+                   },
+                   {
+                       "appId":  "135010216",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  null,
+                       "c4EnterOptCount":  null,
+                       "checkedAt":  "2026-08-13T02:10:58.698Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  "Tenjin report page returned HTTP 403"
+                   },
+                   {
+                       "appId":  "135010215",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  0,
+                       "c4EnterOptCount":  0,
+                       "checkedAt":  "2026-08-13T02:14:35.6015241Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  ""
+                   },
+                   {
+                       "appId":  "135010216",
+                       "date":  "2026-08-13",
+                       "slot":  "manual",
+                       "count":  1,
+                       "c4EnterOptCount":  1,
+                       "checkedAt":  "2026-08-13T02:14:36.1001623Z",
+                       "start":  "2026-08-12",
+                       "end":  "2026-08-13",
+                       "error":  ""
+                   }
+               ],
+    "date":  "2026-08-13",
+    "timezone":  "Asia/Shanghai",
+    "slots":  [
+                  "10:00",
+                  "15:00"
+              ],
+    "updatedAt":  "2026-08-13T02:14:36.3047610Z"
 }
