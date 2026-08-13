@@ -17,8 +17,13 @@ $headers = @{
 }
 
 function Invoke-Git([string[]]$Arguments, [switch]$AllowFailure) {
+  $previousPreference = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
   $output = & $git -c credential.helper=manager -C $repo @Arguments 2>&1
-  if ($LASTEXITCODE -ne 0 -and -not $AllowFailure) {
+  $exitCode = $LASTEXITCODE
+  $ErrorActionPreference = $previousPreference
+  $script:GitExitCode = $exitCode
+  if ($exitCode -ne 0 -and -not $AllowFailure) {
     throw ('git ' + ($Arguments -join ' ') + ' failed: ' + ($output -join [Environment]::NewLine))
   }
   return @($output)
@@ -89,7 +94,7 @@ $json = $output | ConvertTo-Json -Depth 8
 
 $null = Invoke-Git @('add', 'tenjin-monitor-results.json')
 $diff = Invoke-Git @('diff', '--cached', '--quiet') -AllowFailure
-if ($LASTEXITCODE -ne 0) {
+if ($script:GitExitCode -ne 0) {
   $null = Invoke-Git @('commit', '-m', ('Update Tenjin result: ' + $Slot))
   $null = Invoke-Git @('pull', '--rebase', 'origin', 'main')
   $null = Invoke-Git @('push', 'origin', 'main')
