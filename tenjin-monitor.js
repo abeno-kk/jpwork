@@ -3,7 +3,6 @@
 
   var REPO_URL = 'https://github.com/abeno-kk/jpwork';
   var CONFIG_URL = REPO_URL + '/edit/main/tenjin-appids.json';
-  var ACTION_URL = REPO_URL + '/actions/workflows/tenjin-monitor.yml';
   var RAW_RESULTS_URL = 'https://raw.githubusercontent.com/abeno-kk/jpwork/main/tenjin-monitor-results.json';
   var els = {
     input: document.getElementById('tenjin-appids-input'),
@@ -125,7 +124,7 @@
   }
 
   els.configure.addEventListener('click', function () { window.open(CONFIG_URL, '_blank', 'noopener'); });
-  els.run.addEventListener('click', function () { window.open(ACTION_URL, '_blank', 'noopener'); });
+  els.run.addEventListener('click', function () { void refresh(false); });
   void refresh(false);
   window.setInterval(function () { void refresh(true); }, 60 * 1000);
 })();
