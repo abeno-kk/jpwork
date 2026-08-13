@@ -22,5 +22,5 @@ jobs:
           fetch-depth: 0
 
       - name: Query Tenjin from Kevin PC
-        shell: powershell
-        run: ./scripts/run-tenjin-local-sync.ps1 -Slot manual
+        shell: cmd
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\run-tenjin-local-sync.ps1 -Slot manual
