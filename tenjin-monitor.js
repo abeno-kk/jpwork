@@ -4,9 +4,11 @@
   var REPO_URL = 'https://github.com/abeno-kk/jpwork';
   var CONFIG_URL = REPO_URL + '/edit/main/tenjin-appids.json';
   var CONTENTS_API_URL = 'https://api.github.com/repos/abeno-kk/jpwork/contents/tenjin-monitor-results.json?ref=main';
+  var LOCAL_TRIGGER_URL = 'tenjin-update://run';
   var els = {
     input: document.getElementById('tenjin-appids-input'),
     configure: document.getElementById('tenjin-save-appids-btn'),
+    trigger: document.getElementById('tenjin-run-now-btn'),
     run: document.getElementById('tenjin-check-now-btn'),
     status: document.getElementById('tenjin-monitor-status'),
     message: document.getElementById('tenjin-monitor-message'),
@@ -16,6 +18,7 @@
   if (!els.body) return;
 
   var snapshot = { appIds: [], checks: [], date: '' };
+  var updatePolling = null;
 
   function escapeHtml(value) {
     return String(value == null ? '' : value)
@@ -107,6 +110,21 @@
       : '固定查詢：每日 10:00、15:00（北京時間）';
   }
 
+  async function loadSnapshot() {
+    var localResponse = await fetch('./tenjin-monitor-results.json?t=' + Date.now(), { cache: 'no-store' });
+    if (localResponse.ok) return localResponse.json();
+
+    var response = await fetch(CONTENTS_API_URL + '&t=' + Date.now(), {
+      cache: 'no-store',
+      headers: { Accept: 'application/vnd.github+json' }
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    var file = await response.json();
+    var binary = window.atob(String(file.content || '').replace(/\s/g, ''));
+    var bytes = Uint8Array.from(binary, function (char) { return char.charCodeAt(0); });
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
   async function refresh(quiet) {
     if (!quiet) {
       els.run.disabled = true;
@@ -114,28 +132,14 @@
       setMessage('正在讀取 GitHub main 的最新結果…', false);
     }
     try {
-      var githubMode = location.hostname.endsWith('github.io');
-      var resultsUrl = githubMode
-        ? CONTENTS_API_URL + '&t=' + Date.now()
-        : './tenjin-monitor-results.json?t=' + Date.now();
-      var response = await fetch(resultsUrl, {
-        cache: 'no-store',
-        headers: githubMode ? { Accept: 'application/vnd.github+json' } : {}
-      });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      if (githubMode) {
-        var file = await response.json();
-        var binary = window.atob(String(file.content || '').replace(/\s/g, ''));
-        var bytes = Uint8Array.from(binary, function (char) { return char.charCodeAt(0); });
-        snapshot = JSON.parse(new TextDecoder().decode(bytes));
-      } else {
-        snapshot = await response.json();
-      }
+      snapshot = await loadSnapshot();
       render();
       if (!quiet) setMessage('已讀取 GitHub 最新結果。', false);
+      return true;
     } catch (error) {
       els.status.textContent = 'GitHub 查詢結果讀取失敗';
       setMessage('目前無法讀取 Tenjin 結果：' + (error.message || error), true);
+      return false;
     } finally {
       if (!quiet) {
         els.run.disabled = false;
@@ -144,7 +148,39 @@
     }
   }
 
+  function stopUpdatePolling() {
+    if (updatePolling) window.clearInterval(updatePolling);
+    updatePolling = null;
+  }
+
+  function triggerUpdate() {
+    if (!els.trigger || updatePolling) return;
+    var previousUpdatedAt = String(snapshot.updatedAt || '');
+    var attempts = 0;
+    els.trigger.disabled = true;
+    els.trigger.textContent = '查詢中…';
+    setMessage('已通知這台電腦查詢 Tenjin，完成後頁面會自動更新。第一次使用請允許瀏覽器開啟「Tenjin 即時更新」。', false);
+
+    window.location.href = LOCAL_TRIGGER_URL + '?time=' + Date.now();
+    updatePolling = window.setInterval(async function () {
+      attempts += 1;
+      var loaded = await refresh(true);
+      if (loaded && String(snapshot.updatedAt || '') && String(snapshot.updatedAt) !== previousUpdatedAt) {
+        stopUpdatePolling();
+        els.trigger.disabled = false;
+        els.trigger.textContent = '立即查詢並更新';
+        setMessage('立即查詢完成，已顯示最新結果。', false);
+      } else if (attempts >= 30) {
+        stopUpdatePolling();
+        els.trigger.disabled = false;
+        els.trigger.textContent = '立即查詢並更新';
+        setMessage('尚未收到新結果。請確認這台電腦已開機登入，再按一次；若瀏覽器詢問是否開啟，請選擇允許。', true);
+      }
+    }, 4000);
+  }
+
   els.configure.addEventListener('click', function () { window.open(CONFIG_URL, '_blank', 'noopener'); });
+  if (els.trigger) els.trigger.addEventListener('click', triggerUpdate);
   els.run.addEventListener('click', function () { void refresh(false); });
   void refresh(false);
   window.setInterval(function () { void refresh(true); }, 60 * 1000);
