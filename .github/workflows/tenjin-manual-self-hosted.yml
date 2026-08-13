@@ -1,0 +1,26 @@
+name: Tenjin Manual Update
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tenjin-manual-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Query Tenjin and update results
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout jpwork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Query Tenjin from Kevin PC
+        shell: powershell
+        run: ./scripts/run-tenjin-local-sync.ps1 -Slot manual

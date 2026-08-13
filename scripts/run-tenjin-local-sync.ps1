@@ -19,7 +19,11 @@ $headers = @{
 function Invoke-Git([string[]]$Arguments, [switch]$AllowFailure) {
   $previousPreference = $ErrorActionPreference
   $ErrorActionPreference = 'Continue'
-  $output = & $git -c credential.helper=manager -C $repo @Arguments 2>&1
+  if ($env:GITHUB_ACTIONS -eq 'true') {
+    $output = & $git -C $repo @Arguments 2>&1
+  } else {
+    $output = & $git -c credential.helper=manager -C $repo @Arguments 2>&1
+  }
   $exitCode = $LASTEXITCODE
   $ErrorActionPreference = $previousPreference
   $script:GitExitCode = $exitCode
