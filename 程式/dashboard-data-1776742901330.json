@@ -1,0 +1,2012 @@
+{
+  "tasks": [
+    {
+      "id": "59451634-2c3e-4530-9238-4bd5fe80f0a8",
+      "name": "禁止原生",
+      "guideUrl1": "https://www.notion.so/32d9d637b98180e0bc28c5cb12dc61b3?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "周一～周三",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-16": false,
+        "2026-04-15": true,
+        "2026-04-14": true,
+        "2026-04-17": true,
+        "2026-04-20": false,
+        "2026-04-21": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "63de5e34-8301-4157-90e1-4644567ba682",
+      "name": "渠道回U",
+      "guideUrl1": "https://www.notion.so/3289d637b98180348eead33da4761038",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "每日數次",
+      "archivedAt": "",
+      "history": {
+        "2026-04-16": true,
+        "2026-04-15": false,
+        "2026-04-14": true,
+        "2026-04-17": true,
+        "2026-04-18": true,
+        "2026-04-19": true,
+        "2026-04-20": true,
+        "2026-04-21": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "c5405324-e8a2-422a-8864-3d592c981fff",
+      "name": "代付余额不足檢查",
+      "guideUrl1": "https://www.notion.so/RockpayX-3179d637b98180e9ba91f67df5d9bcf5?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true,
+        "2026-04-18": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "3e36fc52-4f32-4c9e-a9d3-cc07a50961bf",
+      "name": "支付渠道卡单",
+      "guideUrl1": "https://www.notion.so/300-1000-3179d637b9818027ab92d8510caded2f?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true,
+        "2026-04-18": true,
+        "2026-04-20": false,
+        "2026-04-21": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "bc4ce95c-bf59-4c11-9058-88ca280f963d",
+      "name": "封鎖喚醒用戶的帳號",
+      "guideUrl1": "https://www.notion.so/33b9d637b981805e8b86f58449e7e375",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true,
+        "2026-04-18": true,
+        "2026-04-20": false,
+        "2026-04-21": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "b3c55e30-b7d5-4874-aaaf-b4b2301a751d",
+      "name": "统计API唤醒补",
+      "guideUrl1": "https://www.notion.so/3179d637b98180158fc1fd783553c758?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "/order_sales_track@ktv_pro_gg2023_bot",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true,
+        "2026-04-18": true,
+        "2026-04-20": false,
+        "2026-04-21": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "eaa2872a-33e6-4b61-bd03-e00fec82c60f",
+      "name": "ROCK摧單處理",
+      "guideUrl1": "https://www.notion.so/ROCK-3409d637b9818008ba71dac298cf7149?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "6c76c2f7-6d89-4e9c-9f00-d4a685bb12cd",
+      "name": "支付渠道-rockgame調整",
+      "guideUrl1": "https://www.notion.so/rockpay-3179d637b981808d91e0dabf38f4b9ab?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "adminlyf  354dfas",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true,
+        "2026-04-18": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "f64f7741-004e-47c7-bb53-1f92e944402c",
+      "name": "手动调整代收渠道的权重",
+      "guideUrl1": "https://www.notion.so/Rockpay-10-20-100-3179d637b981808d91e0dabf38f4b9ab?source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "79aa6e4b-9bcd-4ec1-8ddd-e9ce8f5d7a43",
+      "name": "调整代收金额区间",
+      "guideUrl1": "https://www.notion.so/rockpay-3179d637b981808d91e0dabf38f4b9ab?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "887546a1-69f5-486c-a2be-fe32e8d3871f",
+      "name": "调整代付开启和关闭",
+      "guideUrl1": "https://www.notion.so/rockpay-3179d637b981808d91e0dabf38f4b9ab?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "113 142 143 147 210 代收不要在開了,這些準備停掉了          113(Rubikpay-native)  142(Paypay-native) 143(Yespay-native) 147(Evermaxpay-native)  210(Nekpay-wake)",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "624841e3-33a5-4778-8adf-f6de266fdfb2",
+      "name": "手动调整代收渠道的权重",
+      "guideUrl1": "https://www.notion.so/rockpay-3179d637b981808d91e0dabf38f4b9ab?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "每日",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-17": true,
+        "2026-04-18": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "bc369a16-9f5f-46e9-af96-63a30b6edefd",
+      "name": "禁止提现订单审核",
+      "guideUrl1": "https://www.notion.so/3179d637b98180f09ba6ea6c8d2715dd?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "https://www.notion.so/3189d637b981802a90f9c8b0283ea314?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "type": "週六",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-18": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "59e03c51-e711-46a3-8fd7-e41bd2ec8d26",
+      "name": "禁止自动提现用户",
+      "guideUrl1": "https://www.notion.so/3179d637b98180deaaa6f909c4e14594?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "週六",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-16": true,
+        "2026-04-15": false,
+        "2026-04-14": false,
+        "2026-04-18": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "e5c691fb-e7a9-4644-bd7f-658146d1f230",
+      "name": "高V補單",
+      "guideUrl1": "https://www.notion.so/3199d637b98180d09b06fcbb70263bf6?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "週六",
+      "note": "",
+      "archivedAt": "",
+      "history": {
+        "2026-04-16": true,
+        "2026-04-15": true,
+        "2026-04-14": true,
+        "2026-04-18": true
+      },
+      "extras": {}
+    },
+    {
+      "id": "b787b18e-a1ae-46f8-83de-3a1dbbd32f7d",
+      "name": "惡意退款處理",
+      "guideUrl1": "https://www.notion.so/32d9d637b981802b8a11f92adabce05d?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "機動性",
+      "note": "",
+      "archivedAt": "",
+      "history": {},
+      "extras": {}
+    },
+    {
+      "id": "af9f5be8-a27c-4ecf-8cb0-df1d2f87a93f",
+      "name": "客服消息回复-100条",
+      "guideUrl1": "https://www.notion.so/RockgamPAY-32c9d637b981807fa84df31926705541?v=3179d637b981809e9701000c3fc630aa&source=copy_link",
+      "guideUrl2": "",
+      "type": "機動性",
+      "note": "",
+      "archivedAt": "",
+      "history": {},
+      "extras": {}
+    }
+  ],
+  "channels": [
+    {
+      "id": "a1ca51b7-e097-4806-9c93-49eae52c3ca7",
+      "source": "營運",
+      "name": "MGPAY",
+      "amount": "656,851.68",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "等11點結算",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "14ec5590-2012-4420-a69a-ac65add5a61a",
+      "source": "營運",
+      "name": "BFPAY",
+      "amount": "1601.53",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "741cbc53-509b-4f44-92fd-54336607eb41",
+      "source": "營運",
+      "name": "KCASH",
+      "amount": "639112.58",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "c745690c-e37b-4156-b913-1db0c8ba8954",
+      "source": "營運",
+      "name": "YUNPAY",
+      "amount": "6140367.83",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "95172022-8bf4-4856-9008-4b9621983b96",
+      "source": "營運",
+      "name": "KoiNativePay",
+      "amount": "572627.80",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "1fb0fea1-a752-412c-a19f-d18e070852df",
+      "source": "營運",
+      "name": "MOSSENPAY",
+      "amount": "",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "d416355f-4ee3-49de-9bfe-2ea3d3a5895f",
+      "source": "營運",
+      "name": "EAZYTECH",
+      "amount": "465372.34",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "56f20bd7-a6b6-460c-9d75-3bb203dd4433",
+      "source": "ROCK",
+      "name": "138(Hotzpay-native)",
+      "amount": "376662",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "e34d57b9-8fe0-43b4-972b-b07c88010d40",
+      "source": "ROCK",
+      "name": "147(Evermaxpay-native)",
+      "amount": "494965.4",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "e9cb8621-e4c6-48b4-91c1-c568429659d7",
+      "source": "ROCK",
+      "name": "114(Ecpay-native)",
+      "amount": "330.27",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "01525221-9a40-4988-ad97-2f62c95315ab",
+      "source": "ROCK",
+      "name": "107(Tpay-native)",
+      "amount": "193202.35",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "3dcebd09-4dc2-45e7-a8cf-fb9df62806ba",
+      "source": "ROCK",
+      "name": "121(Hexpay-native)",
+      "amount": "381405.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "7421c21b-ddaa-4cea-bd06-168dd10c5981",
+      "source": "ROCK",
+      "name": "126(Yunpay-native)",
+      "amount": "146428.28",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "9f3366e1-e19f-4259-acba-559636ed2c8a",
+      "source": "ROCK",
+      "name": "128(Eazy2pay-native)",
+      "amount": "465372.34",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "7ece033c-eab2-4ef9-b767-bcd05ebdd1f3",
+      "source": "ROCK",
+      "name": "129(Kcash-native)",
+      "amount": "1434.6",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "8d396e77-1d4b-4fe4-8b3d-89f3bc86293c",
+      "source": "ROCK",
+      "name": "135(Lhpay-native)",
+      "amount": "557001.32",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "55W",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "6749154a-5dbb-4953-a384-d8e7b6e25ec6",
+      "source": "ROCK",
+      "name": "136(Agpay-native)",
+      "amount": "1812.79",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "2b26118a-04c5-4573-bf97-16e345e9c9a4",
+      "source": "ROCK",
+      "name": "139(Oppay-native)",
+      "amount": "376662",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "e3520fb7-904a-459c-8236-291d53949b59",
+      "source": "ROCK",
+      "name": "145(Epypay-native)",
+      "amount": "569.44",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "01d69bf4-ed94-4b7b-b096-9f517756c27a",
+      "source": "ROCK",
+      "name": "205(Ppay-wake)",
+      "amount": "1434.99",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "f411f3e4-8b9e-433f-9154-e5dd1738caf1",
+      "source": "ROCK",
+      "name": "150(Hdfc-native)",
+      "amount": "494965.4",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "4d442437-08d2-42fc-8f62-21e5313299db",
+      "source": "ROCK",
+      "name": "151(Velo-native)",
+      "amount": "1640.42",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "51497cb5-978d-4cbf-9867-0fc2cef7d900",
+      "source": "ROCK",
+      "name": "140(Payapay-native)",
+      "amount": "1640.42",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-21T10:16",
+      "extras": {}
+    },
+    {
+      "id": "4e04451c-ca22-4260-82ea-a44eee1d03e2",
+      "source": "營運",
+      "name": "MGPAY",
+      "amount": "1,834,551.68",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "180W",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "ec88de46-8de4-4745-82d5-5d8a0b6b5444",
+      "source": "營運",
+      "name": "BFPAY",
+      "amount": "5654.33",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "a1edfbab-8988-44b9-af8e-474579c07e07",
+      "source": "營運",
+      "name": "KCASH",
+      "amount": "10.18",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "af23a795-7cf9-468f-a48d-3328592a075e",
+      "source": "營運",
+      "name": "YUNPAY",
+      "amount": "6102856.17",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "9d2ff98a-b5ea-4115-acb2-c7256aef8bba",
+      "source": "營運",
+      "name": "KoiNativePay",
+      "amount": "1072828.20",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "開啟代付中，不回U",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "462a94fe-3b27-4118-a077-cc8f0f3d5df5",
+      "source": "營運",
+      "name": "MOSSENPAY",
+      "amount": "",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "207f16e7-67a6-4ee4-8ca4-fee0e38d07bb",
+      "source": "營運",
+      "name": "EAZYTECH",
+      "amount": " 1306379.14",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "詢問上一 筆回U80W狀況",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "c3ea8c17-0056-42e7-b11d-3593952f6f70",
+      "source": "ROCK",
+      "name": "138(Hotzpay-native)",
+      "amount": "",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "df7c107e-ba7b-496b-b29f-f7ad247c6719",
+      "source": "ROCK",
+      "name": "147(Evermaxpay-native)",
+      "amount": "",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "a74f368d-8ff9-49cc-9ba4-1db3326ecaba",
+      "source": "ROCK",
+      "name": "114(Ecpay-native)",
+      "amount": "473000.17",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "38ec73fe-bfc9-4769-a903-4c8938ebbad2",
+      "source": "ROCK",
+      "name": "107(Tpay-native)",
+      "amount": "471112.75",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "7c88bc8e-cd4e-4381-8c15-4020ea5d01a5",
+      "source": "ROCK",
+      "name": "121(Hexpay-native)",
+      "amount": "381405.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "1ea910b3-dd4b-4f60-a1ed-4eeb998abe12",
+      "source": "ROCK",
+      "name": "126(Yunpay-native)",
+      "amount": "141529.78",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "c6dd4b2d-19bc-4d35-acf3-1101e4974bcb",
+      "source": "ROCK",
+      "name": "128(Eazy2pay-native)",
+      "amount": "1306379.14",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "86defb92-7eff-467b-9b37-f76ad594a753",
+      "source": "ROCK",
+      "name": "129(Kcash-native)",
+      "amount": "36214",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "47dadee1-123e-4b5f-9cb4-3fa7066a6a4d",
+      "source": "ROCK",
+      "name": "135(Lhpay-native)",
+      "amount": "830235.13",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "開啟代付中，不回U",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "7644a18a-5397-43d1-8847-85bf8ef2d8d2",
+      "source": "ROCK",
+      "name": "136(Agpay-native)",
+      "amount": "939.39",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "df26608b-c9ed-4cfe-8c24-2501799e8e93",
+      "source": "ROCK",
+      "name": "139(Oppay-native)",
+      "amount": "1894533.95",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "5da35f98-347c-4ac8-88ce-fd160cd917ee",
+      "source": "ROCK",
+      "name": "145(Epypay-native)",
+      "amount": "706017.84",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "e4296a33-6d7e-4606-ae4e-0ad6d4ede5d7",
+      "source": "ROCK",
+      "name": "205(Ppay-wake)",
+      "amount": "431099.19",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "84c8d8c8-a997-40ae-a9af-f481f22b036e",
+      "source": "ROCK",
+      "name": "150(Hdfc-native)",
+      "amount": "653571",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "eade1c5e-6950-4f3f-98ed-38816ecbdf86",
+      "source": "ROCK",
+      "name": "151(Velo-native)",
+      "amount": "353156.5",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "e93841de-f2a0-450e-9e11-dc34ad4ddb2c",
+      "source": "ROCK",
+      "name": "140(Payapay-native)",
+      "amount": "133653.62",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-20T13:27",
+      "extras": {}
+    },
+    {
+      "id": "13ce2afa-42f5-42f4-a67c-fcf7cf486155",
+      "source": "營運",
+      "name": "MGPAY",
+      "amount": "3,951.68",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "86c1ffe1-d207-4535-bb4d-0b8906713679",
+      "source": "營運",
+      "name": "BFPAY",
+      "amount": "43663.53",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "73db2f58-123f-4eb6-beb3-6336fd6ec132",
+      "source": "營運",
+      "name": "KCASH",
+      "amount": "1175795.62",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "05148f87-0218-4f5e-afdf-e080ac18f42c",
+      "source": "營運",
+      "name": "YUNPAY",
+      "amount": "6097239.32",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "c4126b13-4dc6-4f6c-90bc-8633b31e8687",
+      "source": "營運",
+      "name": "KoiNativePay",
+      "amount": "535193.40",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "770a5e0e-aaa0-40c6-b8ac-9c5716794ffc",
+      "source": "營運",
+      "name": "MOSSENPAY",
+      "amount": "",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "6e79f97e-733f-4b4c-aa9c-52581fd31e42",
+      "source": "營運",
+      "name": "EAZYTECH",
+      "amount": " 1185844.94",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "有申請一筆回U80W",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "f6832433-c242-4818-a5f9-272740f795ba",
+      "source": "ROCK",
+      "name": "138(Hotzpay-native)",
+      "amount": "",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "29e64a38-800f-4e7b-acb5-af1aae730750",
+      "source": "ROCK",
+      "name": "147(Evermaxpay-native)",
+      "amount": "763349.5",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "d30d9c48-2d67-40a3-baf8-b3749ba9c13d",
+      "source": "ROCK",
+      "name": "114(Ecpay-native)",
+      "amount": "863855.27",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "1b51dd63-62de-48ca-b008-1b9074ec1b27",
+      "source": "ROCK",
+      "name": "107(Tpay-native)",
+      "amount": "463902.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "57bf52b4-06d7-4da5-af05-8202e5e30024",
+      "source": "ROCK",
+      "name": "121(Hexpay-native)",
+      "amount": "381405.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "3681997a-d691-42e5-99ae-1e827e346971",
+      "source": "ROCK",
+      "name": "126(Yunpay-native)",
+      "amount": "141529.78",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "6d05b6cf-2793-4827-b0c0-b5b4b71c0f80",
+      "source": "ROCK",
+      "name": "128(Eazy2pay-native)",
+      "amount": "1185844.94",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "76c1712f-95e5-4806-b6ef-7305102ddbe5",
+      "source": "ROCK",
+      "name": "129(Kcash-native)",
+      "amount": "1037903.5",
+      "result": "已回U",
+      "status": "啟用",
+      "note": "50W",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "fc12bbc1-784a-4e3e-b802-0e0912600749",
+      "source": "ROCK",
+      "name": "135(Lhpay-native)",
+      "amount": "776125.63",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "296f136e-cfd9-487e-9352-229656e2d0c1",
+      "source": "ROCK",
+      "name": "136(Agpay-native)",
+      "amount": "14298.72",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "4ffecc86-7d6e-4228-9bf8-a568e8bdfa38",
+      "source": "ROCK",
+      "name": "139(Oppay-native)",
+      "amount": "1076611.25",
+      "result": "已回U",
+      "status": "啟用",
+      "note": "50W",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "ffe8c9f1-68a9-42e3-804e-ffc654d9a021",
+      "source": "ROCK",
+      "name": "145(Epypay-native)",
+      "amount": "380443.44",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "664822bd-af83-44c6-8c71-c462a1edeebb",
+      "source": "ROCK",
+      "name": "205(Ppay-wake)",
+      "amount": "431099.19",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "78792140-94bf-49ea-8487-e5f04f722c1b",
+      "source": "ROCK",
+      "name": "150(Hdfc-native)",
+      "amount": "353156.5",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "3cc0b5fd-8886-4c3f-908c-b65bd0a4f5fb",
+      "source": "ROCK",
+      "name": "151(Velo-native)",
+      "amount": "48944.03",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "3bfdb582-c9d2-4c55-8924-525f91f10911",
+      "source": "ROCK",
+      "name": "140(Payapay-native)",
+      "amount": "838910.02",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T22:25",
+      "extras": {}
+    },
+    {
+      "id": "a1452adb-0615-462d-98fd-74b7d15f9500",
+      "source": "營運",
+      "name": "MGPAY",
+      "amount": "1078541.68",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "336c2e84-bf74-4280-9052-8e405f00538e",
+      "source": "營運",
+      "name": "BFPAY",
+      "amount": "11578.50",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "ff26a434-592a-427c-abb9-a596809530e8",
+      "source": "營運",
+      "name": "KCASH",
+      "amount": "426120.93",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "b0ec7d65-6550-4d43-86cf-916c4a9102e1",
+      "source": "營運",
+      "name": "YUNPAY",
+      "amount": "6097239.32",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "5fef4ece-6ead-40af-a743-4f3cc17bf1b6",
+      "source": "營運",
+      "name": "KoiNativePay",
+      "amount": "1016670.90",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "c064419c-2d60-4549-a3fc-df04ee17bde8",
+      "source": "營運",
+      "name": "MOSSENPAY",
+      "amount": "",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "4f0bdc98-0fed-4967-afd4-119e9ebc1336",
+      "source": "營運",
+      "name": "EAZYTECH",
+      "amount": "462498.14",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "f1e05bda-d356-43c4-9054-03ec46ebb5a9",
+      "source": "ROCK",
+      "name": "138(Hotzpay-native)",
+      "amount": "376662",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "fcee451d-895a-456e-b88e-dccc046169da",
+      "source": "ROCK",
+      "name": "147(Evermaxpay-native)",
+      "amount": "763349.5",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "cd47aad6-69fa-4ddf-b891-ac31b0d38d88",
+      "source": "ROCK",
+      "name": "114(Ecpay-native)",
+      "amount": "746328.47",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "f84be180-7070-4862-b235-f917661f394b",
+      "source": "ROCK",
+      "name": "107(Tpay-native)",
+      "amount": "321503.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "0c6a2d82-6d26-406d-a316-753508c97ba5",
+      "source": "ROCK",
+      "name": "121(Hexpay-native)",
+      "amount": "381405.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "536c28e7-33f3-4cca-bdd2-b6095e7b1c9d",
+      "source": "ROCK",
+      "name": "126(Yunpay-native)",
+      "amount": "146428.28",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "815b0168-7e46-4e8e-b93e-9d82704e227a",
+      "source": "ROCK",
+      "name": "128(Eazy2pay-native)",
+      "amount": "462498.14",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "e0314d71-617b-44a5-ae01-85136b7ebcf4",
+      "source": "ROCK",
+      "name": "129(Kcash-native)",
+      "amount": "1037653.5",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "5c57e9cc-b936-4351-82bd-48b6d2fcf987",
+      "source": "ROCK",
+      "name": "135(Lhpay-native)",
+      "amount": "942205.03",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "39cd81f2-f462-4644-9026-92b23d478767",
+      "source": "ROCK",
+      "name": "136(Agpay-native)",
+      "amount": "2069.39",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "aa56a430-289e-48bd-a873-5de356857982",
+      "source": "ROCK",
+      "name": "139(Oppay-native)",
+      "amount": "2069.39",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "3b240209-8494-461a-a4b6-184a9699d6b9",
+      "source": "ROCK",
+      "name": "145(Epypay-native)",
+      "amount": "485070.24",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "2d51c99e-399a-4e2b-8eb9-2342eaddc9fe",
+      "source": "ROCK",
+      "name": "205(Ppay-wake)",
+      "amount": "431099.19",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "6aff4c80-4db9-4359-a263-eaa92f8dfe5f",
+      "source": "ROCK",
+      "name": "150(Hdfc-native)",
+      "amount": "714056.6",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "8d75c048-8237-4000-a153-2686e1643458",
+      "source": "ROCK",
+      "name": "151(Velo-native)",
+      "amount": "1211.3",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    },
+    {
+      "id": "3a15b81f-ba59-458c-9813-3961607f74dd",
+      "source": "營運",
+      "name": "MGPAY",
+      "amount": "526,671.68",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "6a03a847-2fdd-4273-a2c3-f19cddc26bd1",
+      "source": "營運",
+      "name": "BFPAY",
+      "amount": "25420.33",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "8baa9626-7672-4d49-accd-b89f61003af9",
+      "source": "營運",
+      "name": "KCASH",
+      "amount": "2068440.69",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "48a9d0ac-de74-42bd-939c-69416538ed07",
+      "source": "營運",
+      "name": "YUNPAY",
+      "amount": "6097239.32",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "0b822175-3c4d-4af6-9343-e5fc6520d763",
+      "source": "營運",
+      "name": "KoiNativePay",
+      "amount": "331446.20",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "5e6a866d-ac90-4c98-ab7c-3caaed94b40f",
+      "source": "營運",
+      "name": "MOSSENPAY",
+      "amount": "",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "15a66fe1-0e01-4bdd-8f56-eaf158666dd8",
+      "source": "營運",
+      "name": "EAZYTECH",
+      "amount": "856688.44",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "800000 明天才會回U",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "06b55d8e-4b88-431c-b24c-c2b1b41074db",
+      "source": "ROCK",
+      "name": "138(Hotzpay-native)",
+      "amount": "376662",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "ca707a33-66b2-4058-a858-6d225983a18b",
+      "source": "ROCK",
+      "name": "147(Evermaxpay-native)",
+      "amount": "763349.5",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "9b26b990-3573-49d2-a010-be80fd5ec405",
+      "source": "ROCK",
+      "name": "114(Ecpay-native)",
+      "amount": "603953.77",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "e3412d5a-3dd0-46d2-bcfe-dd4010b62ebc",
+      "source": "ROCK",
+      "name": "107(Tpay-native)",
+      "amount": "232617.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "b7139479-875d-47db-ae3d-668b2c1b21a3",
+      "source": "ROCK",
+      "name": "121(Hexpay-native)",
+      "amount": "381405.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "804db4af-2802-46b1-8b76-2b6c15240425",
+      "source": "ROCK",
+      "name": "126(Yunpay-native)",
+      "amount": "146428.28",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "907d60d8-3d5d-4e19-aae7-4a6147e983e3",
+      "source": "ROCK",
+      "name": "128(Eazy2pay-native)",
+      "amount": "56688.44",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "00de3e3a-216f-4413-b25c-1024f8360088",
+      "source": "ROCK",
+      "name": "129(Kcash-native)",
+      "amount": "1136126.5",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "5777871b-2ccc-4685-85ee-169d66858d1b",
+      "source": "ROCK",
+      "name": "135(Lhpay-native)",
+      "amount": "961403.73",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "0715f167-cc0b-4cba-b4ca-816af06c7287",
+      "source": "ROCK",
+      "name": "136(Agpay-native)",
+      "amount": "20382.04",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "7aaf7f68-4a42-4d15-8fc2-3ee4927c3ce4",
+      "source": "ROCK",
+      "name": "139(Oppay-native)",
+      "amount": "214105.25",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "ca82302f-34a4-4c2c-9b8d-85ed8c14a614",
+      "source": "ROCK",
+      "name": "145(Epypay-native)",
+      "amount": "751921.84",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "ea5656f8-910f-4196-b780-34bca23f0703",
+      "source": "ROCK",
+      "name": "205(Ppay-wake)",
+      "amount": "431099.19",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "49b7e11e-6ea5-4d5c-b5cf-885b12d1c2d5",
+      "source": "ROCK",
+      "name": "150(Hdfc-native)",
+      "amount": "663162.3",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "7948088c-893b-41c0-a407-bcc747632e77",
+      "source": "ROCK",
+      "name": "151(Velo-native)",
+      "amount": "348240",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T23:15",
+      "extras": {}
+    },
+    {
+      "id": "013ede0d-416e-47ec-bc98-09f419ae9286",
+      "source": "營運",
+      "name": "MGPAY",
+      "amount": "69,514.68",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "等晚一點在回",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "c33b3912-5617-472e-8a53-ee9a2af10f3f",
+      "source": "ROCK",
+      "name": "",
+      "amount": "",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "e1b6178d-8e97-40b0-941b-1b4444d1d9c8",
+      "source": "營運",
+      "name": "",
+      "amount": "",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "dc97647a-db25-4aa5-92bf-9112bffac39f",
+      "source": "回U渠道-R",
+      "name": "MGPAY",
+      "amount": "2171373.68",
+      "result": "已回U",
+      "status": "啟用",
+      "note": "上次",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "baca795b-247a-4766-80f6-4e48fc194f5a",
+      "source": "ROCK",
+      "name": "",
+      "amount": "",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "a9f0bcc8-9cc9-4dd1-b0b7-702ba48f0220",
+      "source": "ROCK",
+      "name": "",
+      "amount": "",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "f2e7e4ef-e843-48e5-a0d2-c0796834d41f",
+      "source": "ROCK",
+      "name": "",
+      "amount": "",
+      "result": "已回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-16T02:34",
+      "extras": {}
+    },
+    {
+      "id": "1233b561-8081-49c8-aab4-250753108c0b",
+      "source": "ROCK",
+      "name": "",
+      "amount": "",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-16T02:34",
+      "extras": {}
+    },
+    {
+      "id": "a3a059cc-712d-47b1-bf74-469e35ab63d7",
+      "source": "回U渠道-R",
+      "name": "MGPAY",
+      "amount": "71373.68",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "晚間批次",
+      "updatedAt": "2026-04-16T02:34",
+      "extras": {}
+    },
+    {
+      "id": "879779f3-9728-4890-a253-4794a043dce6",
+      "source": "回U渠道-R",
+      "name": "MOSSENPAY",
+      "amount": "",
+      "result": "已回U",
+      "status": "關閉",
+      "note": "11 結算",
+      "updatedAt": "2026-04-16T02:34",
+      "extras": {}
+    },
+    {
+      "id": "1f88bcda-ff5f-421f-8716-b734742410ca",
+      "source": "ROCK",
+      "name": "128(Eazy2pay-native)",
+      "amount": "233150.24",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "38ba847d-263f-4878-a8b3-2b198c3eaaee",
+      "source": "ROCK",
+      "name": "129(Kcash-native)",
+      "amount": "517030.5",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "e5c6be20-412e-45e8-ac3e-de32f0de0793",
+      "source": "ROCK",
+      "name": "138(Hotzpay-native)",
+      "amount": "",
+      "result": "目前暫無法回U",
+      "status": "",
+      "note": "",
+      "updatedAt": "2026-04-16T02:27",
+      "extras": {}
+    },
+    {
+      "id": "06af7763-dd01-4992-8f45-d7941139769c",
+      "source": "營運",
+      "name": "BFPAY",
+      "amount": "28964.33",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "c32b0889-0569-448c-ba59-71b3e7966817",
+      "source": "營運",
+      "name": "KCASH",
+      "amount": "69.86",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "22ebb694-3765-4420-8c3f-bfc79ed8d770",
+      "source": "營運",
+      "name": "YUNPAY",
+      "amount": "6089897.10",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "f21634fd-a74c-429a-aaf1-41bfc7033bae",
+      "source": "營運",
+      "name": "KoiNativePay",
+      "amount": "959156.30",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "ee94bb39-6cd4-4f72-b3a1-49f1102938ad",
+      "source": "營運",
+      "name": "MOSSENPAY",
+      "amount": "",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "dd853cc5-fb4d-4927-8cd3-e3687bff9450",
+      "source": "營運",
+      "name": "EAZYTECH",
+      "amount": "229815.34",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "9c46479f-f2c5-4e91-9133-ce1f1b125387",
+      "source": "ROCK",
+      "name": "138(Hotzpay-native)",
+      "amount": "376662",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "cfe4145c-b6e6-4d1e-9bf4-79c0e6c54bff",
+      "source": "ROCK",
+      "name": "147(Evermaxpay-native)",
+      "amount": "763349.5",
+      "result": "目前暫無法回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "ece3c7cc-fb43-4556-932d-e981878df6fb",
+      "source": "ROCK",
+      "name": "114(Ecpay-native)",
+      "amount": "619456.07",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "e03cfebf-d3ae-4dd5-bacb-e13acc76b05e",
+      "source": "ROCK",
+      "name": "107(Tpay-native)",
+      "amount": "165499.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "3196b978-3cba-44c1-92cc-a54da5d9a5bf",
+      "source": "ROCK",
+      "name": "121(Hexpay-native)",
+      "amount": "381405.75",
+      "result": "不回U",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "106cab88-6825-4130-adcd-257061785fad",
+      "source": "ROCK",
+      "name": "126(Yunpay-native)",
+      "amount": "154256.28",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "1f1955fb-a245-4620-b952-9ab6e4e34b3c",
+      "source": "ROCK",
+      "name": "128(Eazy2pay-native)",
+      "amount": "229815.34",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "a3a33be4-b373-4ad9-a99f-fe7e938f1893",
+      "source": "ROCK",
+      "name": "129(Kcash-native)",
+      "amount": "623741.5",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "68e6b8d9-6520-46d0-8e6b-6551e99a5cd5",
+      "source": "ROCK",
+      "name": "135(Lhpay-native)",
+      "amount": "744460.53",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "a6ad91a4-c364-480a-be57-ed72503621da",
+      "source": "ROCK",
+      "name": "136(Agpay-native)",
+      "amount": "2072.06",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "936a7586-d986-4c8e-b2eb-65fbd1168fb6",
+      "source": "ROCK",
+      "name": "139(Oppay-native)",
+      "amount": "351767.05",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "1243be2b-56e4-412e-b1cd-b3a26214be81",
+      "source": "ROCK",
+      "name": "145(Epypay-native)",
+      "amount": "1002395.84",
+      "result": "詢問中",
+      "status": "關閉",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "3f0a93ca-4b4c-41a0-887e-c457e1895286",
+      "source": "ROCK",
+      "name": "205(Ppay-wake)",
+      "amount": "302862.69",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "c15ea1d1-d0e2-4ed3-9c7d-13c5a1c1ea15",
+      "source": "ROCK",
+      "name": "150(Hdfc-native)",
+      "amount": "428120",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "ea64a141-2301-4b49-a164-d120532a47c3",
+      "source": "ROCK",
+      "name": "151(Velo-native)",
+      "amount": "1871.5",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-18T11:09",
+      "extras": {}
+    },
+    {
+      "id": "f07fe937-5d74-4e0f-a91d-74aa7881bb4b",
+      "source": "ROCK",
+      "name": "140(Payapay-native)",
+      "amount": "692818.12",
+      "result": "不回U",
+      "status": "啟用",
+      "note": "",
+      "updatedAt": "2026-04-19T11:38",
+      "extras": {}
+    }
+  ],
+  "channelBatchNotes": {
+    "2026-04-18T11:09": "",
+    "2026-04-18T23:15": "113 142 143 147 210 代收不要在開了,這些準備停掉了      113(Rubikpay-native)   142(Paypay-native)  143(Yespay-native) 147(Evermaxpay-native)  210(Nekpay-wake)",
+    "2026-04-19T11:38": "",
+    "2026-04-19T22:25": "",
+    "2026-04-20T13:27": "",
+    "2026-04-21T10:16": ""
+  },
+  "channelSummarySync": {
+    "mode": "apps-script",
+    "url": "https://script.google.com/macros/s/AKfycbyCGJJDSPaI27dy8m_MAAPWj9GshazJIuEAR7e7btTB/dev"
+  },
+  "taskColumns": [
+    {
+      "id": "name",
+      "label": "項目",
+      "type": "text"
+    },
+    {
+      "id": "guideUrl1",
+      "label": "操作說明 1",
+      "type": "guide"
+    },
+    {
+      "id": "guideUrl2",
+      "label": "操作說明 2",
+      "type": "guide"
+    },
+    {
+      "id": "type",
+      "label": "類型",
+      "type": "taskType"
+    },
+    {
+      "id": "note",
+      "label": "備註",
+      "type": "text"
+    },
+    {
+      "id": "history_0",
+      "label": "今日是否完成",
+      "type": "history",
+      "offset": 0
+    },
+    {
+      "id": "history_1",
+      "label": "昨日是否完成",
+      "type": "history",
+      "offset": -1
+    },
+    {
+      "id": "history_2",
+      "label": "前日是否完成",
+      "type": "history",
+      "offset": -2
+    }
+  ],
+  "channelColumns": [
+    {
+      "id": "name",
+      "label": "渠道名稱",
+      "type": "text"
+    },
+    {
+      "id": "amount",
+      "label": "最新金額",
+      "type": "text"
+    },
+    {
+      "id": "result",
+      "label": "處理結果",
+      "type": "result"
+    },
+    {
+      "id": "source",
+      "label": "來源",
+      "type": "source"
+    },
+    {
+      "id": "status",
+      "label": "狀態",
+      "type": "status"
+    },
+    {
+      "id": "updatedAt",
+      "label": "時間",
+      "type": "datetime"
+    },
+    {
+      "id": "note",
+      "label": "備註",
+      "type": "text"
+    }
+  ],
+  "columnWidths": {
+    "channel:source": 154,
+    "task:name": 192,
+    "channel:name": 221
+  },
+  "dropdownOptions": {
+    "source": [
+      "ROCK",
+      "營運",
+      "回U渠道-R"
+    ],
+    "taskType": [
+      "每日",
+      "週六",
+      "機動性",
+      "周一～周三"
+    ],
+    "result": [
+      "已回U",
+      "不回U",
+      "目前暫無法回U",
+      "詢問中"
+    ],
+    "status": [
+      "啟用",
+      "關閉"
+    ]
+  },
+  "hiddenColumns": {
+    "tasks": [
+      "guideUrl2"
+    ],
+    "channels": [
+      "updatedAt"
+    ],
+    "channelSummary": []
+  }
+}

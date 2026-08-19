@@ -11,9 +11,9 @@ Use this skill when working on this dashboard project or other similar Google Sh
 
 Before proposing or editing anything, always read these files in this order:
 
-1. `/Users/kklin/Documents/New project/index.html`
-2. `/Users/kklin/Documents/New project/styles.css`
-3. `/Users/kklin/Documents/New project/app.js`
+1. `D:\工具\自用工具\工作儀表板\程式index.html`
+2. `D:\工具\自用工具\工作儀表板\程式styles.css`
+3. `D:\工具\自用工具\工作儀表板\程式app.js`
 
 Do not skip this step. Build context from the real structure first.
 
