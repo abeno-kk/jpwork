@@ -1,0 +1,1 @@
+node_modules/\n*.bak\n*.bak-*\n.before-*.bak\n__MACOSX/\n.rsync-tmp/\n*.zip\n*.png\n*.jpg\n*.psd\n*.DS_Store\n
