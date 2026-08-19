@@ -1,0 +1,42 @@
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+thead {
+  background: #f5f7fa;
+}
+
+th {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+}
+
+td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+tr:hover {
+  background: #f9fbfd;
+}
+
+.status-ok {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.status-fail {
+  color: #c62828;
+  font-weight: 600;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}

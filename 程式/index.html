@@ -1,0 +1,1629 @@
+
+
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>總儀表版</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">DB</div>
+          <div>
+            <h1>總儀表版</h1>
+            <p>可編輯的本地儀表版</p>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <div class="nav-group" data-group="tasks">
+            <button class="nav-group-toggle is-open" data-nav-group="tasks" type="button">
+              <span>任務管理</span>
+              <span class="nav-group-arrow">⌄</span>
+            </button>
+            <div class="nav-submenu is-open" data-nav-submenu="tasks">
+              <button class="nav-button is-active" data-view="tasks">任務儀表版</button>
+              <button class="nav-button" data-view="task-archive">任務封存</button>
+            </div>
+          </div>
+
+          <div class="nav-group" data-group="channels">
+            <button class="nav-group-toggle is-open" data-nav-group="channels" type="button">
+              <span>渠道管理</span>
+              <span class="nav-group-arrow">⌄</span>
+            </button>
+            <div class="nav-submenu is-open" data-nav-submenu="channels">
+              <button class="nav-button" data-view="channels">渠道儀表版</button>
+              <button class="nav-button" data-view="channel-history">歷史批次</button>
+              <button class="nav-button" data-view="channel-summary">渠道統整表</button>
+              <button class="nav-button" data-view="update-list">更新列表</button>
+              <button class="nav-button" data-view="poison-monitor">強弱轉監控表</button>
+              <button class="nav-button" data-view="poison-monitor">&#22577;&#27602;&#25511;&#34920;</button>
+              <button class="nav-button" data-view="google-play-monitor">每日自動查詢</button>
+            </div>
+          </div>
+
+          <button class="nav-button nav-button-standalone" data-view="tools">資料工具</button>
+          <!-- 新增發單解析功能列，可自訂欄位、排序與篩選 -->
+          <button class="nav-button nav-button-standalone" data-view="orders">發單解析</button>
+          <button class="nav-button nav-button-standalone dialog-db-nav-btn" data-view="conversation-db" type="button">對話資料庫</button>
+          <!-- 編輯功能列按鈕：可切換左側功能列的編輯模式 -->
+          <button id="nav-edit-toggle" class="secondary-button nav-edit-toggle" type="button">編輯功能列</button>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Dashboard Workspace</p>
+            <h2 id="page-title">任務儀表版</h2>
+          </div>
+          <div class="toolbar">
+            <span id="save-status" class="save-status">已儲存</span>
+          </div>
+        </header>
+
+        <section id="undo-banner" class="undo-banner" hidden>
+          <div>
+            <strong id="undo-title">已刪除資料</strong>
+            <p id="undo-text">你可以復原剛剛刪掉的資料。</p>
+          </div>
+          <div class="undo-actions">
+            <button id="undo-btn" class="secondary-button">復原</button>
+            <button id="dismiss-undo-btn" class="ghost-button">關閉</button>
+          </div>
+        </section>
+
+        <section id="tasks-view" class="view is-active">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">任務儀表版</h3>
+              <p class="task-topbar-text">以任務清單為主，快速查看今天要處理的項目。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">總任務：<strong id="task-total-count">0</strong></span>
+              <span class="summary-pill">今日未完成：<strong id="task-open-count">0</strong></span>
+              <button id="task-field-settings-btn" class="secondary-button compact-button" type="button">欄位設定</button>
+              <button id="add-task-btn" class="primary-button compact-button">新增任務</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>任務清單</h3>
+              </div>
+              <div class="history-toolbar">
+                <button id="task-prev-range-btn" class="secondary-button compact-mini-button" type="button">往前 3 天</button>
+                <input id="task-anchor-date" type="date" class="date-input" />
+                <button id="task-today-btn" class="secondary-button compact-mini-button" type="button">回今天</button>
+                <button id="task-next-range-btn" class="secondary-button compact-mini-button" type="button">往後 3 天</button>
+              </div>
+            </div>
+
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table">
+                <thead id="task-table-head"></thead>
+                <tbody id="task-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="task-archive-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">任務封存</h3>
+              <p class="task-topbar-text">封存後的任務會留在這裡，方便查詢、復原或永久刪除。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">封存數：<strong id="task-archive-count">0</strong></span>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>封存任務查詢</h3>
+              </div>
+              <div class="history-toolbar">
+                <input id="task-archive-search" type="text" class="date-input" placeholder="搜尋項目或備註" />
+                <select id="task-archive-type-filter" class="date-input"></select>
+                <button id="task-archive-clear-btn" class="secondary-button compact-mini-button" type="button">清除條件</button>
+              </div>
+            </div>
+
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table">
+                <thead id="task-archive-table-head"></thead>
+                <tbody id="task-archive-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="channels-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">渠道整合表</h3>
+              <p class="task-topbar-text">把回U兩張表合在一起，用時間排序，適合同一天多次更新。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">總筆數：<strong id="channel-total-count">0</strong></span>
+              <!-- 新增：顯示勾選的最新金額加總 -->
+              <span class="summary-pill" id="channel-selected-sum-pill">勾選加總：<strong id="channel-selected-sum">0</strong></span>
+              <span class="summary-pill">已隱藏：<strong id="channel-hidden-count">0</strong> 筆</span>
+              <button id="hide-selected-channels-btn" class="secondary-button compact-button" type="button">隱藏勾選</button>
+              <button id="restore-hidden-channels-btn" class="secondary-button compact-button" type="button">恢復隱藏</button>
+              <button id="channel-capture-btn" class="secondary-button compact-button" type="button">截圖模式</button>
+              <button id="channel-field-settings-btn" class="secondary-button compact-button" type="button">欄位設定</button>
+              <button id="duplicate-channel-batch-btn" class="secondary-button compact-button" type="button">新增批次</button>
+              <button id="add-channel-btn" class="primary-button compact-button">新增紀錄</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div class="panel-title-block">
+                <h3>回U整合清單</h3>
+              </div>
+              <div class="history-toolbar">
+                <div id="channel-capture-pagination" class="capture-pagination" hidden>
+                  <button id="capture-prev-page-btn" class="secondary-button compact-mini-button" type="button">上一頁</button>
+                  <span id="capture-page-indicator" class="summary-pill">第 1 / 1 頁</span>
+                  <button id="capture-next-page-btn" class="secondary-button compact-mini-button" type="button">下一頁</button>
+                </div>
+                <label class="batch-time-label">
+                  <span>本次處理時間</span>
+                  <input id="channel-batch-time" type="datetime-local" class="date-input" />
+                </label>
+                <div id="channel-batch-time-display" class="batch-time-display" hidden></div>
+                <button id="apply-batch-time-btn" class="secondary-button compact-mini-button" type="button">套用到全部</button>
+              </div>
+            </div>
+
+            <div class="channel-batch-note-row">
+              <label class="batch-note-label">
+                <span>批次備註</span>
+                <input id="channel-batch-note" type="text" class="batch-note-input" placeholder="例如：下午批次、已通知營運" />
+              </label>
+            </div>
+
+            <div class="table-wrap">
+              <table class="channel-log-table">
+                <thead id="channel-table-head"></thead>
+                <tbody id="channel-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+
+        </section>
+
+        <section id="channel-summary-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">渠道統整表</h3>
+              <p class="task-topbar-text">同步 Google Sheet「渠道APPID總表」的最新內容，並可直接搜尋與篩選。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">來源：<strong>渠道APPID總表</strong></span>
+              <span class="summary-pill">筆數：<strong id="channel-summary-count">0</strong></span>
+              <span class="summary-pill">昨日新增：<strong id="channel-summary-yesterday-new-total">0</strong></span>
+              <span class="summary-pill">昨日DAU：<strong id="channel-summary-yesterday-dau-total">0</strong></span>
+              <span class="summary-pill">昨日充值：<strong id="channel-summary-yesterday-recharge-total">0</strong></span>
+              <span id="channel-summary-sync-status" class="summary-pill">尚未同步</span>
+              <button id="channel-summary-refresh-btn" class="secondary-button compact-button" type="button">重新整理</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Google Sheet 同步表</h3>
+              </div>
+              <div class="history-toolbar">
+                <select id="channel-summary-sync-mode" class="date-input channel-summary-filter">
+                  <option value="sheet-direct">Google Sheet 直接讀取</option>
+                  <option value="public-csv">公開 CSV 連結</option>
+                  <option value="apps-script">Apps Script API</option>
+                </select>
+                <input id="channel-summary-sync-url" type="text" class="date-input channel-summary-sync-url" placeholder="貼上公開 CSV 或 Apps Script API 網址" />
+                <button id="channel-summary-sync-save-btn" class="secondary-button compact-mini-button" type="button">儲存同步來源</button>
+                <input id="channel-summary-search" type="text" class="date-input channel-summary-search" placeholder="搜尋 APPID、渠道名稱、渠道或版本" />
+                <select id="channel-summary-channel-filter" class="date-input channel-summary-filter"></select>
+                <select id="channel-summary-version-filter" class="date-input channel-summary-filter"></select>
+                <select id="channel-summary-confirm-filter" class="date-input channel-summary-filter"></select>
+                <select id="channel-summary-joint-channel-filter" class="date-input channel-summary-filter"></select>
+                <select id="channel-summary-package-name-filter" class="date-input channel-summary-filter"></select>
+                <button id="channel-summary-clear-btn" class="secondary-button compact-mini-button" type="button">清除條件</button>
+                <button id="channel-summary-field-settings-btn" class="secondary-button compact-mini-button" type="button">欄位設定</button>
+              </div>
+            </div>
+
+            <div id="channel-summary-message" class="channel-summary-message" hidden></div>
+            <div id="channel-summary-help" class="channel-summary-help">
+              這張 Google Sheet 是私人權限時，前端頁面不能直接讀取。
+          
+    已經幫你在專案裡準備好 <code>channel_summary_api.gs</code>。
+              部署最新版後，按「重新整理」才會讀取 Google Sheet 第一列表頭與資料；日後新增、刪除或改名欄位，也會在這次手動同步時更新，不必再修改網站程式。
+            </div>
+
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table channel-summary-table">
+                <thead id="channel-summary-table-head"></thead>
+                <tbody id="channel-summary-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="channel-history-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">歷史批次</h3>
+              <p class="task-topbar-text">查詢舊批次內容，必要時可以整批刪除。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <button id="delete-history-batch-btn" class="danger-button compact-button" type="button">刪除這個批次</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>歷史批次查詢</h3>
+              </div>
+              <div class="history-toolbar">
+                <label class="batch-time-label">
+                  <span>開始時間</span>
+                  <input id="channel-history-start" type="datetime-local" class="date-input" />
+                </label>
+                <label class="batch-time-label">
+                  <span>結束時間</span>
+                  <input id="channel-history-end" type="datetime-local" class="date-input" />
+                </label>
+                <select id="channel-history-batch-select" class="date-input"></select>
+                <button id="channel-history-clear-btn" class="secondary-button compact-mini-button" type="button">清除條件</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="channel-log-table">
+                <thead id="channel-history-table-head"></thead>
+                <tbody id="channel-history-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="tools-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">資料工具</h3>
+              <p class="task-topbar-text">把原本側邊資料工具和數值轉換器整理到同一頁，使用上比較乾淨。</p>
+            </div>
+          </div>
+
+          <section class="panel tools-panel">
+            <div class="panel-header">
+              <div>
+                <h3>本機資料</h3>
+              </div>
+            </div>
+            <div class="tools-actions">
+              <button id="seed-demo-btn" class="secondary-button">載入示範資料</button>
+              <button id="export-btn" class="secondary-button">匯出 JSON</button>
+              <label class="file-input-label tools-file-label">
+                匯入 JSON
+                <input id="import-input" type="file" accept="application/json" />
+              </label>
+              <button id="reset-btn" class="danger-button">清除本機資料</button>
+            </div>
+            <p class="hint">
+              目前是本機版，資料會存在你的瀏覽器 `localStorage`。之後可以再改成接 Google Sheet API、Airtable、Supabase 或你的後端。
+            </p>
+          </section>
+
+          <section class="panel tools-panel">
+            <div class="panel-header">
+              <div>
+                <h3>轉換工具</h3>
+              </div>
+            </div>
+          <iframe id="tools-embed" class="tools-embed-frame" src="./tools.html?v=20260716a" title="資料工具"></iframe>
+          </section>
+        </section>
+
+        <!-- 發單解析頁面 -->
+        <section id="orders-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">發單解析</h3>
+              <p class="task-topbar-text">直接於下方表格新增或編輯資料，可自訂欄位、排序、篩選並複製所選欄位。</p>
+            </div>
+          </div>
+
+          <section class="panel orders-panel">
+            <div class="panel-header">
+              <div>
+                <h3>發單資料</h3>
+              </div>
+            </div>
+            <div class="orders-controls">
+              <!-- 移除上方輸入區，直接在表格中填寫 -->
+              <div class="orders-actions">
+                <button id="orders-add-btn" class="secondary-button" type="button">新增空白記錄</button>
+                <button id="orders-add-col-btn" class="secondary-button" type="button">新增欄位</button>
+                <button id="orders-copy-btn" class="secondary-button" type="button">複製資料</button>
+                <!-- 複製筆數：可指定要複製的資料筆數，預設複製全部 -->
+                <input id="orders-copy-count" type="number" min="1" class="date-input" style="width:100px" placeholder="複製筆數" />
+                <button id="orders-save-batch-btn" class="primary-button" type="button">儲存批次</button>
+                <input id="orders-search" type="text" class="date-input" placeholder="搜尋全部欄位" />
+              </div>
+              <!-- 複製欄位選擇器：可勾選要複製的欄位 -->
+              <div id="orders-copy-select" class="copy-select"></div>
+              <div id="orders-count" class="orders-count">筆數：0</div>
+              <div class="table-wrap">
+                <table class="record-table orders-table">
+                  <thead id="orders-table-head"></thead>
+                  <tbody id="orders-table-body"></tbody>
+                </table>
+              </div>
+              <!-- 批次歷史列表 -->
+              <div class="orders-batch-panel">
+                <h4>批次歷史</h4>
+                <table class="record-table orders-batch-table">
+                  <thead>
+                    <tr><th>批次時間</th><th>筆數</th><th>操作</th></tr>
+                  </thead>
+                  <tbody id="orders-batch-list"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- 更新列表頁面：顯示渠道統整表的最新資料，並可手動刷新、搜尋與篩選 -->
+        <!-- 更新列表頁面：顯示更新記錄分頁的最新資料，並可手動刷新、搜尋與篩選 -->
+        <section id="update-list-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">更新列表</h3>
+              <p class="task-topbar-text">顯示更新記錄分頁的最新資料，可手動更新與搜尋。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">筆數：<strong id="update-list-count">0</strong></span>
+              <span id="update-list-sync-status" class="summary-pill">尚未同步</span>
+              <button id="update-list-refresh-btn" class="secondary-button compact-button" type="button">重新整理</button>
+            </div>
+          </div>
+
+
+          <section class="panel">
+
+            <div class="panel-header">
+              <div>
+              <h3>更新記錄表</h3>
+              </div>
+              <div class="history-toolbar">
+                <select id="update-list-sync-mode" class="date-input channel-summary-filter">
+                  <option value="apps-script">Apps Script API</option>
+                  <option value="public-csv">公開 CSV 連結</option>
+                  <option value="sheet-direct">Google Sheet 直接讀取</option>
+                </select>
+                <input id="update-list-sync-url" type="text" class="date-input channel-summary-sync-url" placeholder="貼上更新記錄的 Apps Script API 網址" />
+                <button id="update-list-sync-save-btn" class="secondary-button compact-mini-button" type="button">儲存同步來源</button>
+                <input id="update-list-search" type="text" class="date-input" placeholder="搜尋任何欄位" />
+                <button id="update-list-clear-btn" class="secondary-button compact-mini-button" type="button">清除條件</button>
+              </div>
+            </div>
+
+            <div id="update-list-message" class="channel-summary-message" hidden></div>
+            <div id="update-list-help" class="channel-summary-help">
+              更新列表可獨立設定資料來源。若使用同一支 Apps Script，直接貼同一個 Web App 網址即可，系統會自動加上 <code>type=updates</code> 讀取「更新記錄」分頁。
+            </div>
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table update-list-table">
+                <thead id="update-list-table-head"></thead>
+                <tbody id="update-list-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="poison-monitor-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">強弱轉監控表</h3>
+              <p class="task-topbar-text">同步 Google Sheet「強弱轉觸發」分頁，可依分類、報毒、天數、充值、版本及項目快速篩選。</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">來源：<strong>強弱轉觸發</strong></span>
+              <span class="summary-pill">筆數：<strong id="poison-monitor-count">0</strong></span>
+              <span id="poison-monitor-sync-status" class="summary-pill">尚未同步</span>
+              <button id="poison-monitor-refresh-btn" class="secondary-button compact-button" type="button">重新整理</button>
+            </div>
+          </div>
+          <section class="panel">
+            <div class="panel-header">
+              <div><h3>監控資料</h3></div>
+              <div class="history-toolbar poison-monitor-toolbar">
+                <select id="poison-monitor-sync-mode" class="date-input channel-summary-filter">
+                  <option value="apps-script">Apps Script API</option>
+                  <option value="public-csv">公開 CSV 連結</option>
+                  <option value="sheet-direct">Google Sheet 直接讀取</option>
+                </select>
+                <input id="poison-monitor-sync-url" type="text" class="date-input channel-summary-sync-url" placeholder="貼上 Apps Script API 或公開 CSV 網址" />
+                <button id="poison-monitor-sync-save-btn" class="secondary-button compact-mini-button" type="button">儲存同步來源</button>
+                <input id="poison-monitor-search" type="text" class="date-input poison-monitor-search" placeholder="搜尋 UID、渠道或任何欄位" />
+                <select id="poison-monitor-category-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-poison-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-days-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-recharge-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-version-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-item-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-store-online-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-offline-date-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-marketing-spend-filter" class="date-input channel-summary-filter"></select>
+                <button id="poison-monitor-clear-btn" class="secondary-button compact-mini-button" type="button">清除條件</button>
+              </div>
+            </div>
+            <div id="poison-monitor-message" class="channel-summary-message" hidden></div>
+            <div id="poison-monitor-help" class="channel-summary-help">
+              此頁會沿用「渠道統整表」既有的 Apps Script 網址，並以 <code>type=trigger-monitor</code> 讀取「強弱轉觸發」分頁。更新本機的 <code>channel_summary_api.gs</code> 後，請重新部署 Apps Script 網頁應用程式。
+            </div>
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table poison-monitor-table">
+                <thead id="poison-monitor-table-head"></thead>
+                <tbody id="poison-monitor-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <section id="poison-monitor-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">&#22577;&#27602;&#25511;&#34920;</h3>
+              <p class="task-topbar-text">&#21516;&#27493; Google Sheet&#12300;&#24375;&#24369;&#36681;&#35320;&#30332;&#12301;&#20998;&#38913;&#65292;&#21487;&#25628;&#23563;&#12289;&#25490;&#24207;&#33287;&#31721;&#36984;&#22577;&#27602;&#29376;&#24907;&#12290;</p>
+            </div>
+            <div class="task-topbar-actions">
+              <span class="summary-pill">&#20358;&#28304;&#65306;<strong>&#24375;&#24369;&#36681;&#35320;&#30332;</strong></span>
+              <span class="summary-pill">&#31558;&#25976;&#65306;<strong id="poison-monitor-count">0</strong></span>
+              <span class="summary-pill">&#24050;&#22577;&#27602;&#65306;<strong id="poison-monitor-poison-count">0</strong></span>
+              <span id="poison-monitor-sync-status" class="summary-pill">&#23578;&#26410;&#21516;&#27493;</span>
+              <button id="poison-monitor-refresh-btn" class="secondary-button compact-button" type="button">&#37325;&#26032;&#25972;&#29702;</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div><h3>Google Sheet &#24375;&#24369;&#36681;&#35320;&#30332;&#34920;</h3></div>
+              <div class="history-toolbar">
+                <select id="poison-monitor-sync-mode" class="date-input channel-summary-filter">
+                  <option value="apps-script">Apps Script API</option>
+                  <option value="public-csv">&#20844;&#38283; CSV &#36899;&#32080;</option>
+                  <option value="sheet-direct">Google Sheet &#30452;&#25509;&#35712;&#21462;</option>
+                </select>
+                <input id="poison-monitor-sync-url" type="text" class="date-input channel-summary-sync-url" placeholder="Google Sheet &#25110; Apps Script API &#32178;&#22336;" />
+                <button id="poison-monitor-sync-save-btn" class="secondary-button compact-mini-button" type="button">&#20786;&#23384;&#21516;&#27493;&#20358;&#28304;</button>
+                <input id="poison-monitor-search" type="text" class="date-input channel-summary-search" placeholder="&#25628;&#23563; APPID&#12289;&#36938;&#25138;&#21517;&#31281;&#12289;&#21253;&#21517;&#25110;&#20854;&#20182;&#27396;&#20301;" />
+                <select id="poison-monitor-channel-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-version-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-category-filter" class="date-input channel-summary-filter"></select>
+                <select id="poison-monitor-poison-filter" class="date-input channel-summary-filter">
+                  <option value="">&#20840;&#37096;&#22577;&#27602;&#29376;&#24907;</option>
+                  <option value="poisoned">&#24050;&#22577;&#27602;</option>
+                  <option value="clean">&#26410;&#22577;&#27602;</option>
+                </select>
+                <button id="poison-monitor-clear-btn" class="secondary-button compact-mini-button" type="button">&#28165;&#38500;&#26781;&#20214;</button>
+                <button id="poison-monitor-field-settings-btn" class="secondary-button compact-mini-button" type="button">&#27396;&#20301;&#35373;&#23450;</button>
+              </div>
+            </div>
+            <div id="poison-monitor-message" class="channel-summary-message" hidden></div>
+            <div class="channel-summary-help">
+              Google Sheet &#32178;&#22336;&#26371;&#33258;&#21205;&#20999;&#25563;&#28858;&#30452;&#25509;&#35712;&#21462;&#65307;Apps Script API &#35531;&#20351;&#29992; <code>/exec</code> &#32178;&#22336;&#65292;&#31995;&#32113;&#26371;&#33258;&#21205;&#21152;&#19978; <code>type=trigger-monitor</code>&#12290;
+            </div>
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table poison-monitor-table">
+                <thead id="poison-monitor-table-head"></thead>
+                <tbody id="poison-monitor-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <dialog id="poison-monitor-field-dialog" class="settings-modal">
+            <form method="dialog" class="settings-modal-card">
+              <div class="settings-modal-head">
+                <div><p class="panel-label">Field Settings</p><h3>&#22577;&#27602;&#25511;&#34920;&#27396;&#20301;&#35373;&#23450;</h3></div>
+                <button class="icon-button" value="cancel" aria-label="&#38364;&#38281;">&#10005;</button>
+              </div>
+              <div id="poison-monitor-field-list" class="settings-list"></div>
+            </form>
+          </dialog>
+        </section>
+
+        <section id="google-play-monitor-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">每日自動查詢</h3>
+              <p class="task-topbar-text">輸入 APPID，固定於每日 10:00 與 15:00 查詢 Tenjin 註冊數。</p>
+            </div>
+          </div>
+
+          <section class="panel tenjin-monitor-panel">
+            <div class="tenjin-monitor-heading">
+              <div>
+                <p class="panel-label">Tenjin 註冊數監控</p>
+                <h3>每日自動查詢註冊結果</h3>
+                <p class="task-topbar-text">固定以上海時間 10:00 與 15:00 查詢昨日至今日，最近結果顯示完成註冊與進入驗證碼頁的數量。</p>
+              </div>
+              <div class="tenjin-monitor-actions">
+                <span id="tenjin-monitor-status" class="google-play-service-status">正在讀取…</span>
+                <button id="tenjin-check-now-btn" class="secondary-button compact-button" type="button">立即查詢</button>
+              </div>
+            </div>
+
+            <div class="tenjin-monitor-config">
+              <label>
+                <span>APPID（可一次輸入多個）</span>
+                <textarea id="tenjin-appids-input" rows="3" placeholder="135010217 135010218&#10;可用空格、逗號或換行分隔"></textarea>
+              </label>
+              <button id="tenjin-save-appids-btn" class="primary-button" type="button">儲存 APPID</button>
+            </div>
+            <div id="tenjin-monitor-message" class="channel-summary-message" hidden></div>
+
+            <div class="table-wrap spreadsheet-wrap">
+              <table class="spreadsheet-table tenjin-monitor-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>APPID</th>
+                    <th>10:00 執行時間</th>
+                    <th>15:00 執行時間</th>
+                    <th>最近結果</th>
+                    <th>最後查詢</th>
+                    <th>狀態</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="tenjin-monitor-body"></tbody>
+              </table>
+            </div>
+            <div id="tenjin-monitor-empty" class="google-play-empty">尚未輸入 APPID。</div>
+          </section>
+        </section>
+
+        <section id="conversation-db-view" class="view">
+          <div class="task-topbar">
+            <div>
+              <h3 class="task-topbar-title">對話資料庫</h3>
+              <p class="task-topbar-text">中英文／印度文對照、分類、標籤、收藏與最近使用的客服話術資料庫。</p>
+            </div>
+            <div class="toolbar-pills">
+              <span class="summary-pill">分類：<strong id="dialog-category-count">0</strong></span>
+              <span class="summary-pill">話術：<strong id="dialog-template-count">0</strong></span>
+            </div>
+          </div>
+
+          <section class="panel dialog-db-panel">
+            <div class="dialog-db-toolbar">
+              <input id="dialog-search" class="search-input" placeholder="搜尋標題、分類、TAG 或話術內容…" />
+              <button id="dialog-clear-search-btn" class="ghost-button compact-mini-button" type="button">清除搜尋</button>
+              <button id="dialog-export-btn" class="secondary-button" type="button">匯出話術</button>
+              <button id="dialog-import-btn" class="secondary-button" type="button">匯入話術</button>
+              <input id="dialog-import-file" type="file" accept="application/json,.json" hidden />
+              <button id="dialog-add-category-btn" class="secondary-button" type="button">新增分類</button>
+              <button id="dialog-manage-categories-btn" class="secondary-button" type="button">管理分類</button>
+              <button id="dialog-add-template-btn" class="primary-button" type="button">新增話術</button>
+            </div>
+
+            <div class="dialog-db-layout">
+              <aside class="dialog-categories">
+                <div class="dialog-section-title">分類</div>
+                <div id="dialog-category-list" class="dialog-category-list"></div>
+              </aside>
+
+              <aside class="dialog-template-list-wrap">
+                <div class="dialog-section-title">話術列表</div>
+                <div id="dialog-template-list" class="dialog-template-list"></div>
+              </aside>
+
+              <section class="dialog-editor">
+                <div class="dialog-editor-head">
+                  <input id="dialog-title" placeholder="標題 / 用途" />
+                  <select id="dialog-category-input" title="分類"></select>
+                </div>
+
+                <div class="dialog-editor-meta">
+                  <input id="dialog-tags" placeholder="TAG，例如：withdrawal, utr, pending" />
+                  <span id="dialog-editor-status" class="dialog-editor-status" aria-live="polite">選擇話術或新增一筆</span>
+                </div>
+
+                <div class="dialog-text-grid">
+                  <label>
+                    <span>中文內容</span>
+                    <textarea id="dialog-zh" placeholder="中文話術"></textarea>
+                  </label>
+                  <label>
+                    <span>英文內容</span>
+                    <textarea id="dialog-en" placeholder="English template"></textarea>
+                  </label>
+                  <label>
+                    <span>印度文內容</span>
+                    <textarea id="dialog-hi" placeholder="Hindi template"></textarea>
+                  </label>
+                  <label>
+                    <span>備註</span>
+                    <textarea id="dialog-note" placeholder="內部備註"></textarea>
+                  </label>
+                </div>
+
+                <div class="dialog-editor-actions">
+                  <div class="dialog-primary-actions">
+                    <button id="dialog-save-btn" class="primary-button" type="button">儲存話術</button>
+                    <button id="dialog-favorite-btn" class="secondary-button" type="button">加入收藏</button>
+                    <button id="dialog-delete-btn" class="danger-button" type="button">刪除</button>
+                  </div>
+                  <div class="dialog-copy-actions" aria-label="複製話術">
+                    <button id="dialog-copy-zh-btn" class="secondary-button" type="button">複製中文</button>
+                    <button id="dialog-cop
+y-en-btn" class="secondary-button" type="button">複製英文</button>
+                    <button id="dialog-copy-hi-btn" class="secondary-button" type="button">複製印度文</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <dialog id="dialog-category-manager" class="dialog-category-manager">
+            <div class="dialog-category-manager-card">
+              <div class="dialog-category-manager-head">
+                <div><p class="panel-label">Category Settings</p><h3>管理分類</h3></div>
+                <button id="dialog-category-manager-close" class="ghost-button" type="button">關閉</button>
+              </div>
+              <p class="dialog-category-manager-hint">在這裡集中重新命名或刪除分類，話術內容不會被刪除。</p>
+              <div id="dialog-category-manager-list" class="dialog-category-manager-list"></div>
+            </div>
+          </dialog>
+        </section>
+
+      </main>
+    </div>
+
+    <aside id="sticky-notes-panel" class="sticky-notes-panel" aria-label="臨時便利貼" hidden>
+      <div class="sticky-notes-header">
+        <div><p class="panel-label">Quick Notes</p><h3>臨時便利貼</h3></div>
+        <div class="sticky-notes-header-actions"><button id="sticky-note-add-btn" class="secondary-button compact-mini-button" type="button">新增</button><button id="sticky-notes-close-btn" class="ghost-button compact-mini-button" type="button">關閉</button></div>
+      </div>
+      <p class="sticky-notes-hint">內容與完成狀態都會自動保存，關閉網頁或重新開機後仍會保留。</p>
+      <div class="sticky-notes-tabs" role="tablist" aria-label="便利貼分類">
+        <button id="sticky-notes-active-tab" class="sticky-notes-tab is-active" type="button" role="tab" aria-selected="true">進行中 <span id="sticky-notes-active-total">0</span></button>
+        <button id="sticky-notes-archive-tab" class="sticky-notes-tab" type="button" role="tab" aria-selected="false">完成保存區 <span id="sticky-notes-archive-total">0</span></button>
+      </div>
+      <label id="sticky-notes-search-wrap" class="sticky-notes-search" hidden>
+        <input id="sticky-notes-search" type="search" placeholder="搜尋已完成內容…" aria-label="搜尋已完成便利貼" autocomplete="off" />
+      </label>
+      <div id="sticky-notes-list" class="sticky-notes-list"></div>
+      <div id="sticky-notes-empty" class="sticky-notes-empty">還沒有便利貼，按「新增」開始記錄。</div>
+    </aside>
+    <button id="sticky-notes-toggle" class="sticky-notes-toggle" type="button" aria-controls="sticky-notes-panel" aria-expanded="false"><span aria-hidden="true">📝</span><span>便利貼</span><strong id="sticky-notes-count" class="sticky-notes-count" hidden>0</strong></button>
+
+    <template id="task-row-template">
+      <tr>
+        <td class="row-index"></td>
+        <td><input data-field="name" type="text" placeholder="例如：渠道回U" /></td>
+        <td>
+          <div class="link-cell">
+            <a data-link="guideUrl1" class="sheet-link" href="#" target="_blank" rel="noopener noreferrer" hidden>連結</a>
+            <button data-action="edit-guide-url" data-field="guideUrl1" class="tiny-button" type="button">設定</button>
+          </div>
+        </td>
+        <td>
+          <div class="link-cell">
+            <a data-link="guideUrl2" class="sheet-link" href="#" target="_blank" rel="noopener noreferrer" hidden>連結</a>
+            <button data-action="edit-guide-url" data-field="guideUrl2" class="tiny-button" type="button">設定</button>
+          </div>
+        </td>
+        <td>
+          <select data-field="type">
+            <option value="每日">每日</option>
+            <option value="週六">週六</option>
+            <option value="機動性">機動性</option>
+          </select>
+        </td>
+        <td><input data-field="note" type="text" placeholder="備註" /></td>
+        <td class="status-cell"><input data-field="todayDone" type="checkbox" /></td>
+        <td class="status-cell"><input data-field="yesterdayDone" type="checkbox" /></td>
+        <td class="status-cell"><input data-field="beforeYesterdayDone" type="checkbox" /></td>
+        <td><button data-action="delete-task" class="icon-button">刪除</button></td>
+      </tr>
+    </template>
+
+    <template id="channel-row-template">
+      <tr>
+        <td><input data-field="updatedAt" type="datetime-local" /></td>
+        <td>
+          <input data-field="source" type="text" list="channel-source-list" placeholder="可輸入或選擇來源" />
+        </td>
+        <td><input data-field="name" type="text" placeholder="渠道名稱" /></td>
+        <td><input data-field="amount" type="text" placeholder="例如：9900" /></td>
+        <td>
+          <select data-field="result">
+            <option value="已回U">已回U</option>
+            <option value="不回U">不回U</option>
+            <option value="詢問中">詢問中</option>
+            <option value="目前暫無法回U">目前暫無法回U</option>
+          </select>
+        </td>
+        <td>
+          <select data-field="status">
+            <option value="">-</option>
+            <option value="啟用">啟用</option>
+            <option value="關閉">關閉</option>
+          </select>
+        </td>
+        <td><input data-field="note" type="text" placeholder="備註" /></td>
+        <td><button data-action="delete-channel" class="icon-button icon-button-danger">刪除</button></td>
+      </tr>
+    </template>
+
+    <datalist id="channel-source-list"></datalist>
+    <datalist id="task-type-list"></datalist>
+    <datalist id="channel-result-list"></datalist>
+    <datalist id="channel-status-list"></datalist>
+
+    <dialog id="field-settings-modal" class="settings-modal">
+      <form method="dialog" class="settings-modal-card">
+        <div class="settings-modal-head">
+          <div>
+            <p class="panel-label">Field Settings</p>
+            <h3 id="field-settings-title">欄位設定</h3>
+          </div>
+          <button id="close-field-settings-btn" class="ghost-button" type="button">關閉</button>
+        </div>
+
+        <div class="settings-toolbar">
+          <button id="add-field-from-modal-btn" class="secondary-button" type="button">新增欄位</button>
+        </div>
+
+        <div id="field-settings-list" class="settings-list"></div>
+      </form>
+    </dialog>
+
+    <button id="capture-exit-btn" class="primary-button capture-exit-button" type="button" hidden>返回首頁</button>
+
+    <script src="./app.js"></script>
+    <script src="./poison-monitor.js"></script>
+    <script src="./poison-monitor.js"></script>
+    <script src="./tenjin-monitor.js"></script>
+    <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->
+    <script>
+      (function() {
+        const ordersKey = 'ordersRecords';
+        const columnsKey = 'ordersColumns';
+        const batchesKey = 'ordersBatches';
+        let orders = [];
+        let columns = [];
+        let sortKey = '';
+        let sortDir = 'asc';
+        // copyColumns: 紀錄每個欄位是否在複製時包含
+        let copyColumns = [];
+        // orderBatches: 儲存批次資料及時間
+        let orderBatches = [];
+
+        function loadOrders() {
+          try {
+            const raw = localStorage.getItem(ordersKey);
+            orders = raw ? JSON.parse(raw) : [];
+          } catch (e) {
+            orders = [];
+          }
+        }
+
+        function loadColumns() {
+          try {
+            const raw = localStorage.getItem(columnsKey);
+            columns = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [];
+          } catch (e) {
+            columns = [];
+          }
+          if (!columns || columns.length === 0) {
+            columns = [
+              { key: 'id', name: 'New ID' },
+              { key: 'time', name: '發單時間' },
+              { key: 'pay', name: '金流' },
+            ];
+          }
+          // 初始化複製欄位設定：預設全選
+          copyColumns = columns.map(() => true);
+        }
+
+        function saveOrders() {
+          // 在儲存前，移除所有臨時的 __selected 標記，避免寫入 localStorage
+          const sanitized = orders.map(order => {
+            const copy = { ...order };
+            delete copy.__selected;
+            return copy;
+          });
+          localStorage.setItem(ordersKey, JSON.stringify(sanitized));
+        }
+
+        function saveColumns() {
+          localStorage.setItem(columnsKey, JSON.stringify(columns));
+        }
+
+        // 批次資料載入
+        function loadBatches() {
+          try {
+            const raw = localStorage.getItem(batchesKey);
+            orderBatches = raw ? JSON.parse(raw) : [];
+          } catch (e) {
+            orderBatches = [];
+          }
+        }
+
+        // 批次資料儲存
+        function saveBatches() {
+          localStorage.setItem(batchesKey, JSON.stringify(orderBatches));
+        }
+
+        function getNewColumnKey() {
+          let idx = 1;
+          const existing = new Set(columns.map(c => c.key));
+          while (existing.has('col' + idx)) idx++;
+          return 'col' + idx;
+        }
+
+        function addEmptyOrder() {
+          const record = {};
+          columns.forEach(col => {
+            record[col.key] = '';
+          });
+          orders.push(record);
+          saveOrders();
+          renderTable();
+        }
+
+        function addColumn() {
+          const name = prompt('請輸入新的欄位名稱：');
+          if (!name) return;
+          const key = getNewColumnKey();
+          columns.push({ key, name });
+          orders.forEach(order => {
+            order[key] = '';
+          });
+          saveColumns();
+          saveOrders();
+          // 新增欄位時預設將其加入複製範圍
+          copyColumns.push(true);
+          renderTable();
+        }
+
+        function renameColumn(key) {
+          const col = columns.find(c => c.key === key);
+          if (!col) return;
+          const newName = prompt('請輸入新的欄位名稱：', col.name);
+          if (!newName) return;
+          col.name = newName;
+          saveColumns();
+          renderTable();
+
+        }
+
+
+        function sortBy(key) {
+          if (sortKey === key) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortKey = key;
+            sortDir = 'asc';
+          }
+          orders.sort((a, b) => {
+            const aVal = a[key] || '';
+            const bVal = b[key] || '';
+            if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+          });
+          saveOrders();
+          renderTable();
+        }
+
+        function renderTable() {
+          const head = document.getElementById('orders-table-head');
+          const body = document.getElementById('orders-table-body');
+          if (!head || !body) return;
+          head.innerHTML = '';
+          const headerRow = document.createElement('tr');
+          // 新增選擇欄標題
+          const selTh = document.createElement('th');
+          selTh.style.width = '30px';
+          // 全選 checkbox
+          const selAllCb = document.createElement('input');
+          selAllCb.type = 'checkbox';
+          selAllCb.id = 'orders-select-all';
+          selAllCb.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            // 設定所有項目的 __selected
+            orders.forEach(order => {
+              order.__selected = checked;
+            });
+            // 重新渲染表格但不改變排序
+            renderTable();
+          });
+          selTh.appendChild(selAllCb);
+          headerRow.appendChild(selTh);
+          // 產生欄位標題
+          columns.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col.name;
+            th.dataset.key = col.key;
+            th.addEventListener('click', () => sortBy(col.key));
+            th.addEventListener('dblclick', (e) => {
+              e.stopPropagation();
+              renameColumn(col.key);
+            });
+            // indicate sort direction on current key
+            if (col.key === sortKey) {
+              const arrow = document.createElement('span');
+              arrow.textContent = sortDir === 'asc' ? ' ▲' : ' ▼';
+              th.appendChild(arrow);
+            }
+            headerRow.appendChild(th);
+          });
+          // 操作欄
+          const opTh = document.createElement('th');
+          opTh.textContent = '操作';
+          headerRow.appendChild(opTh);
+          head.appendChild(headerRow);
+
+          // build body
+          body.innerHTML = '';
+          const searchVal = (document.getElementById('orders-search')?.value || '').trim().toLowerCase();
+          let count = 0;
+          orders.forEach((order, idx) => {
+            // filter
+            if (searchVal) {
+              const match = columns.some(col => {
+                const val = (order[col.key] || '').toString().toLowerCase();
+                return val.includes(searchVal);
+              });
+              if (!match) return;
+            }
+            const tr = document.createElement('tr');
+            // 選擇欄
+            const selTd = document.createElement('td');
+            selTd.style.textAlign = 'center';
+            const selCb = document.createElement('input');
+            selCb.type = 'checkbox';
+            selCb.checked = !!order.__selected;
+
+            selCb.addEventListener('change', () => {
+              order.__selected = selCb.checked;
+              // 更新全選狀態
+              const allChecked = orders.every(o => o.__selected);
+              const selAll = document.getElementById('orders-select-all');
+              if (selAll) selAll.checked = allChecked;
+            });
+            selTd.appendChild(selCb);
+            tr.appendChild(selTd);
+            // 欄位資料
+            columns.forEach(col => {
+              const td = document.createElement('td');
+              const input = document.createElement('input');
+              input.type = 'text';
+              input.value = order[col.key] || '';
+              input.addEventListener('input', (e) => {
+                order[col.key] = e.target.value;
+                saveOrders();
+              });
+              td.appendChild(input);
+              tr.appendChild(td);
+            });
+            // action cell
+            const tdAction = document.createElement('td');
+            const delBtn = document.createElement('button');
+            delBtn.className = 'danger-button compact-mini-button';
+            delBtn.textContent = '刪除';
+            delBtn.addEventListener('click', () => {
+              orders.splice(idx, 1);
+              saveOrders();
+              renderTable();
+            });
+            tdAction.appendChild(delBtn);
+            tr.appendChild(tdAction);
+            body.appendChild(tr);
+            count++;
+          });
+          const countEl = document.getElementById('orders-count');
+          if (countEl) {
+            countEl.textContent = '筆數：' + count;
+          }
+          // 更新複製欄位選擇器
+          renderCopySelector();
+        }
+
+        function parseOrders() {
+          const textarea = document.getElementById('orders-input');
+          if (!textarea) return;
+          const text = textarea.value.trim();
+          if (!text) return;
+          const lines = text.split(/\n+/);
+          lines.forEach(line => {
+            const parts = line.trim().split(/[\t,\s]+/).filter(Boolean);
+            if (!parts.length) return;
+            const record = {};
+            columns.forEach((col, idx) => {
+              record[col.key] = parts[idx] || '';
+            });
+            orders.push(record);
+          });
+          saveOrders();
+          textarea.value = '';
+          renderTable();
+        }
+
+        function clearInput() {
+          const textarea = document.getElementById('orders-input');
+          if (textarea) textarea.value = '';
+        }
+
+        function fallbackCopy(text) {
+          const temp = document.createElement('textarea');
+          temp.value = text;
+          temp.style.position = 'fixed';
+          temp.style.left = '-9999px';
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          document.body.removeChild(temp);
+          alert('資料已複製到剪貼簿');
+        }
+
+        function copyOrders() {
+          if (!orders.length) return;
+          // 先檢查是否有選擇行，若有則只複製選擇的行，否則全選
+          let rows = orders.filter(order => order.__selected);
+          if (rows.length === 0) rows = orders;
+          // 若指定複製筆數，則限制行數
+          const countInput = document.getElementById('orders-copy-count');
+          let limit = 0;
+          if (countInput && countInput.value) {
+            const n = parseInt(countInput.value);
+            if (!isNaN(n) && n > 0) limit = n;
+          }
+          let rowsToCopy = rows;
+          if (limit > 0) {
+            rowsToCopy = rows.slice(0, limit);
+          }
+          const lines = rowsToCopy.map(order => {
+            const parts = [];
+            columns.forEach((col, idx) => {
+              if (copyColumns[idx]) {
+                parts.push(order[col.key] || '');
+              }
+            });
+            return parts.join('\t');
+          }).join('\n');
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(lines).then(() => {
+              alert('資料已複製到剪貼簿');
+            }).catch(() => fallbackCopy(lines));
+          } else {
+            fallbackCopy(lines);
+          }
+        }
+
+        // 渲染複製欄位選擇器
+        function renderCopySelector() {
+          const container = document.getElementById('orders-copy-select');
+          if (!container) return;
+          container.innerHTML = '';
+          columns.forEach((col, idx) => {
+            const label = document.createElement('label');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = copyColumns[idx];
+            cb.addEventListener('change', () => {
+              copyColumns[idx] = cb.checked;
+            });
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(col.name));
+            container.appendChild(label);
+          });
+        }
+
+        // 渲染批次歷史列表
+        function renderBatches() {
+          const tbody = document.getElementById('orders-batch-list');
+          if (!tbody) return;
+          tbody.innerHTML = '';
+          orderBatches.forEach((batch, idx) => {
+            const tr = document.createElement('tr');
+            const tdTime = document.createElement('td');
+            tdTime.textContent = batch.time;
+            const tdCount = document.createElement('td');
+            tdCount.textContent = batch.data.length;
+            const tdOp = document.createElement('td');
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'secondary-button compact-mini-button';
+            viewBtn.textContent = '載入';
+            viewBtn.addEventListener('click', () => {
+              // 讀取批次資料回到當前表格
+              columns = batch.columns.map(c => Object.assign({}, c));
+              orders = batch.data.map(row => {
+                const rec = {};
+                batch.columns.forEach((col, i) => {
+                  rec[col.key] = row[i] || '';
+                });
+                return rec;
+              });
+              // 複製欄位設定重新初始化為全選
+              copyColumns = columns.map(() => true);
+              saveColumns();
+              saveOrders();
+              renderTable();
+              renderCopySelector();
+            });
+            const delBtn = document.createElement('button');
+            delBtn.className = 'danger-button compact-mini-button';
+            delBtn.textContent = '刪除';
+            delBtn.addEventListener('click', () => {
+              orderBatches.splice(idx, 1);
+              saveBatches();
+              renderBatches();
+            });
+            tdOp.appendChild(viewBtn);
+            tdOp.appendChild(delBtn);
+            tr.appendChild(tdTime);
+            tr.appendChild(tdCount);
+            tr.appendChild(tdOp);
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          // 如果沒有 orders-view，則不初始化
+          if (!document.getElementById('orders-view')) return;
+          loadOrders();
+          loadColumns();
+          loadBatches();
+          // 初始渲染
+          renderTable();
+          renderBatches();
+          renderCopySelector();
+          // 綁定事件
+          const addBtn = document.getElementById('orders-add-btn');
+          if (addBtn) addBtn.addEventListener('click', addEmptyOrder);
+          const addColBtn = document.getElementById('orders-add-col-btn');
+          if (addColBtn) addColBtn.addEventListener('click', addColumn);
+          const copyBtn = document.getElementById('orders-copy-btn');
+          if (copyBtn) copyBtn.addEventListener('click', copyOrders);
+          const saveBatchBtn = document.getElementById('orders-save-batch-btn');
+          if (saveBatchBtn) saveBatchBtn.addEventListener('click', () => {
+            const now = new Date();
+            // 使用台灣時區格式化時間
+            const formatter = new Intl.DateTimeFormat('zh-TW', {
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', second: '2-digit',
+              hour12: false
+            });
+            const timestamp = formatter.format(now);
+            const batch = {
+              time: timestamp,
+              columns: columns.map(c => Object.assign({}, c)),
+              data: orders.map(order => columns.map(col => order[col.key] || '')),
+            };
+            orderBatches.push(batch);
+            saveBatches();
+            renderBatches();
+            alert('批次已儲存');
+          });
+          const searchInput = document.getElementById('orders-search');
+          if (searchInput) searchInput.addEventListener('input', renderTable);
+        });
+      })();
+    </script>
+    <!-- 導航列編輯功能腳本 -->
+    <script>
+      (function() {
+        const NAV_CONFIG_KEY = 'dashboardNavConfigV4';
+        let navConfig;
+        let navEditing = false;
+
+        // 構建預設導航設定
+        function buildNavConfig() {
+          const config = {
+            order: [],
+            titles: {},
+            groupOrder: {},
+            hidden: []
+          };
+          const navEl = document.querySelector('.nav');
+          Array.from(navEl.children).forEach((child) => {
+            if (child.classList.contains('nav-group')) {
+              const groupName = child.dataset.group;
+              const groupKey = 'group-' + groupName;
+              config.order.push(groupKey);
+              const toggleEl = child.querySelector('.nav-group-toggle');
+              const titleSpan = toggleEl ? toggleEl.querySelector('span') : null;
+              config.titles[groupKey] = titleSpan ? titleSpan.textContent.trim() : groupName;
+              const submenu = child.querySelector('.nav-submenu');
+              const subBtns = submenu ? Array.from(submenu.querySelectorAll('.nav-button')) : [];
+              config.groupOrder[groupKey] = [];
+              subBtns.forEach((btn) => {
+                const key = btn.dataset.view;
+                config.groupOrder[groupKey].push(key);
+                config.titles[key] = btn.textContent.trim();
+              });
+            } else if (child.classList.contains('nav-button')) {
+              const key = child.dataset.view;
+              config.order.push(key);
+              config.titles[key] = child.textContent.trim();
+            }
+          });
+          localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(config));
+          return config;
+        }
+
+        // 讀取導航設定
+        function loadNavConfig() {
+          const json = localStorage.getItem(NAV_CONFIG_KEY);
+          if (json) {
+            try {
+              const parsed = JSON.parse(json);
+              parsed.order = Array.isArray(parsed.order) ? parsed.order : [];
+              parsed.hidden = Array.isArray(parsed.hidden) ? parsed.hidden : [];
+              parsed.titles = parsed.titles && typeof parsed.titles === 'object' ? parsed.titles : {};
+              parsed.groupOrder = parsed.groupOrder && typeof parsed.groupOrder === 'object' ? parsed.groupOrder : {};
+              const channelKey = 'group-channels';
+              const channelOrder = Array.isArray(parsed.groupOrder[channelKey]) ? parsed.groupOrder[channelKey] : [];
+              if (!channelOrder.includes('poison-monitor')) {
+                const updateIndex = channelOrder.indexOf('update-list');
+                channelOrder.splice(updateIndex >= 0 ? updateIndex + 1 : channelOrder.length, 0, 'poison-monitor');
+              }
+              if (!parsed.titles['poison-monitor']) parsed.titles['poison-monitor'] = '強弱轉監控表';
+              if (!channelOrder.includes('poison-monitor')) {
+                const triggerIndex = channelOrder.indexOf('poison-monitor');
+                const updateIndex = channelOrder.indexOf('update-list');
+                const insertIndex = triggerIndex >= 0 ? triggerIndex + 1 : (updateIndex >= 0 ? updateIndex + 1 : channelOrder.length);
+                channelOrder.splice(insertIndex, 0, 'poison-monitor');
+              }
+              if (!channelOrder.includes('google-play-monitor')) {
+                const updateIndex = channelOrder.indexOf('update-list');
+                channelOrder.splice(updateIndex >= 0 ? updateIndex + 1 : channelOrder.length, 0, 'google-play-monitor');
+              }
+              parsed.groupOrder[channelKey] = channelOrder;
+              if (!parsed.titles['poison-monitor']) parsed.titles['poison-monitor'] = '報毒控表';
+              if (!parsed.titles['google-play-monitor'] || parsed.titles['google-play-monitor'] === 'Google Play 監控') {
+                parsed.titles['google-play-monitor'] = '每日自動查詢';
+              }
+              localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(parsed));
+              return parsed;
+            } catch (e) {
+              console.error('navConfig parse error', e);
+            }
+          }
+          return buildNavConfig();
+        }
+
+        // 儲存導航設定
+        function saveNavConfig(cfg) {
+          localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(cfg));
+        }
+
+        function applyHiddenState(el, key) {
+          const hidden = Array.isArray(navConfig.hidden) && navConfig.hidden.includes(key);
+          el.classList.toggle('nav-item-hidden', hidden);
+          const button = el.querySelector(':scope > .nav-edit-icons [data-nav-action="visibility"], :scope > .nav-group-toggle .nav-edit-icons [data-nav-action="visibility"]');
+          if (button) {
+            button.textContent = hidden ? '↩' : '◉';
+            button.title = hidden ? '恢復顯示' : '隱藏功能';
+            button.setAttribute('aria-label', button.title);
+          }
+        }
+
+
+        function toggleItemHidden(el) {
+          const key = getNavKey(el);
+          if (!key) return;
+
+          navConfig.hidden = Array.isArray(navConfig.hidden) ? navConfig.hidden : [];
+          const index = navConfig.hidden.indexOf(key);
+          if (index >= 0) navConfig.hidden.splice(index, 1);
+          else navConfig.hidden.push(key);
+          applyHiddenState(el, key);
+          saveNavConfig(navConfig);
+        }
+
+        // 取得元素對應的 key
+      
+  function getNavKey(el) {
+          if (el.classList.contains('nav-group')) {
+            return 'group-' + el.dataset.group;
+          }
+          if (el.classList.contains('nav-button')) {
+            return el.dataset.view;
+          }
+          return null;
+        }
+
+        // 上移元素
+        function moveItemUp(el) {
+          const parent = el.parentElement;
+          const prev = el.previousElementSibling;
+          if (!prev) return;
+          parent.insertBefore(el, prev);
+          // 更新設定
+          const key = getNavKey(el);
+          if (!key) return;
+          if (parent.classList.contains('nav-submenu')) {
+            // 子項目
+            const groupEl = el.closest('.nav-group');
+            const groupKey = 'group-' + groupEl.dataset.group;
+            const arr = navConfig.groupOrder[groupKey];
+            const idx = arr.indexOf(key);
+            if (idx > 0) {
+              arr.splice(idx, 1);
+              arr.splice(idx - 1, 0, key);
+            }
+          } else {
+            // 根層
+            const arr = navConfig.order;
+            const idx = arr.indexOf(key);
+            if (idx > 0) {
+              arr.splice(idx, 1);
+              arr.splice(idx - 1, 0, key);
+            }
+          }
+          saveNavConfig(navConfig);
+        }
+
+        // 下移元素
+        function moveItemDown(el) {
+          const parent = el.parentElement;
+          const next = el.nextElementSibling;
+          if (!next || next.id === 'nav-edit-toggle') return;
+          parent.insertBefore(next, el);
+          const key = getNavKey(el);
+          if (!key) return;
+          if (parent.classList.contains('nav-submenu')) {
+            const groupEl = el.closest('.nav-group');
+            const groupKey = 'group-' + groupEl.dataset.group;
+            const arr = navConfig.groupOrder[groupKey];
+            const idx = arr.indexOf(key);
+            if (idx >= 0 && idx < arr.length - 1) {
+              arr.splice(idx, 1);
+              arr.splice(idx + 1, 0, key);
+            }
+          } else {
+            const arr = navConfig.order;
+            const idx = arr.indexOf(key);
+            if (idx >= 0 && idx < arr.length - 1) {
+              arr.splice(idx, 1);
+              arr.splice(idx + 1, 0, key);
+            }
+          }
+          saveNavConfig(navConfig);
+        }
+
+        // 重新命名元素
+        function renameItem(el) {
+          let key = getNavKey(el);
+          if (!key) return;
+          let currentName;
+          if (el.classList.contains('nav-group')) {
+            const span = el.querySelector('.nav-group-toggle span');
+            currentName = span ? span.textContent.trim() : '';
+            const newName = prompt('輸入新的名稱', currentName);
+            if (newName !== null && newName.trim() !== '') {
+              navConfig.titles[key] = newName.trim();
+              if (span) span.textContent = newName.trim();
+              saveNavConfig(navConfig);
+            }
+          } else if (el.classList.contains('nav-button')) {
+            // 重新命名按鈕，需保留編輯圖示
+            currentName = el.textContent.trim();
+            // 忽略內部編輯圖示文字
+            const icons = el.querySelector('.nav-edit-icons');
+            if (icons) {
+              // 暫時移除圖示以獲取純文字
+              const tmp = icons.cloneNode(true);
+              el.removeChild(icons);
+              currentName = el.textContent.trim();
+              el.appendChild(tmp);
+            }
+            const newName = prompt('輸入新的名稱', currentName);
+            if (newName !== null && newName.trim() !== '') {
+              navConfig.titles[key] = newName.trim();
+              // 移除現有圖示
+              const iconEl = el.querySelector('.nav-edit-icons');
+              let savedIcons = null;
+              if (iconEl) {
+                savedIcons = iconEl;
+                el.removeChild(iconEl);
+              }
+              // 設定新的文字內容
+              el.textContent = newName.trim();
+              // 恢復圖示
+              if (savedIcons) {
+                el.appendChild(savedIcons);
+              }
+              saveNavConfig(navConfig);
+            }
+          }
+        }
+
+        // 為群組或按鈕新增編輯圖示
+        function addEditIconsForElement(el) {
+          // 避免重複添加
+          if (el.querySelector('.nav-edit-icons')) return;
+          const icons = document.createElement('span');
+          icons.className = 'nav-edit-icons';
+          // 上移
+          const upBtn = document.createElement('button');
+          upBtn.type = 'button';
+          upBtn.textContent = '↑';
+          upBtn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            // el 是要移動的整體容器
+            if (el.classList.contains('nav-group')) {
+              moveItemUp(el);
+            } else {
+              moveItemUp(el);
+            }
+          });
+          // 下移
+          const downBtn = document.createElement('button');
+          downBtn.type = 'button';
+          downBtn.textContent = '↓';
+          downBtn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            if (el.classList.contains('nav-group')) {
+              moveItemDown(el);
+            } else {
+              moveItemDown(el);
+            }
+          });
+          // 重新命名
+          const renameBtn = document.createElement('button');
+          renameBtn.type = 'button';
+          renameBtn.textContent = '✎';
+          renameBtn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            renameItem(el);
+          });
+          const visibilityBtn = document.createElement('button');
+          visibilityBtn.type = 'button';
+          visibilityBtn.dataset.navAction = 'visibility';
+          visibilityBtn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            toggleItemHidden(el);
+          });
+          icons.appendChild(upBtn);
+          icons.appendChild(downBtn);
+          icons.appendChild(renameBtn);
+          icons.appendChild(visibilityBtn);
+          if (el.classList.contains('nav-group')) {
+            const toggleEl = el.querySelector('.nav-group-toggle');
+            const arrowSpan = toggleEl.querySelector('.nav-group-arrow');
+            if (arrowSpan) {
+              toggleEl.insertBefore(icons, arrowSpan);
+            } else {
+              toggleEl.appendChild(icons);
+            }
+          } else if (el.classList.contains('nav-button')) {
+            el.appendChild(icons);
+          }
+        }
+
+        // 初始化編輯圖示
+        function initEditIcons() {
+          const navEl = document.querySelector('.nav');
+          // 群組和根級按鈕
+          Array.from(navEl.children).forEach((child) => {
+            if (child.classList.contains('nav-group')) {
+              addEditIconsForElement(child);
+              // 子按鈕
+              const submenu = child.querySelector('.nav-submenu');
+              if (submenu) {
+                Array.from(submenu.children).forEach((btn) => {
+                  if (btn.classList.contains('nav-button')) {
+                    addEditIconsForElement(btn);
+                  }
+                });
+              }
+            } else if (child.classList.contains('nav-button')) {
+              addEditIconsForElement(child);
+            }
+          });
+        }
+
+        // 套用設定到現有 DOM
+        function applyNavConfig(cfg) {
+          const navEl = document.querySelector('.nav');
+          // 重排序根項目
+          cfg.order.forEach((key) => {
+            if (key.startsWith('group-')) {
+              const groupName = key.substring(6);
+              const groupEl = navEl.querySelector('.nav-group[data-group="' + groupName + '"]');
+              if (groupEl) navEl.appendChild(groupEl);
+              // 排序子項目
+              const subOrder = cfg.groupOrder[key];
+              const submenu = groupEl ? groupEl.querySelector('.nav-submenu') : null;
+              if (submenu && Array.isArray(subOrder)) {
+                subOrder.forEach((subKey) => {
+                  const btn = submenu.querySelector('.nav-button[data-view="' + subKey + '"]');
+                  if (btn) submenu.appendChild(btn);
+                  if (btn && cfg.titles[subKey]) {
+                    btn.textContent = cfg.titles[subKey];
+                  }
+                });
+              }
+              // 更新群組標題
+              if (groupEl && cfg.titles[key]) {
+                const titleSpan = groupEl.querySelector('.nav-group-toggle span');
+                if (titleSpan) titleSpan.textContent = cfg.titles[key];
+              }
+            } else {
+              const btn = navEl.querySelector('.nav-button[data-view="' + key + '"]');
+              if (btn) navEl.appendChild(btn);
+              if (btn && cfg.titles[key]) {
+                btn.textContent = cfg.titles[key];
+              }
+            }
+          });
+          navEl.querySelectorAll('.nav-group, .nav-button').forEach((el) => {
+            const key = getNavKey(el);
+            if (key) applyHiddenState(el, key);
+          });
+          // 編輯按鈕不屬於可排序項目，永遠固定在功能列最下方。
+          const editToggle = document.getElementById('nav-edit-toggle');
+          if (editToggle) navEl.appendChild(editToggle);
+        }
+
+        // 切換編輯模式
+        function toggleNavEdit() {
+          const navEl = document.querySelector('.nav');
+          navEditing = !navEditing;
+          navEl.classList.toggle('is-editing', navEditing);
+          const toggleBtn = document.getElementById('nav-edit-toggle');
+          if (toggleBtn) toggleBtn.textContent = navEditing ? '完成' : '編輯功能列';
+        }
+
+        function initializeNavEditor() {
+          navConfig = loadNavConfig();
+          applyNavConfig(navConfig);
+          initEditIcons();
+          const currentNav = document.querySelector('.nav');
+          currentNav.querySelectorAll('.nav-group, .nav-button').forEach((el) => {
+            const key = getNavKey(el);
+            if (key) applyHiddenState(el, key);
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const editToggleBtn = document.getElementById('nav-edit-toggle');
+          if (editToggleBtn) {
+            editToggleBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              toggleNavEdit();
+            });
+          }
+          try {
+            initializeNavEditor();
+          } catch (error) {
+            console.error('Navigation editor initialization failed; rebuilding settings.', error);
+            localStorage.removeItem(NAV_CONFIG_KEY);
+            initializeNavEditor();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+
+/* 隱藏指定側邊欄按鈕 */
+[data-menu="task-dashboard"],
+[data-menu="task-archive"],
+[data-menu="history"],
+[data-menu="update-list"] {
+  display: none !important;
+}

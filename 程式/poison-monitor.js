@@ -1,0 +1,585 @@
+(function () {
+  'use strict';
+
+  var SOURCE = {
+    spreadsheetId: '1B298mjXY1HBAz4ohtNr1pletE9xTE44uYzL0932RRFU',
+    gid: '1961758864'
+  };
+  var STORAGE_KEY = 'dashboard-poison-monitor-v1';
+  var EMPTY_FILTER_VALUE = '__poison_monitor_blank__';
+  var state = {
+    headers: [], rows: [], loading: false, error: '', lastFetchedAt: 0,
+    search: '', channel: '', version: '', category: '', poisonStatus: '',
+    storeOnline: '', offlineDate: '', marketingSpend: '',
+    sortHeader: '', sortDirection: 'asc', hiddenHeaders: new Set(), columnWidths: {}
+  };
+  var els = {
+    count: document.getElementById('poison-monitor-count'),
+    poisonCount: document.getElementById('poison-monitor-poison-count'),
+    status: document.getElementById('poison-monitor-sync-status'),
+    refresh: document.getElementById('poison-monitor-refresh-btn'),
+    syncMode: document.getElementById('poison-monitor-sync-mode'),
+    syncUrl: document.getElementById('poison-monitor-sync-url'),
+    syncSave: document.getElementById('poison-monitor-sync-save-btn'),
+    search: document.getElementById('poison-monitor-search'),
+    channel: document.getElementById('poison-monitor-channel-filter'),
+    version: document.getElementById('poison-monitor-version-filter'),
+    category: document.getElementById('poison-monitor-category-filter'),
+    poisonStatus: document.getElementById('poison-monitor-poison-filter'),
+    storeOnline: document.getElementById('poison-monitor-store-online-filter'),
+    offlineDate: document.getElementById('poison-monitor-offline-date-filter'),
+    marketingSpend: document.getElementById('poison-monitor-marketing-spend-filter'),
+    clear: document.getElementById('poison-monitor-clear-btn'),
+    fieldSettings: document.getElementById('poison-monitor-field-settings-btn'),
+    message: document.getElementById('poison-monitor-message'),
+    head: document.getElementById('poison-monitor-table-head'),
+    body: document.getElementById('poison-monitor-table-body'),
+    dialog: document.getElementById('poison-monitor-field-dialog'),
+    settingsList: document.getElementById('poison-monitor-field-list')
+  };
+  if (!els.body) return;
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+  }
+
+  function isGoogleSheetUrl(value) {
+    try {
+      var url = new URL(String(value || '').trim(), window.location.href);
+      return url.hostname === 'docs.google.com' && url.pathname.includes('/spreadsheets/d/');
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function isAppsScriptUrl(value) {
+    try {
+      var url = new URL(String(value || '').trim(), window.location.href);
+      return url.hostname === 'script.google.com' && url.pathname.endsWith('/exec');
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function findExistingAppsScriptUrl() {
+    var channelInput = document.getElementById('channel-summary-sync-url');
+    var visibleValue = String(channelInput && channelInput.value || '').trim();
+    if (isAppsScriptUrl(visibleValue)) return visibleValue;
+    try {
+      var dashboard = JSON.parse(localStorage.getItem('local-dashboard-app-v1') || '{}') || {};
+      var candidates = [dashboard.channelSummarySync, dashboard.updateListSync];
+      for (var index = 0; index < candidates.length; index += 1) {
+        var candidate = String(candidates[index] && candidates[index].url || '').trim();
+        if (isAppsScriptUrl(candidate)) return candidate;
+      }
+    } catch (error) {}
+    return '';
+  }
+  function normalizeSyncConfig(config) {
+    var url = String(config && config.url || '').trim();
+    var mode = config && config.mode || 'apps-script';
+    if (isGoogleSheetUrl(url)) mode = 'sheet-direct';
+    return { mode: mode, url: url };
+  }
+
+  function resolveDirectSource() {
+    var result = { spreadsheetId: SOURCE.spreadsheetId, gid: SOURCE.gid };
+    if (!isGoogleSheetUrl(syncConfig.url)) return result;
+    var url = new URL(syncConfig.url, window.location.href);
+    var pathParts = url.pathname.split('/spreadsheets/d/');
+    if (pathParts[1]) result.spreadsheetId = pathParts[1].split('/')[0];
+    var gid = url.searchParams.get('gid');
+    if (!gid && url.hash) gid = new URLSearchParams(url.hash.replace(/^#/, '')).get('gid');
+    if (gid) result.gid = gid;
+    return result;
+  }
+  function loadSettings() {
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
+    catch (error) { saved = {}; }
+    state.hiddenHeaders = new Set(Array.isArray(saved.hiddenHeaders) ? saved.hiddenHeaders : []);
+    state.columnWidths = saved.columnWidths && typeof saved.columnWidths === 'object'
+      ? saved.columnWidths : {};
+    if (saved.sync && saved.sync.url) {
+      var savedConfig = normalizeSyncConfig(saved.sync);
+      var existingApi = findExistingAppsScriptUrl();
+      if (savedConfig.mode === 'sheet-direct' && existingApi) {
+        return { mode: 'apps-script', url: existingApi };
+      }
+      return savedConfig;
+    }
+    try {
+      var dashboard = JSON.parse(localStorage.getItem('local-dashboard-app-v1') || '{}') || {};
+      if (dashboard.channelSummarySync && dashboard.channelSummarySync.url) {
+        return normalizeSyncConfig({ mode: dashboard.channelSummarySync.mode || 'apps-script', url: dashboard.channelSummarySync.url });
+      }
+    } catch (error) {}
+    return normalizeSyncConfig({ mode: 'apps-script', url: '' });
+  }
+
+  var syncConfig = loadSettings();
+
+  function saveSettings() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      sync: syncConfig,
+      hiddenHeaders: Array.from(state.hiddenHeaders),
+      columnWidths: state.columnWidths
+    }));
+  }
+
+  function readValue(row, aliases) {
+    for (var index = 0; index < aliases.length; index += 1) {
+      var header = aliases[index];
+      if (Object.prototype.hasOwnProperty.call(row, header)) return String(row[header] || '').trim();
+    }
+    return '';
+  }
+
+  function isPoisoned(row) {
+    var explicit = readValue(row, ['\u5831\u6bd2', '\u62a5\u6bd2', '\u5831\u6bd2\u72c0\u614b', '\u62a5\u6bd2\u72b6\u6001']);
+    if (explicit) return !/(\u672a\u5831\u6bd2|\u672a\u62a5\u6bd2)/i.test(explicit) && /(\u5831\u6bd2|\u62a5\u6bd2)/i.test(explicit);
+    return /(\u5831\u6bd2|\u62a5\u6bd2)/i.test(
+      readValue(row, ['\u5099\u8a3b', '\u5907\u6ce8', 'remark', 'remarks', 'note'])
+    );
+  }
+
+  function uniqueValues(aliases) {
+    return Array.from(new Set(state.rows.map(function (row) {
+      return readValue(row, aliases);
+    }).filter(Boolean))).sort(function (left, right) {
+      return left.localeCompare(right, 'zh-Hant', { numeric: true });
+    });
+  }
+
+  function uniqueFilterValues(aliases) {
+    var values = uniqueValues(aliases);
+    var hasBlank = state.rows.some(function (row) { return !readValue(row, aliases); });
+    return hasBlank ? [EMPTY_FILTER_VALUE].concat(values) : values;
+  }
+
+  function matchesFilter(row, aliases, selected) {
+    if (!selected) return true;
+    var value = readValue(row, aliases);
+    return selected === EMPTY_FILTER_VALUE ? !value : value === selected;
+  }
+
+  function fillSelect(select, placeholder, values, current) {
+    if (!select) return;
+    select.innerHTML = ['<option value="">' + escapeHtml(placeholder) + '</option>']
+      .concat(values.map(function (value) {
+        var label = value === EMPTY_FILTER_VALUE ? '\uff08\u7a7a\u767d\uff09' : value;
+        return '<option value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</option>';
+      })).join('');
+    select.value = current || '';
+  }
+
+  function syncFilters() {
+    fillSelect(els.channel, '\u5168\u90e8\u6e20\u9053',
+      uniqueValues(['\u6e20\u9053']), state.channel);
+    fillSelect(els.version, '\u5168\u90e8\u7248\u672c',
+      uniqueValues(['\u7248\u672c']), state.version);
+    fillSelect(els.category, '\u5168\u90e8\u5206\u985e',
+      uniqueValues(['\u5206\u985e', '\u5206\u7c7b']), state.category);
+    fillSelect(els.storeOnline, '\u5168\u90e8\u5546\u5e97\u5728\u7dda',
+      uniqueFilterValues(['\u5546\u5e97\u5728\u7dda', '\u5546\u5e97\u5728\u7ebf']), state.storeOnline);
+    fillSelect(els.offlineDate, '\u5168\u90e8\u4e0b\u7dda\u65e5\u671f',
+      uniqueFilterValues(['\u4e0b\u7dda\u65e5\u671f', '\u4e0b\u7ebf\u65e5\u671f']), state.offlineDate);
+    fillSelect(els.marketingSpend, '\u5168\u90e8\u884c\u92b7\u82b1\u8cbb',
+      uniqueFilterValues(['\u884c\u92b7\u82b1\u8cbb', '\u884c\u9500\u82b1\u8d39']), state.marketingSpend);
+    els.poisonStatus.value = state.poisonStatus;
+    els.search.value = state.search;
+  }
+
+  function filteredRows() {
+    var search = state.search.trim().toLowerCase();
+    var rows = state.rows.filter(function (row) {
+      if (state.channel && readValue(row, ['\u6e20\u9053']) !== state.channel) return false;
+      if (state.version && readValue(row, ['\u7248\u672c']) !== state.version) return false;
+      if (state.category && readValue(row, ['\u5206\u985e', '\u5206\u7c7b']) !== state.category) return false;
+      if (!matchesFilter(row, ['\u5546\u5e97\u5728\u7dda', '\u5546\u5e97\u5728\u7ebf'], state.storeOnline)) return false;
+      if (!matchesFilter(row, ['\u4e0b\u7dda\u65e5\u671f', '\u4e0b\u7ebf\u65e5\u671f'], state.offlineDate)) return false;
+      if (!matchesFilter(row, ['\u884c\u92b7\u82b1\u8cbb', '\u884c\u9500\u82b1\u8d39'], state.marketingSpend)) return false;
+      if (state.poisonStatus === 'poisoned' && !isPoisoned(row)) return false;
+      if (state.poisonStatus === 'clean' && isPoisoned(row)) return false;
+      if (!search) return true;
+      return state.headers.some(function (header) {
+        return String(row[header] || '').toLowerCase().includes(search);
+      });
+    });
+    if (!state.sortHeader) return rows;
+    return rows.slice().sort(function (left, right) {
+      var valueA = String(left[state.sortHeader] || '').trim();
+      var valueB = String(right[state.sortHeader] || '').trim();
+      var result = valueA.localeCompare(valueB, 'zh-Hant', { numeric: true, sensitivity: 'base' });
+      return state.sortDirection === 'asc' ? result : -result;
+    });
+  }
+
+  function cellHtml(value) {
+    var text = String(value == null ? '' : value);
+    if (/^https?:\/\//i.test(text)) {
+      return '<a href="' + escapeHtml(text) + '" target="_blank" rel="noopener noreferrer">' +
+        escapeHtml(text) + '</a>';
+    }
+    return escapeHtml(text).replaceAll('\n', '<br>');
+  }
+
+  function columnCellAttributes(header, index) {
+    var width = Number(state.columnWidths[header]);
+    var style = Number.isFinite(width) && width > 0
+      ? ' style="width:' + width + 'px;min-width:' + width + 'px;max-width:' + width + 'px"'
+      : '';
+    return ' data-poison-column-index="' + index + '"' + style;
+  }
+
+  function renderHead() {
+    var visible = state.headers.filter(function (header) { return !state.hiddenHeaders.has(header); });
+    els.head.innerHTML = '<tr>' + visible.map(function (header, index) {
+      var arrow = state.sortHeader === header
+        ? (state.sortDirection === 'asc' ? ' \u2191' : ' \u2193')
+        : ' \u2195';
+      return '<th' + columnCellAttributes(header, index) + '><button type="button" class="sort-button" data-poison-sort="' + escapeHtml(header) + '">' +
+        escapeHtml(header) + '<span aria-hidden="true">' + arrow + '</span></button>' +
+        '<span class="poison-column-resizer" data-poison-resize-header="' + escapeHtml(header) + '"' +
+        ' data-poison-resize-index="' + index + '" title="\u62d6\u66f3\u8abf\u6574\u6b04\u5bec\uff0c\u96d9\u64ca\u6062\u5fa9\u81ea\u52d5"></span></th>';
+    }).join('') + '</tr>';
+  }
+
+  function renderRows(rows) {
+    var visible = state.headers.filter(function (header) { return !state.hiddenHeaders.has(header); });
+    if (!rows.length) {
+      els.body.innerHTML = '<tr><td colspan="' + Math.max(visible.length, 1) + '" class="empty-cell">' +
+        (state.loading ? '\u540c\u6b65\u4e2d\u2026' : '\u6c92\u6709\u7b26\u5408\u689d\u4ef6\u7684\u8cc7\u6599') +
+        '</td></tr>';
+      return;
+    }
+    els.body.innerHTML = rows.map(function (row) {
+      return '<tr class="' + (isPoisoned(row) ? 'is-poisoned' : '') + '">' +
+        visible.map(function (header, index) {
+          return '<td' + columnCellAttributes(header, index) + '>' + cellHtml(row[header]) + '</td>';
+        }).join('') +
+        '</tr>';
+    }).join('');
+  }
+
+  function render() {
+    syncFilters();
+    var rows = filteredRows();
+    els.count.textContent = String(rows.length);
+    els.poisonCount.textContent = String(state.rows.filter(isPoisoned).length);
+    els.status.textContent = state.loading
+      ? '\u540c\u6b65\u4e2d'
+      : state.lastFetchedAt
+        ? '\u66f4\u65b0 ' + new Date(state.lastFetchedAt).toLocaleTimeString('zh-Hant', {
+            hour: '2-digit', minute: '2-digit'
+          }) + '\u30fb' + state.headers.length + ' \u6b04'
+        : '\u5c1a\u672a\u540c\u6b65';
+    els.message.hidden = !state.error;
+    els.message.textContent = state.error;
+    els.message.classList.toggle('is-error', Boolean(state.error));
+    els.syncMode.value = syncConfig.mode || 'apps-script';
+    els.syncUrl.value = syncConfig.url || '';
+    renderHead();
+    renderRows(rows);
+  }
+
+  function rowsFromArrays(values) {
+    if (!Array.isArray(values) || !values.length) return { headers: [], rows: [] };
+    var headers = values[0].map(function (value, index) {
+      return String(value || '').trim() || '\u6b04\u4f4d ' + (index + 1);
+    });
+    var rows = values.slice(1).filter(function (row) {
+      return row.some(function (cell) { return String(cell || '').trim(); });
+    }).map(function (sourceRow) {
+      var record = {};
+      headers.forEach(function (header, index) {
+        record[header] = String(sourceRow[index] || '').trim();
+      });
+      return record;
+    });
+    return { headers: headers, rows: rows };
+  }
+
+  function parseCsv(text) {
+    var output = [];
+    var row = [];
+    var value = '';
+    var quoted = false;
+    for (var index = 0; index < text.length; index += 1) {
+      var char = text[index];
+      if (char === '"') {
+        if (quoted && text[index + 1] === '"') {
+          value += '"';
+          index += 1;
+        } else {
+          quoted = !quoted;
+        }
+      } else if (char === ',' && !quoted) {
+        row.push(value);
+        value = '';
+      } else if ((char === '\n' || char === '\r') && !quoted) {
+        if (char === '\r' && text[index + 1] === '\n') index += 1;
+        row.push(value);
+        output.push(row);
+        row = [];
+        value = '';
+      } else {
+        value += char;
+      }
+    }
+    if (value || row.length) {
+      row.push(value);
+      output.push(row);
+    }
+    return rowsFromArrays(output);
+  }
+
+  function rowsFromApi(payload) {
+    if (!payload || payload.ok === false) {
+      throw new Error(payload && payload.error ? payload.error : 'Apps Script API \u8fd4\u56de\u932f\u8aa4');
+    }
+    var headers = Array.isArray(payload.headers) ? payload.headers.map(String) : [];
+    if (!headers.length && Array.isArray(payload.rows)) {
+      headers = payload.rows.reduce(function (result, row) {
+        if (!row || Array.isArray(row) || typeof row !== 'object') return result;
+        Object.keys(row).forEach(function (header) {
+          if (!/_url$/i.test(header) && !result.includes(header)) result.push(header);
+        });
+        return result;
+      }, []);
+    }
+    var rows = Array.isArray(payload.rows) ? payload.rows.map(function (sourceRow) {
+      var record = {};
+      headers.forEach(function (header) {
+        record[header] = String(sourceRow && sourceRow[header] || '').trim();
+      });
+      return record;
+    }) : [];
+    return { headers: headers, rows: rows };
+  }
+
+  function ensureTriggerMonitorResult(result) {
+    var headers = Array.isArray(result && result.headers) ? result.headers.map(function (header) {
+      return String(header || '').trim();
+    }) : [];
+    var hasUid = headers.some(function (header) { return /^UID$/i.test(header); });
+    var hasPoison = headers.some(function (header) { return /^(\u5831\u6bd2|\u62a5\u6bd2)$/.test(header); });
+    if (!hasUid || !hasPoison) {
+      throw new Error('Apps Script \u5c1a\u672a\u6307\u5411\u300c\u5f37\u5f31\u8f49\u89f8\u767c\u300d\u5206\u9801\uff0c\u8acb\u66f4\u65b0\u4e26\u91cd\u65b0\u90e8\u7f72 channel_summary_api.gs');
+    }
+    return result;
+  }
+
+  function readGvizCell(cell) {
+    if (!cell) return '';
+    if (cell.f !== null && cell.f !== undefined && cell.f !== '') return String(cell.f);
+    if (typeof cell.v === 'boolean') return cell.v ? 'TRUE' : 'FALSE';
+    return String(cell.v == null ? '' : cell.v);
+  }
+
+  function rowsFromGviz(response) {
+    if (response && response.status === 'error') throw new Error('\u7121\u6cd5\u8b80\u53d6 Google Sheet');
+    var headers = (response && response.table && response.table.cols || []).map(function (column, index) {
+      return String(column.label || column.id || ('\u6b04\u4f4d ' + (index + 1))).trim();
+    });
+    var rows = (response && response.table && response.table.rows || []).map(function (sourceRow) {
+      var record = {};
+      headers.forEach(function (header, index) {
+        record[header] = readGvizCell(sourceRow.c && sourceRow.c[index]);
+      });
+      return record;
+    }).filter(function (row) {
+      return headers.some(function (header) { return String(row[header] || '').trim(); });
+    });
+    return { headers: headers, rows: rows };
+  }
+
+  function jsonp(urlBuilder, callbackPrefix, parser) {
+    return new Promise(function (resolve, reject) {
+      var callbackName = callbackPrefix + Date.now() + '_' + Math.random().toString(36).slice(2);
+      var script = document.createElement('script');
+      var timer = window.setTimeout(function () {
+        cleanup();
+        reject(new Error('\u540c\u6b65\u903e\u6642\uff0c\u8acb\u78ba\u8a8d\u7db2\u5740\u8207\u90e8\u7f72\u72c0\u614b'));
+      }, 15000);
+      function cleanup() {
+        window.clearTimeout(timer);
+        delete window[callbackName];
+        script.remove();
+      }
+      window[callbackName] = function (payload) {
+        cleanup();
+        try { resolve(parser(payload)); }
+        catch (error) { reject(error); }
+      };
+      script.onerror = function () {
+        cleanup();
+        reject(new Error('\u7121\u6cd5\u9023\u7dda\u540c\u6b65\u4f86\u6e90'));
+      };
+      script.src = urlBuilder(callbackName);
+      document.body.appendChild(script);
+    });
+  }
+
+  function loadRows() {
+    syncConfig = normalizeSyncConfig(syncConfig);
+    if (syncConfig.mode === 'public-csv') {
+      if (!syncConfig.url) return Promise.reject(new Error('\u8acb\u5148\u8cbc\u4e0a\u516c\u958b CSV \u9023\u7d50'));
+      return fetch(syncConfig.url).then(function (response) {
+        if (!response.ok) throw new Error('\u516c\u958b CSV \u8b80\u53d6\u5931\u6557');
+        return response.text();
+      }).then(parseCsv);
+    }
+    if (syncConfig.mode === 'sheet-direct') {
+      var directSource = resolveDirectSource();
+      var directRequest = jsonp(function (callbackName) {
+        var tqx = encodeURIComponent('out:json;responseHandler:' + callbackName);
+        return 'https://docs.google.com/spreadsheets/d/' + directSource.spreadsheetId +
+          '/gviz/tq?gid=' + directSource.gid + '&headers=1&tqx=' + tqx;
+      }, '__poisonMonitorSheet_', rowsFromGviz);
+      var fallbackApi = findExistingAppsScriptUrl();
+      if (!fallbackApi) return directRequest;
+      return directRequest.catch(function () {
+        syncConfig = { mode: 'apps-script', url: fallbackApi };
+        saveSettings();
+        return loadRows();
+      });
+    }
+    if (!syncConfig.url) {
+      return Promise.reject(new Error(
+        '\u8acb\u5148\u5728\u6e20\u9053\u7d71\u6574\u8868\u5132\u5b58 Apps Script API \u7db2\u5740\uff0c\u6216\u5728\u672c\u9801\u8cbc\u4e0a\u7db2\u5740'
+      ));
+    }
+    function requestMonitorType(type, callbackPrefix) {
+      return jsonp(function (callbackName) {
+        var url = new URL(syncConfig.url, window.location.href);
+        url.searchParams.set('type', type);
+        url.searchParams.set('callback', callbackName);
+        return url.toString();
+      }, callbackPrefix, rowsFromApi).then(ensureTriggerMonitorResult);
+    }
+    return requestMonitorType('trigger-monitor', '__triggerMonitorApi_').catch(function () {
+      return requestMonitorType('poison-monitor', '__poisonMonitorApi_');
+    });
+  }
+
+  function refresh() {
+    state.loading = true;
+    state.error = '';
+    render();
+    loadRows().then(function (result) {
+      state.headers = result.headers;
+      state.rows = result.rows;
+      state.lastFetchedAt = Date.now();
+    }).catch(function (error) {
+      state.error = error && error.message ? error.message : '\u8b80\u53d6\u5831\u6bd2\u76e3\u63a7\u5931\u6557';
+    }).finally(function () {
+      state.loading = false;
+      render();
+    });
+  }
+
+  function renderFieldSettings() {
+    els.settingsList.innerHTML = state.headers.map(function (header) {
+      return '<label class="settings-item poison-monitor-settings-item">' +
+        '<span class="settings-type">' + escapeHtml(header) + '</span>' +
+        '<input type="checkbox" data-poison-column="' + escapeHtml(header) + '"' +
+        (state.hiddenHeaders.has(header) ? '' : ' checked') + '></label>';
+    }).join('');
+  }
+
+  els.refresh.addEventListener('click', refresh);
+  els.syncSave.addEventListener('click', function () {
+    syncConfig = normalizeSyncConfig({ mode: els.syncMode.value || 'apps-script', url: String(els.syncUrl.value || '').trim() });
+    saveSettings();
+    refresh();
+  });
+  els.search.addEventListener('input', function () { state.search = els.search.value || ''; render(); });
+  els.channel.addEventListener('change', function () { state.channel = els.channel.value || ''; render(); });
+  els.version.addEventListener('change', function () { state.version = els.version.value || ''; render(); });
+  els.category.addEventListener('change', function () { state.category = els.category.value || ''; render(); });
+  els.poisonStatus.addEventListener('change', function () { state.poisonStatus = els.poisonStatus.value || ''; render(); });
+  els.storeOnline.addEventListener('change', function () { state.storeOnline = els.storeOnline.value || ''; render(); });
+  els.offlineDate.addEventListener('change', function () { state.offlineDate = els.offlineDate.value || ''; render(); });
+  els.marketingSpend.addEventListener('change', function () { state.marketingSpend = els.marketingSpend.value || ''; render(); });
+  els.clear.addEventListener('click', function () {
+    state.search = '';
+    state.channel = '';
+    state.version = '';
+    state.category = '';
+    state.poisonStatus = '';
+    state.storeOnline = '';
+    state.offlineDate = '';
+    state.marketingSpend = '';
+    render();
+  });
+  els.head.addEventListener('pointerdown', function (event) {
+    var handle = event.target.closest('[data-poison-resize-header]');
+    if (!handle) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var header = handle.dataset.poisonResizeHeader;
+    var index = Number(handle.dataset.poisonResizeIndex);
+    var cell = handle.closest('th');
+    var startX = event.clientX;
+    var startWidth = cell ? cell.getBoundingClientRect().width : Number(state.columnWidths[header]) || 110;
+    function move(moveEvent) {
+      var width = Math.max(70, Math.min(720, Math.round(startWidth + moveEvent.clientX - startX)));
+      state.columnWidths[header] = width;
+      document.querySelectorAll('.poison-monitor-table [data-poison-column-index="' + index + '"]').forEach(function (item) {
+        item.style.width = width + 'px';
+        item.style.minWidth = width + 'px';
+        item.style.maxWidth = width + 'px';
+      });
+    }
+    function end() {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', end);
+      document.body.classList.remove('poison-column-resizing');
+      saveSettings();
+    }
+    document.body.classList.add('poison-column-resizing');
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', end);
+  });
+  els.head.addEventListener('dblclick', function (event) {
+    var handle = event.target.closest('[data-poison-resize-header]');
+    if (!handle) return;
+    event.preventDefault();
+    event.stopPropagation();
+    delete state.columnWidths[handle.dataset.poisonResizeHeader];
+    saveSettings();
+    render();
+  });
+  els.head.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-poison-sort]');
+    if (!button) return;
+    var header = button.dataset.poisonSort;
+    if (state.sortHeader === header) state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+    else {
+      state.sortHeader = header;
+      state.sortDirection = 'asc';
+    }
+    render();
+  });
+  els.fieldSettings.addEventListener('click', function () {
+    renderFieldSettings();
+    els.dialog.showModal();
+  });
+  els.settingsList.addEventListener('change', function (event) {
+    var input = event.target.closest('[data-poison-column]');
+    if (!input) return;
+    if (input.checked) state.hiddenHeaders.delete(input.dataset.poisonColumn);
+    else state.hiddenHeaders.add(input.dataset.poisonColumn);
+    saveSettings();
+    render();
+  });
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-view="poison-monitor"]');
+    if (button && !state.rows.length && !state.loading) window.setTimeout(refresh, 0);
+  });
+
+  render();
+})();
