@@ -110,10 +110,7 @@
       : '固定查詢：每日 10:00、15:00（北京時間）';
   }
 
-  async function loadSnapshot() {
-    var localResponse = await fetch('./tenjin-monitor-results.json?t=' + Date.now(), { cache: 'no-store' });
-    if (localResponse.ok) return localResponse.json();
-
+  async function loadGitHubSnapshot() {
     var response = await fetch(CONTENTS_API_URL + '&t=' + Date.now(), {
       cache: 'no-store',
       headers: { Accept: 'application/vnd.github+json' }
@@ -125,14 +122,28 @@
     return JSON.parse(new TextDecoder().decode(bytes));
   }
 
-  async function refresh(quiet) {
+  async function loadLocalSnapshot() {
+    var response = await fetch('./tenjin-monitor-results.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    return response.json();
+  }
+
+  async function loadSnapshot(preferGitHub) {
+    try {
+      return preferGitHub ? await loadGitHubSnapshot() : await loadLocalSnapshot();
+    } catch (primaryError) {
+      return preferGitHub ? loadLocalSnapshot() : loadGitHubSnapshot();
+    }
+  }
+
+  async function refresh(quiet, preferGitHub) {
     if (!quiet) {
       els.run.disabled = true;
       els.run.textContent = '讀取最新結果中…';
       setMessage('正在讀取 GitHub main 的最新結果…', false);
     }
     try {
-      snapshot = await loadSnapshot();
+      snapshot = await loadSnapshot(Boolean(preferGitHub));
       render();
       if (!quiet) setMessage('已讀取 GitHub 最新結果。', false);
       return true;
@@ -164,7 +175,7 @@
     window.location.href = LOCAL_TRIGGER_URL + '?time=' + Date.now();
     updatePolling = window.setInterval(async function () {
       attempts += 1;
-      var loaded = await refresh(true);
+      var loaded = await refresh(true, true);
       if (loaded && String(snapshot.updatedAt || '') && String(snapshot.updatedAt) !== previousUpdatedAt) {
         stopUpdatePolling();
         els.trigger.disabled = false;
@@ -181,7 +192,7 @@
 
   els.configure.addEventListener('click', function () { window.open(CONFIG_URL, '_blank', 'noopener'); });
   if (els.trigger) els.trigger.addEventListener('click', triggerUpdate);
-  els.run.addEventListener('click', function () { void refresh(false); });
+  els.run.addEventListener('click', function () { void refresh(false, true); });
   void refresh(false);
   window.setInterval(function () { void refresh(true); }, 60 * 1000);
 })();

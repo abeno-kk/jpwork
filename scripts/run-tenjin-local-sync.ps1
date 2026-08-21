@@ -45,7 +45,7 @@ function Get-EventCount([string]$Text, [string]$EventName) {
   return 0
 }
 
-$null = Invoke-Git @('pull', '--rebase', 'origin', 'main')
+$null = Invoke-Git @('pull', '--rebase', '--autostash', 'origin', 'main')
 $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $appIds = @($config.appIds | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ } | Select-Object -Unique)
 if (-not $appIds.Count -or @($appIds | Where-Object { $_ -notmatch '^\d{6,15}$' }).Count) {
@@ -100,8 +100,8 @@ $null = Invoke-Git @('add', 'tenjin-monitor-results.json')
 $diff = Invoke-Git @('diff', '--cached', '--quiet') -AllowFailure
 if ($script:GitExitCode -ne 0) {
   $null = Invoke-Git @('commit', '-m', ('Update Tenjin result: ' + $Slot))
-  $null = Invoke-Git @('pull', '--rebase', 'origin', 'main')
-  $null = Invoke-Git @('push', 'origin', 'main')
+  $null = Invoke-Git @('pull', '--rebase', '--autostash', 'origin', 'main')
+  $null = Invoke-Git @('push', 'origin', 'HEAD:main')
 }
 
 foreach ($item in $newChecks) {
