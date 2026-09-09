@@ -1220,6 +1220,89 @@ select:focus {
   flex-wrap: wrap;
 }
 
+.task-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.task-name-cell input {
+  min-width: 120px;
+  flex: 1;
+}
+
+.task-name-cell.is-parent input {
+  font-weight: 700;
+}
+
+.task-group-toggle,
+.task-group-toggle-spacer,
+.task-child-branch {
+  width: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.task-group-toggle {
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #244f78;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.task-group-toggle:hover {
+  background: #e9f1f8;
+}
+
+.task-child-branch {
+  color: #9a8269;
+  font-size: 16px;
+}
+
+.task-progress-pill {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fff1c7;
+  color: #805b09;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.task-progress-pill.is-complete {
+  background: #dff0d8;
+  color: #35662b;
+}
+
+.task-child-row td {
+  border-top-color: #eee5da;
+}
+
+.task-child-row .row-index {
+  color: #8d7a66;
+  font-size: 12px;
+}
+
+.task-child-row .task-name-cell {
+  padding-left: 12px;
+}
+
+.task-child-row input[data-field="name"] {
+  color: #4d4339;
+}
+
+.task-add-child {
+  border-color: #b9ccdc;
+  color: #244f78;
+  background: #f4f8fb;
+}
+
 .status-cell {
   text-align: center;
   font-weight: 700;

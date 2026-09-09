@@ -671,6 +671,8 @@ function normalizeTask(task = {}) {
 
   return {
     id: task.id || crypto.randomUUID(),
+    parentId: String(task.parentId || ''),
+    collapsed: Boolean(task.collapsed),
     name: task.name || '',
     guideUrl1: task.guideUrl1 || '',
     guideUrl2: task.guideUrl2 || '',
@@ -1970,8 +1972,46 @@ function toDateTimeLocalValue(date) {
 function renderTaskSummary() {
   const tasks = state.data.tasks.filter((task) => !task.archivedAt);
   const currentKey = getDateKey(state.taskAnchorDate);
-  els.taskTotalCount.textContent = String(tasks.length);
-  els.taskOpenCount.textContent = String(tasks.filter((task) => !task.history[currentKey]).length);
+  const actionableTasks = tasks.filter((task) => !tasks.some((item) => item.parentId === task.id));
+  els.taskTotalCount.textContent = String(actionableTasks.length);
+  els.taskOpenCount.textContent = String(actionableTasks.filter((task) => !task.history[currentKey]).length);
+}
+
+function getTaskChildren(parentId, tasks = state.data.tasks.filter((task) => !task.archivedAt)) {
+  return tasks.filter((task) => task.parentId === parentId);
+}
+
+function getTaskGroupProgress(task, dateKey, tasks) {
+  const children = getTaskChildren(task.id, tasks);
+  if (!children.length) return { done: task.history[dateKey] ? 1 : 0, total: 1 };
+  return {
+    done: children.filter((child) => Boolean(child.history[dateKey])).length,
+    total: children.length,
+  };
+}
+
+function buildTaskRenderRows(tasks) {
+  const taskIds = new Set(tasks.map((task) => task.id));
+  const rows = [];
+  let parentNumber = 0;
+  tasks
+    .filter((task) => !task.parentId || !taskIds.has(task.parentId))
+    .forEach((task) => {
+      parentNumber += 1;
+      const children = getTaskChildren(task.id, tasks);
+      rows.push({ task, depth: 0, displayIndex: String(parentNumber), hasChildren: children.length > 0 });
+      if (!task.collapsed) {
+        children.forEach((child, childIndex) => {
+          rows.push({
+            task: child,
+            depth: 1,
+            displayIndex: `${parentNumber}.${childIndex + 1}`,
+            hasChildren: false,
+          });
+        });
+      }
+    });
+  return rows;
 }
 
 function renderTaskTable() {
@@ -1987,25 +2027,30 @@ function renderTaskTable() {
     return;
   }
 
-  activeTasks.forEach((task, index) => {
+  buildTaskRenderRows(activeTasks).forEach(({ task, depth, displayIndex, hasChildren }) => {
     const tr = document.createElement('tr');
     tr.dataset.id = task.id;
     tr.dataset.rowId = task.id;
     tr.dataset.tableType = 'tasks';
-    tr.className = 'draggable-row';
+    tr.className = `draggable-row ${depth ? 'task-child-row' : 'task-parent-row'}`;
+    tr.dataset.taskDepth = String(depth);
+    if (task.parentId) tr.dataset.parentId = task.parentId;
     tr.draggable = true;
     attachRowDragEvents(tr);
     const indexTd = document.createElement('td');
     indexTd.className = 'row-index';
-    indexTd.textContent = String(index + 1);
+    indexTd.textContent = displayIndex;
     tr.appendChild(indexTd);
     visibleColumns.forEach((column) => {
       const td = document.createElement('td');
-      td.appendChild(buildTaskCell(column, task));
+      td.appendChild(buildTaskCell(column, task, { depth, hasChildren, activeTasks }));
       tr.appendChild(td);
     });
     const actionTd = document.createElement('td');
-    actionTd.innerHTML = '<div class="row-action-group"><button data-action="archive-task" class="tiny-button" type="button">封存</button><button data-action="delete-task" class="icon-button">刪除</button></div>';
+    const addChildButton = depth === 0
+      ? '<button data-action="add-subtask" class="tiny-button task-add-child" type="button">＋子項</button>'
+      : '';
+    actionTd.innerHTML = `<div class="row-action-group">${addChildButton}<button data-action="archive-task" class="tiny-button" type="button">封存</button><button data-action="delete-task" class="icon-button">刪除</button></div>`;
     tr.appendChild(actionTd);
     applyTaskStatusBackground(tr, task);
     applyTaskTypeBadge(tr, task);
@@ -2049,7 +2094,7 @@ function getTaskColumnDisplayLabel(column) {
   return formatDate(date);
 }
 
-function buildTaskCell(column, task) {
+function buildTaskCell(column, task, rowMeta = {}) {
   if (column.type === 'guide') {
     const wrapper = document.createElement('div');
     wrapper.className = 'guide-inline-cell';
@@ -2128,7 +2173,10 @@ function buildTaskCell(column, task) {
     checkbox.dataset.field = column.id;
     const dateKey = getDateKey(addDays(state.taskAnchorDate, column.offset || 0));
     checkbox.dataset.dateKey = dateKey;
-    checkbox.checked = Boolean(task.history[dateKey]);
+    const progress = getTaskGroupProgress(task, dateKey, rowMeta.activeTasks);
+    checkbox.checked = progress.done === progress.total;
+    checkbox.indeterminate = progress.done > 0 && progress.done < progress.total;
+    if (rowMeta.hasChildren) checkbox.dataset.groupParent = 'true';
     return checkbox;
   }
 
@@ -2137,6 +2185,39 @@ function buildTaskCell(column, task) {
   input.dataset.field = column.id;
   input.value = readTaskField(task, column.id);
   input.placeholder = column.label;
+  if (column.id === 'name') {
+    const wrapper = document.createElement('div');
+    wrapper.className = `task-name-cell ${rowMeta.depth ? 'is-child' : 'is-parent'}`;
+    if (rowMeta.depth) {
+      const branch = document.createElement('span');
+      branch.className = 'task-child-branch';
+      branch.textContent = '↳';
+      branch.setAttribute('aria-hidden', 'true');
+      wrapper.appendChild(branch);
+    } else {
+      const toggle = document.createElement(rowMeta.hasChildren ? 'button' : 'span');
+      toggle.className = rowMeta.hasChildren ? 'task-group-toggle' : 'task-group-toggle-spacer';
+      if (rowMeta.hasChildren) {
+        toggle.type = 'button';
+        toggle.dataset.action = 'toggle-task-group';
+        toggle.setAttribute('aria-label', task.collapsed ? '展開子項目' : '收合子項目');
+        toggle.setAttribute('aria-expanded', String(!task.collapsed));
+        toggle.textContent = task.collapsed ? '▶' : '▼';
+      }
+      wrapper.appendChild(toggle);
+    }
+    wrapper.appendChild(input);
+    if (rowMeta.hasChildren) {
+      const dateKey = getDateKey(state.taskAnchorDate);
+      const progress = getTaskGroupProgress(task, dateKey, rowMeta.activeTasks);
+      const badge = document.createElement('span');
+      badge.className = `task-progress-pill${progress.done === progress.total ? ' is-complete' : ''}`;
+      badge.textContent = `${progress.done}/${progress.total}`;
+      badge.title = '目前日期完成進度';
+      wrapper.appendChild(badge);
+    }
+    return wrapper;
+  }
   return input;
 }
 
@@ -2151,9 +2232,11 @@ function applyTaskStatusBackground(row, task) {
     if (column.type !== 'history') return;
     const cell = row.children[index + 1];
     const dateKey = getDateKey(addDays(state.taskAnchorDate, column.offset || 0));
-    const done = Boolean(task.history[dateKey]);
-    cell.style.background = done ? '#dff0d8' : '#f6d6d6';
-    cell.title = done ? '完成' : '未完成';
+    const progress = getTaskGroupProgress(task, dateKey);
+    const done = progress.done === progress.total;
+    const partial = progress.done > 0 && !done;
+    cell.style.background = done ? '#dff0d8' : partial ? '#fff1c7' : '#f6d6d6';
+    cell.title = done ? '完成' : partial ? `${progress.done}/${progress.total} 已完成` : '未完成';
   });
 }
 
@@ -2799,6 +2882,34 @@ function addTask() {
   render();
 }
 
+function addSubtask(parentId) {
+  const parent = state.data.tasks.find((task) => task.id === parentId);
+  if (!parent || parent.parentId) return;
+  const child = normalizeTask({ parentId, type: parent.type, name: '' });
+  const childIndexes = state.data.tasks
+    .map((task, index) => task.parentId === parentId ? index : -1)
+    .filter((index) => index >= 0);
+  const insertIndex = childIndexes.length
+    ? Math.max(...childIndexes) + 1
+    : state.data.tasks.indexOf(parent) + 1;
+  state.data.tasks.splice(insertIndex, 0, child);
+  parent.collapsed = false;
+  saveState();
+  render();
+  requestAnimationFrame(() => {
+    const input = els.taskBody.querySelector(`tr[data-id="${child.id}"] input[data-field="name"]`);
+    input?.focus();
+  });
+}
+
+function toggleTaskGroup(id) {
+  const task = state.data.tasks.find((item) => item.id === id);
+  if (!task) return;
+  task.collapsed = !task.collapsed;
+  saveState();
+  render();
+}
+
 function addChannel() {
   const batchTime = els.channelBatchTime.value || toDateTimeLocalValue(new Date());
   state.data.channels.push(normalizeChannel({ updatedAt: batchTime }));
@@ -2853,12 +2964,17 @@ function duplicateChannelBatch() {
 function deleteTask(id) {
   const task = state.data.tasks.find((item) => item.id === id);
   if (!task) return;
+  const children = state.data.tasks.filter((item) => item.parentId === id);
 
   state.lastDeleted = {
     type: 'task',
     item: structuredClone(task),
     index: state.data.tasks.findIndex((item) => item.id === id),
+    childIds: children.map((child) => child.id),
   };
+  children.forEach((child) => {
+    child.parentId = '';
+  });
   state.data.tasks = state.data.tasks.filter((item) => item.id !== id);
   saveState();
   render();
@@ -2867,7 +2983,13 @@ function deleteTask(id) {
 function archiveTask(id) {
   const task = state.data.tasks.find((item) => item.id === id);
   if (!task) return;
-  task.archivedAt = toDateTimeLocalValue(new Date());
+  const archivedAt = toDateTimeLocalValue(new Date());
+  task.archivedAt = archivedAt;
+  state.data.tasks
+    .filter((item) => item.parentId === id)
+    .forEach((child) => {
+      child.archivedAt = archivedAt;
+    });
   saveState();
   render();
 }
@@ -2876,6 +2998,11 @@ function restoreTask(id) {
   const task = state.data.tasks.find((item) => item.id === id);
   if (!task) return;
   task.archivedAt = '';
+  state.data.tasks
+    .filter((item) => item.parentId === id)
+    .forEach((child) => {
+      child.archivedAt = '';
+    });
   saveState();
   render();
 }
@@ -2936,6 +3063,10 @@ function undoDelete() {
   if (type === 'task') {
     const insertIndex = Math.max(0, Math.min(index, state.data.tasks.length));
     state.data.tasks.splice(insertIndex, 0, normalizeTask(item));
+    (state.lastDeleted.childIds || []).forEach((childId) => {
+      const child = state.data.tasks.find((task) => task.id === childId);
+      if (child) child.parentId = item.id;
+    });
   } else {
     const insertIndex = Math.max(0, Math.min(index, state.data.channels.length));
     state.data.channels.splice(insertIndex, 0, normalizeChannel(item));
@@ -2967,6 +3098,11 @@ function updateTaskHistory(id, dateKey, value) {
   const task = state.data.tasks.find((item) => item.id === id);
   if (!task) return;
   task.history[dateKey] = Boolean(value);
+  state.data.tasks
+    .filter((item) => item.parentId === id && !item.archivedAt)
+    .forEach((child) => {
+      child.history[dateKey] = Boolean(value);
+    });
   saveState();
   render();
 }
@@ -3931,6 +4067,22 @@ els.taskBody.addEventListener('change', (event) => {
 });
 
 els.taskBody.addEventListener('click', (event) => {
+  const groupToggle = event.target.closest('[data-action="toggle-task-group"]');
+  if (groupToggle) {
+    const row = groupToggle.closest('tr');
+    if (!row) return;
+    toggleTaskGroup(row.dataset.id);
+    return;
+  }
+
+  const addSubtaskButton = event.target.closest('[data-action="add-subtask"]');
+  if (addSubtaskButton) {
+    const row = addSubtaskButton.closest('tr');
+    if (!row) return;
+    addSubtask(row.dataset.id);
+    return;
+  }
+
   const guideEdit = event.target.closest('[data-action="start-guide-edit"]');
   if (guideEdit) {
     const row = guideEdit.closest('tr');
