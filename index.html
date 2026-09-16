@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>總儀表版</title>
     <link rel="stylesheet" href="./styles.css?v=20260909-task-groups" />
+    <link rel="stylesheet" href="./channel-summary-ux.css?v=20260916-1" />
   </head>
   <body>
     <div class="app-shell">
@@ -63,7 +64,7 @@
             <h2 id="page-title">任務儀表版</h2>
           </div>
           <div class="toolbar">
-            <span id="save-status" class="save-status">已儲存</span>
+            <span id="save-status" class="save-status" role="status">資料儲存於此瀏覽器</span>
           </div>
         </header>
 
@@ -750,7 +751,8 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
 
     <button id="capture-exit-btn" class="primary-button capture-exit-button" type="button" hidden>返回首頁</button>
 
-    <script src="./app.js?v=20260909-task-groups"></script>
+    <script src="./channel-summary-ux.js?v=20260916-1"></script>
+    <script src="./app.js?v=20260916-ux"></script>
     <script src="./poison-monitor.js"></script>
     <script src="./tenjin-monitor.js"></script>
     <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->

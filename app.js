@@ -767,7 +767,7 @@ function saveState() {
     localStorage.setItem(`${STORAGE_BACKUP_KEY}-ts`, new Date().toISOString());
   } catch (error) {}
   els.saveStatus.classList.remove('save-error');
-  els.saveStatus.textContent = `已儲存 ${new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
+  els.saveStatus.textContent = `本機資料已儲存 ${new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
   els.saveStatus.classList.remove('flash');
   void els.saveStatus.offsetWidth;
   els.saveStatus.classList.add('flash');
@@ -783,7 +783,7 @@ function syncStateFromStorage(raw = localStorage.getItem(STORAGE_KEY), shouldRen
   state.data = normalized;
   if (shouldRender) render();
   els.saveStatus.classList.remove('save-error');
-  els.saveStatus.textContent = `\u5df2\u540c\u6b65 ${new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
+  els.saveStatus.textContent = `本機分頁已同步 ${new Date().toLocaleTimeString('zh-Hant', { hour: '2-digit', minute: '2-digit' })}`;
   return true;
 }
 
@@ -1002,6 +1002,7 @@ function renderCaptureMode() {
 }
 
 function refreshChannelSummary() {
+  if (state.channelSummary.loading) return Promise.resolve();
   state.channelSummary.loading = true;
   state.channelSummary.error = '';
   renderChannelSummaryView();
@@ -1809,10 +1810,10 @@ function renderChannelSummaryView() {
 
   renderChannelSummaryHead();
   syncChannelSummaryFilters();
-  if (els.channelSummarySyncMode) {
+  if (els.channelSummarySyncMode && !els.channelSummarySyncMode.dataset.dirty) {
     els.channelSummarySyncMode.value = state.data.channelSummarySync?.mode || 'sheet-direct';
   }
-  if (els.channelSummarySyncUrl) {
+  if (els.channelSummarySyncUrl && !els.channelSummarySyncUrl.dataset.dirty) {
     els.channelSummarySyncUrl.value = state.data.channelSummarySync?.url || '';
   }
 
@@ -1861,6 +1862,7 @@ function renderChannelSummaryView() {
     });
     els.channelSummaryTableBody.appendChild(tr);
   });
+  enhanceChannelSummaryView(filteredRows);
 }
 
 function renderChannelSummaryHead() {
@@ -2968,6 +2970,7 @@ function deleteTask(id) {
 
   state.lastDeleted = {
     type: 'task',
+    deletedAt: Date.now(),
     item: structuredClone(task),
     index: state.data.tasks.findIndex((item) => item.id === id),
     childIds: children.map((child) => child.id),
@@ -3021,6 +3024,7 @@ function deleteChannel(id) {
 
   state.lastDeleted = {
     type: 'channel',
+    deletedAt: Date.now(),
     item: structuredClone(channel),
     index: state.data.channels.findIndex((item) => item.id === id),
   };
@@ -3047,7 +3051,8 @@ function renderUndoBanner() {
   const label = state.lastDeleted.type === 'task' ? '任務' : '渠道';
   const name = state.lastDeleted.item.name || '未命名資料';
   els.undoTitle.textContent = `已刪除${label}`;
-  els.undoText.textContent = `「${name}」已移出列表，你可以立即復原。`;
+  const deletedTime = state.lastDeleted.deletedAt ? new Date(state.lastDeleted.deletedAt).toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'}) : '';
+  els.undoText.textContent = `${deletedTime}「${name}」已移出列表，可在此復原。`;
   els.undoBanner.hidden = false;
 }
 
@@ -4315,6 +4320,7 @@ els.channelSummaryRefreshBtn?.addEventListener('click', () => {
   void refreshChannelSummary();
 });
 els.channelSummarySyncSaveBtn?.addEventListener('click', async () => {
+  if (state.channelSummary.loading) return;
   const rawMode = els.channelSummarySyncMode?.value || 'sheet-direct';
   const rawUrl = String(els.channelSummarySyncUrl?.value || '').trim();
   let candidate;
@@ -4342,7 +4348,10 @@ els.channelSummarySyncSaveBtn?.addEventListener('click', async () => {
   try {
     const result = await loadGoogleSheetRows(candidate);
     state.data.channelSummarySync = candidate;
-    saveState();
+    if (!saveState()) throw new Error('本機設定儲存失敗，請先匯出備份並檢查瀏覽器儲存空間。');
+    delete els.channelSummarySyncMode.dataset.dirty;
+    delete els.channelSummarySyncUrl.dataset.dirty;
+    document.getElementById('channel-source-settings').open = false;
     state.channelSummary.columns = Array.isArray(result?.columns) && result.columns.length
       ? result.columns
       : structuredClone(CHANNEL_SUMMARY_COLUMNS);
