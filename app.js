@@ -1,6 +1,7 @@
 
 
 const STORAGE_KEY = 'local-dashboard-app-v1';
+const PRE_IMPORT_BACKUP_KEY = 'local-dashboard-pre-import-v1';
 const STORAGE_BACKUP_KEY = 'local-dashboard-app-v1-backup';
 const STICKY_NOTES_STORAGE_KEY = 'local-dashboard-sticky-notes-v1';
 const STORAGE_FALLBACK_KEYS = [
@@ -740,11 +741,6 @@ function normalizeChannelColumns(columns) {
 function saveState() {
   const serialized = JSON.stringify(state.data);
   try {
-    localStorage.setItem(STICKY_NOTES_STORAGE_KEY, JSON.stringify(state.data.stickyNotes || []));
-  } catch (error) {
-    console.error('Sticky notes backup could not be saved.', error);
-  }
-  try {
     localStorage.setItem(STORAGE_KEY, serialized);
   } catch (error) {
     // Backup is another full copy, so free it and retry before reporting quota failure.
@@ -761,6 +757,11 @@ function saveState() {
       window.alert('這次修改未儲存。瀏覽器的網站儲存空間可能已滿，請先匯出備份並清理不需要的資料後再試。');
       return false;
     }
+  }
+  try {
+    localStorage.setItem(STICKY_NOTES_STORAGE_KEY, JSON.stringify(state.data.stickyNotes || []));
+  } catch (error) {
+    console.error('Sticky notes backup could not be saved.', error);
   }
   try {
     localStorage.setItem(STORAGE_BACKUP_KEY, serialized);
@@ -845,15 +846,64 @@ function importDashboardBackup(file) {
   reader.onload = () => {
     try {
       const parsed = JSON.parse(String(reader.result || '{}'));
-      state.data = normalizeState(parsed);
-      saveState();
+      validateDashboardBackup(parsed);
+      const next = normalizeState(parsed);
+      const summary = (data) => `任務 ${data.tasks.length} 筆、渠道 ${data.channels.length} 筆、話術 ${data.dialogDb.templates.length} 筆、便利貼 ${data.stickyNotes.length} 筆`;
+      if (!window.confirm(`匯入將取代本機主儀表板資料（包含封存資料與設定）。\n目前：${summary(state.data)}\n匯入：${summary(next)}\n會保留最近一次匯入前備份，可從資料管理匯出還原。確定匯入？`)) return;
+      const previous = state.data;
+      // A separate envelope prevents the normal save backup from overwriting this snapshot.
+      try {
+        localStorage.setItem(PRE_IMPORT_BACKUP_KEY, JSON.stringify({
+          savedAt: new Date().toISOString(), data: previous,
+        }));
+      } catch (error) {
+        window.alert('無法保留匯入前備份，已取消匯入；原有資料未變更。請先匯出 JSON 備份並確認瀏覽器儲存空間。');
+        return;
+      }
+      state.data = next;
+      if (!saveState()) {
+        state.data = previous;
+        render();
+        return;
+      }
+      state.lastDeleted = null;
+      state.selectedChannelIds.clear();
       render();
-      alert('備份已匯入');
+      window.alert('備份已匯入並儲存。匯入前資料可按「匯出匯入前備份」取回。');
     } catch (error) {
-      alert('備份檔格式錯誤');
+      window.alert('匯入失敗：' + (error.message || '備份檔格式錯誤'));
     }
   };
+  reader.onerror = () => window.alert('無法讀取備份檔，原有資料未變更。');
   reader.readAsText(file, 'utf-8');
+}
+
+function validateDashboardBackup(input) {
+  const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+  if (!isRecord(input) || (!Array.isArray(input.tasks) && !Array.isArray(input.channels))) {
+    throw new Error('請選擇主儀表板匯出的 JSON（需包含 tasks 或 channels 清單）。');
+  }
+  for (const key of ['tasks', 'channels', 'taskColumns', 'channelColumns', 'stickyNotes', 'googlePlayMonitors']) {
+    if (input[key] === undefined) continue;
+    if (!Array.isArray(input[key]) || input[key].some((item) => !isRecord(item))) {
+      throw new Error(`備份的 ${key} 清單格式不正確。`);
+    }
+  }
+  if (input.dialogDb !== undefined && (!isRecord(input.dialogDb) ||
+      (input.dialogDb.templates !== undefined && (!Array.isArray(input.dialogDb.templates) ||
+      input.dialogDb.templates.some((item) => !isRecord(item)))))) {
+    throw new Error('備份的對話資料庫格式不正確。');
+  }
+}
+
+function exportPreImportBackup() {
+  const backup = parseStoredState(localStorage.getItem(PRE_IMPORT_BACKUP_KEY));
+  if (!backup || !backup.data) {
+    window.alert('尚無匯入前備份。');
+    return;
+  }
+  downloadBlob(new Blob([JSON.stringify(backup.data, null, 2)], { type: 'application/json' }),
+    `dashboard-before-import-${String(backup.savedAt || Date.now()).replace(/[:.]/g, '-')}.json`);
 }
 
 function render() {
@@ -1975,6 +2025,8 @@ function renderTaskSummary() {
   const tasks = state.data.tasks.filter((task) => !task.archivedAt);
   const currentKey = getDateKey(state.taskAnchorDate);
   const actionableTasks = tasks.filter((task) => !tasks.some((item) => item.parentId === task.id));
+  const label = document.getElementById('task-open-label');
+  if (label) label.textContent = currentKey === getDateKey(new Date()) ? '今日未完成：' : `${currentKey} 未完成：`;
   els.taskTotalCount.textContent = String(actionableTasks.length);
   els.taskOpenCount.textContent = String(actionableTasks.filter((task) => !task.history[currentKey]).length);
 }
@@ -3048,6 +3100,12 @@ function renderUndoBanner() {
     return;
   }
 
+  if (state.lastDeleted.type === 'channel-batch') {
+    els.undoTitle.textContent = '已刪除整批渠道';
+    els.undoText.textContent = `批次「${formatBatchDisplay(state.lastDeleted.batchTime)}」共 ${state.lastDeleted.rows.length} 筆，可復原整批及批次備註。重新整理或再次刪除後將無法在此復原。`;
+    els.undoBanner.hidden = false;
+    return;
+  }
   const label = state.lastDeleted.type === 'task' ? '任務' : '渠道';
   const name = state.lastDeleted.item.name || '未命名資料';
   els.undoTitle.textContent = `已刪除${label}`;
@@ -3063,12 +3121,21 @@ function clearUndoBanner() {
 
 function undoDelete() {
   if (!state.lastDeleted) return;
-
-  const { type, item, index } = state.lastDeleted;
-  if (type === 'task') {
+  const deleted = state.lastDeleted;
+  const previous = structuredClone(state.data);
+  const { type, item, index } = deleted;
+  if (type === 'channel-batch') {
+    const existingIds = new Set(state.data.channels.map((channel) => channel.id));
+    deleted.rows.forEach(({ item: row, index: position }) => {
+      if (existingIds.has(row.id)) return;
+      state.data.channels.splice(Math.max(0, Math.min(position, state.data.channels.length)), 0, normalizeChannel(row));
+      existingIds.add(row.id);
+    });
+    if (deleted.hadNote) state.data.channelBatchNotes[deleted.batchTime] = deleted.note;
+  } else if (type === 'task') {
     const insertIndex = Math.max(0, Math.min(index, state.data.tasks.length));
     state.data.tasks.splice(insertIndex, 0, normalizeTask(item));
-    (state.lastDeleted.childIds || []).forEach((childId) => {
+    (deleted.childIds || []).forEach((childId) => {
       const child = state.data.tasks.find((task) => task.id === childId);
       if (child) child.parentId = item.id;
     });
@@ -3076,9 +3143,17 @@ function undoDelete() {
     const insertIndex = Math.max(0, Math.min(index, state.data.channels.length));
     state.data.channels.splice(insertIndex, 0, normalizeChannel(item));
   }
-
+  if (!saveState()) {
+    state.data = previous;
+    render();
+    return;
+  }
+  if (type === 'channel-batch') {
+    state.historyBatchTime = deleted.batchTime;
+    deleted.selectedIds.forEach((id) => state.selectedChannelIds.add(id));
+    updateSelectedChannelSum();
+  }
   state.lastDeleted = null;
-  saveState();
   render();
 }
 
@@ -3359,22 +3434,37 @@ function deleteHistoryBatch() {
     window.alert('目前沒有可刪除的舊批次。');
     return;
   }
-
-  const targetRows = state.data.channels.filter((channel) => String(channel.updatedAt || '').trim() === batchTime);
-  if (!targetRows.length) {
+  const rows = state.data.channels.map((item, index) => ({ item, index }))
+    .filter(({ item }) => String(item.updatedAt || '').trim() === batchTime);
+  if (!rows.length) {
     window.alert('找不到這個批次的資料。');
     return;
   }
-
-  const ok = window.confirm(`要刪除整個批次「${formatBatchDisplay(batchTime)}」嗎？共 ${targetRows.length} 筆資料，刪除後可按上方「復原」救回最後一次刪除的單筆資料，但無法整批復原。`);
-  if (!ok) return;
-
-  state.data.channels = state.data.channels.filter((channel) => String(channel.updatedAt || '').trim() !== batchTime);
-  if (state.data.channelBatchNotes) {
-    delete state.data.channelBatchNotes[batchTime];
+  if (!window.confirm(`要刪除整個批次「${formatBatchDisplay(batchTime)}」嗎？共 ${rows.length} 筆資料。可在上方「復原」還原整批及批次備註；請在重新整理或再次刪除前復原。`)) return;
+  const previous = state.data;
+  const notes = { ...previous.channelBatchNotes };
+  const deleted = {
+    type: 'channel-batch', deletedAt: Date.now(), batchTime,
+    rows: structuredClone(rows),
+    hadNote: Object.prototype.hasOwnProperty.call(notes, batchTime),
+    note: notes[batchTime],
+    selectedIds: rows.filter(({ item }) => state.selectedChannelIds.has(item.id)).map(({ item }) => item.id),
+  };
+  delete notes[batchTime];
+  state.data = {
+    ...previous,
+    channels: previous.channels.filter((item) => String(item.updatedAt || '').trim() !== batchTime),
+    channelBatchNotes: notes,
+  };
+  if (!saveState()) {
+    state.data = previous;
+    render();
+    return;
   }
+  state.lastDeleted = deleted;
+  deleted.selectedIds.forEach((id) => state.selectedChannelIds.delete(id));
   state.historyBatchTime = '';
-  saveState();
+  updateSelectedChannelSum();
   render();
 }
 
@@ -4008,20 +4098,7 @@ function exportJson() {
 }
 
 function importJson(file) {
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const parsed = JSON.parse(String(reader.result));
-      state.data = normalizeState(parsed);
-      saveState();
-      render();
-    } catch (error) {
-      window.alert('匯入失敗，請確認 JSON 格式正確。');
-    }
-  };
-  reader.readAsText(file, 'utf-8');
+  importDashboardBackup(file);
 }
 
 function resetData() {
@@ -4052,6 +4129,7 @@ document.getElementById('add-task-btn').addEventListener('click', addTask);
 document.getElementById('add-channel-btn').addEventListener('click', addChannel);
 document.getElementById('seed-demo-btn').addEventListener('click', seedDemoData);
 document.getElementById('export-btn').addEventListener('click', exportJson);
+document.getElementById('pre-import-export-btn')?.addEventListener('click', exportPreImportBackup);
 document.getElementById('reset-btn').addEventListener('click', resetData);
 els.importInput.addEventListener('change', (event) => importJson(event.target.files[0]));
 

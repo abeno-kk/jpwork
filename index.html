@@ -87,7 +87,7 @@
             </div>
             <div class="task-topbar-actions">
               <span class="summary-pill">總任務：<strong id="task-total-count">0</strong></span>
-              <span class="summary-pill">今日未完成：<strong id="task-open-count">0</strong></span>
+              <span class="summary-pill"><span id="task-open-label">今日未完成：</span><strong id="task-open-count">0</strong></span>
               <button id="task-field-settings-btn" class="secondary-button compact-button" type="button">欄位設定</button>
               <button id="add-task-btn" class="primary-button compact-button">新增任務</button>
             </div>
@@ -318,6 +318,7 @@
             <div class="tools-actions">
               <button id="seed-demo-btn" class="secondary-button">載入示範資料</button>
               <button id="export-btn" class="secondary-button">匯出 JSON</button>
+              <button id="pre-import-export-btn" class="secondary-button" type="button">匯出匯入前備份</button>
               <label class="file-input-label tools-file-label">
                 匯入 JSON
                 <input id="import-input" type="file" accept="application/json" />
@@ -752,9 +753,9 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
     <button id="capture-exit-btn" class="primary-button capture-exit-button" type="button" hidden>返回首頁</button>
 
     <script src="./channel-summary-ux.js?v=20260916-1"></script>
-    <script src="./app.js?v=20260916-ux"></script>
+    <script src="./app.js?v=20260922-data-safety"></script>
     <script src="./poison-monitor.js"></script>
-    <script src="./tenjin-monitor.js"></script>
+    <script src="./tenjin-monitor.js?v=20260922-freshness"></script>
     <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->
     <script>
       (function() {
