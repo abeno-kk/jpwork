@@ -57,9 +57,41 @@
     }).sort(function (a, b) { return String(b.checkedAt || '').localeCompare(String(a.checkedAt || '')); });
   }
 
+  function beijingDateKey(value) {
+    var date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    var parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(date);
+    function part(type) { return parts.find(function (item) { return item.type === type; }).value; }
+    return part('year') + '-' + part('month') + '-' + part('day');
+  }
+
+  function latestCheckStatus(latest, now) {
+    now = now == null ? Date.now() : now;
+    if (!latest) return { text: '今日尚未執行（等待第一次查詢）', warning: false };
+    var checkedAt = Date.parse(latest.checkedAt || '');
+    if (!Number.isFinite(checkedAt) || checkedAt > now + 5 * 60 * 1000) {
+      return { text: '查詢時間異常，請重新查詢', warning: true };
+    }
+    var today = beijingDateKey(now);
+    if (beijingDateKey(checkedAt) !== today) {
+      return { text: '資料過期：今日尚未執行' + (latest.error ? '；上次查詢失敗' : ''), warning: true };
+    }
+    if (latest.error) return { text: '查詢失敗：' + latest.error, warning: true };
+    // Allow fifteen minutes for the scheduled query to finish and publish.
+    var dueSlot = ['15:00', '10:00'].find(function (slot) {
+      return now >= Date.parse(today + 'T' + slot + ':00+08:00') + 15 * 60 * 1000;
+    });
+    if (dueSlot && checkedAt < Date.parse(today + 'T' + dueSlot + ':00+08:00')) {
+      return { text: '資料過期：尚無 ' + dueSlot + ' 後的新結果', warning: true };
+    }
+    return { text: '查詢成功', warning: false };
+  }
+
   function scheduledCheck(appId, slot) {
     return checksFor(appId).find(function (check) {
-      return check.date === snapshot.date && check.slot === slot;
+      return check.date === beijingDateKey(Date.now()) && check.slot === slot;
     });
   }
 
@@ -90,8 +122,9 @@
     els.input.value = ids.join('\n');
     els.body.innerHTML = ids.map(function (appId, index) {
       var latest = checksFor(appId)[0];
-      var statusText = latest ? (latest.error || '正常') : '等待第一次查詢';
-      var statusClass = latest && latest.error ? ' is-error' : '';
+      var status = latestCheckStatus(latest);
+      var statusText = status.text;
+      var statusClass = status.warning ? ' is-error' : '';
       return [
         '<tr>',
         '<td>' + (index + 1) + '</td>',
@@ -148,6 +181,7 @@
       if (!quiet) setMessage('已讀取 GitHub 最新結果。', false);
       return true;
     } catch (error) {
+      render();
       els.status.textContent = 'GitHub 查詢結果讀取失敗';
       setMessage('目前無法讀取 Tenjin 結果：' + (error.message || error), true);
       return false;
