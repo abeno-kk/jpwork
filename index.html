@@ -650,18 +650,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
         </section>
 
         <section id="url-builder-view" class="view">
-          <div class="pwa-shared-gate panel"><h3>共用渠道 · Google 登入</h3><p>使用指定 Drive 資料夾的權限讀取共用渠道；有編輯權限的同事可新增或修改。</p><p>渠道 17、18 已加入共用清單。之後網站編輯與 Google Sheet 修改會同步到同一份資料。</p><div class="pwa-shared-actions"><a class="primary-button" href="https://script.google.com/macros/s/AKfycbz17TUuHO9JhEnrdumGqo_9bpeYX0zs64STPeQPdGOdTt9izgBY2-9KpbF-hJDnhYY_/exec" target="_blank" rel="noopener">Google 登入共用版 ↗</a><a class="secondary-button" href="https://docs.google.com/spreadsheets/d/1q0fj4U4wxAyQNyZA_U9Gldz5ffz7e0K_rh5YDMs2NAE/edit" target="_blank" rel="noopener">開啟共用 Google Sheet ↗</a><button id="url-builder-local-toggle" type="button" class="ghost-button" aria-expanded="false">使用本機模式</button></div><p class="hint">登入只確認 Google 電子郵件，不要求存取你的 Drive 或試算表。請使用直接加入指定資料夾分享名單的帳號；檢視者可使用，編輯者可管理渠道。本機模式的變更僅限此瀏覽器。</p></div>
-          <div class="pwa-workspace" id="url-builder-local-workspace" hidden>
-            <div class="pwa-heading"><div><span class="pwa-kicker">PWA LINK BUILDER</span><h3>選渠道，快速產生連結</h3><p class="hint">填入 AID 與 TOKEN，完整網址即時生成。</p></div><button id="url-builder-manage" class="secondary-button" type="button">管理渠道 <span id="url-builder-count"></span></button></div>
-            <form id="url-builder-form" autocomplete="off">
-              <div class="pwa-input-card">
-                <div class="pwa-field"><div class="pwa-channel-heading"><label for="url-builder-channel">渠道</label><div class="pwa-source-switch" role="group" aria-label="渠道網址來源"><button id="url-builder-source-list" type="button" aria-pressed="true">選擇渠道</button><button id="url-builder-source-manual" type="button" aria-pressed="false">手動網址</button></div></div><select id="url-builder-channel" required></select><input id="url-builder-custom-url" type="text" inputmode="url" placeholder="https://你的渠道網址" aria-label="手動渠道網址" spellcheck="false" autocapitalize="off" hidden disabled /><p id="url-builder-domain" class="hint"></p></div>
-                <div class="pwa-field"><label for="url-builder-aid">AID <span>數字 ID</span></label><input id="url-builder-aid" type="text" inputmode="numeric" placeholder="例如：135010119" required /></div>
-                <div class="pwa-field pwa-token-field"><label for="url-builder-uid">UID <span>查詢 TOKEN</span></label><div class="pwa-uid-query"><input id="url-builder-uid" type="text" inputmode="numeric" placeholder="例如：101025912" autocomplete="off" /><button id="url-builder-query" class="secondary-button" type="button">查詢 TOKEN</button></div><p id="url-builder-query-status" class="hint" role="status" aria-live="polite"></p></div><div class="pwa-field pwa-token-field"><label for="url-builder-token">TOKEN <span>可自動查詢或手動貼上</span></label><input id="url-builder-token" type="text" placeholder="貼上 TOKEN" required spellcheck="false" autocapitalize="off" /></div>
-              </div>
-              <div id="url-builder-result" class="pwa-result-card"><div class="pwa-result-heading"><label for="url-builder-output">完整網址</label><span id="url-builder-result-state">等待輸入</span></div><textarea id="url-builder-output" rows="3" readonly placeholder="選好渠道並填完上方欄位，網址會顯示在這裡。" spellcheck="false"></textarea><div class="pwa-result-actions"><p id="url-builder-status" role="status" aria-live="polite"></p><button id="url-builder-clear" class="ghost-button" type="button">清空輸入</button><button id="url-builder-copy" class="primary-button" type="submit" disabled>複製網址</button></div></div>
-            </form>
-          </div>
+          <div class="pwa-shared-gate panel"><h3>共用渠道 · Google 登入</h3><p>使用指定 Drive 資料夾的權限讀取共用渠道；有編輯權限的同事可新增或修改。</p><p>渠道 17、18 已加入共用清單。之後網站編輯與 Google Sheet 修改會同步到同一份資料。</p><div class="pwa-shared-actions"><a class="primary-button" href="https://script.google.com/macros/s/AKfycbz17TUuHO9JhEnrdumGqo_9bpeYX0zs64STPeQPdGOdTt9izgBY2-9KpbF-hJDnhYY_/exec" target="_blank" rel="noopener">Google 登入共用版 ↗</a><a class="secondary-button" href="https://docs.google.com/spreadsheets/d/1q0fj4U4wxAyQNyZA_U9Gldz5ffz7e0K_rh5YDMs2NAE/edit" target="_blank" rel="noopener">開啟共用 Google Sheet ↗</a></div><p class="hint">登入只確認 Google 電子郵件，不要求存取你的 Drive 或試算表。請使用直接加入指定資料夾分享名單的帳號；檢視者可使用，編輯者可管理渠道。</p></div>
         </section>
       </main>
     </div>
@@ -1203,18 +1192,12 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
       })();
     </script>
 
-    <dialog id="url-builder-manager" class="workspace-dialog" aria-labelledby="pwa-manager-title">
-      <header class="workspace-dialog-header"><div><h3 id="pwa-manager-title">管理渠道</h3><p>修改渠道名稱或網址，也可以新增渠道。儲存後立即生效。</p></div><button id="url-builder-manager-close" type="button" class="ghost-button" aria-label="關閉渠道管理">✕</button></header>
-      <div class="workspace-dialog-body"><div class="pwa-channel-columns"><span>#</span><span>渠道名稱</span><span>渠道網址</span><span></span></div><div id="url-builder-rows"></div><button id="url-builder-add" type="button" class="secondary-button">＋ 新增渠道</button><p class="workspace-storage-note">設定儲存在目前瀏覽器，並包含在主儀表板的 JSON 備份中。</p></div>
-      <footer class="workspace-dialog-footer"><p id="url-builder-manager-error" role="status" aria-live="polite"></p><button id="url-builder-manager-cancel" type="button" class="secondary-button">取消</button><button id="url-builder-manager-save" type="button" class="primary-button">儲存渠道</button></footer>
-    </dialog>
     <dialog id="nav-manager" class="workspace-dialog nav-manager-dialog" aria-labelledby="nav-manager-title">
       <header class="workspace-dialog-header"><div><h3 id="nav-manager-title">整理功能列</h3><p>所有功能與群組皆可拖曳；拖入群組、移回最外層，或直接選擇所屬群組。</p></div><button id="nav-manager-close" type="button" class="ghost-button" aria-label="關閉功能列整理">✕</button></header>
       <div class="nav-manager-toolbar"><span>拖曳排序 · 直接改名 · 自由分組</span><button id="nav-manager-add" type="button" class="secondary-button">＋ 新增群組</button></div>
       <div class="workspace-dialog-body"><div class="nav-organizer-columns"><span></span><span>顯示名稱</span><span>所屬群組</span><span>可見</span><span>調整</span></div><div id="nav-manager-tree"></div></div>
       <footer class="workspace-dialog-footer"><p id="nav-manager-status" role="status" aria-live="polite"></p><button id="nav-manager-cancel" type="button" class="secondary-button">取消</button><button id="nav-manager-save" type="button" class="primary-button">儲存設定</button></footer>
     </dialog>
-    <script src="./url-builder.js?v=20260923-folder"></script>
     <script src="./nav-editor.js?v=20260923-2"></script>
   </body>
 </html>
