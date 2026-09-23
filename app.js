@@ -453,6 +453,7 @@ function createDefaultState() {
     googlePlayMonitors: normalizeGooglePlayMonitors(undefined),
     googlePlayMonitorSettings: normalizeGooglePlayMonitorSettings({}),
     dialogDb: normalizeDialogDb({}),
+    urlBuilderChannels: PwaUrlModel.normalize(undefined),
   };
 }
 
@@ -567,6 +568,7 @@ function normalizeState(input) {
     googlePlayMonitors: normalizeGooglePlayMonitors(input.googlePlayMonitors),
     googlePlayMonitorSettings: normalizeGooglePlayMonitorSettings(input.googlePlayMonitorSettings),
     dialogDb: normalizeDialogDb(input.dialogDb),
+    urlBuilderChannels: PwaUrlModel.normalize(input.urlBuilderChannels),
   };
 }
 
@@ -847,7 +849,9 @@ function importDashboardBackup(file) {
     try {
       const parsed = JSON.parse(String(reader.result || '{}'));
       validateDashboardBackup(parsed);
+      if (parsed.urlBuilderChannels !== undefined) PwaUrlModel.validate(parsed.urlBuilderChannels);
       const next = normalizeState(parsed);
+      if (parsed.urlBuilderChannels === undefined) next.urlBuilderChannels = structuredClone(state.data.urlBuilderChannels || PwaUrlModel.defaults);
       const summary = (data) => `任務 ${data.tasks.length} 筆、渠道 ${data.channels.length} 筆、話術 ${data.dialogDb.templates.length} 筆、便利貼 ${data.stickyNotes.length} 筆`;
       if (!window.confirm(`匯入將取代本機主儀表板資料（包含封存資料與設定）。\n目前：${summary(state.data)}\n匯入：${summary(next)}\n會保留最近一次匯入前備份，可從資料管理匯出還原。確定匯入？`)) return;
       const previous = state.data;
@@ -926,6 +930,7 @@ function render() {
   renderSuggestionLists();
   renderStickyNotes();
   updateCaptureFit();
+  window.refreshPwaUrlBuilder?.();
 }
 
 function renderStickyNotes() {
@@ -988,20 +993,11 @@ function renderNavigation() {
     button.classList.toggle('is-active', isActive);
   });
 
-  const activeGroup = state.view === 'tasks' || state.view === 'task-archive'
-    ? 'tasks'
-    : ['channels', 'channel-history', 'channel-summary', 'poison-monitor', 'update-list', 'google-play-monitor'].includes(state.view)
-      ? 'channels'
-      : '';
-
-  if (activeGroup) {
-    state.navGroups[activeGroup] = true;
-  }
-
   document.querySelectorAll('[data-nav-group]').forEach((button) => {
     const group = button.dataset.navGroup;
     const isOpen = Boolean(state.navGroups[group]);
     button.classList.toggle('is-open', isOpen);
+    button.setAttribute('aria-expanded', String(isOpen));
   });
 
   document.querySelectorAll('[data-nav-submenu]').forEach((panel) => {
@@ -1025,7 +1021,7 @@ function renderNavigation() {
       : state.view === 'url-builder'
         ? 'URL 拼接'
       : state.view === 'tools'
-        ? '資料工具'
+        ? '數值轉換器'
       : state.view === 'orders'
         ? '發單解析'
       : state.view === 'poison-monitor'
@@ -1037,6 +1033,8 @@ function renderNavigation() {
       : state.view === 'conversation-db'
         ? '對話資料庫'
         : '歷史批次';
+  const activeButton = document.querySelector('.nav-button.is-active');
+  if (activeButton) els.pageTitle.textContent = activeButton.textContent.trim();
   els.channelCaptureBtn.textContent = state.captureMode ? '截圖中' : '截圖模式';
 }
 
@@ -4115,16 +4113,21 @@ function resetData() {
 document.querySelectorAll('.nav-button').forEach((button) => {
   button.addEventListener('click', () => {
     state.view = button.dataset.view;
+    let parentGroup = button.closest('.nav-group');
+    while (parentGroup) {
+      state.navGroups[parentGroup.dataset.group] = true;
+      parentGroup = parentGroup.parentElement.closest('.nav-group');
+    }
     render();
   });
 });
 
-document.querySelectorAll('[data-nav-group]').forEach((button) => {
-  button.addEventListener('click', () => {
-    const group = button.dataset.navGroup;
-    state.navGroups[group] = !state.navGroups[group];
-    renderNavigation();
-  });
+document.querySelector('.nav').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-nav-group]');
+  if (!button) return;
+  const group = button.dataset.navGroup;
+  state.navGroups[group] = !state.navGroups[group];
+  renderNavigation();
 });
 
 document.getElementById('add-task-btn').addEventListener('click', addTask);
@@ -5174,7 +5177,7 @@ function ensureDialogNavButton() {
     const nav = document.querySelector('.nav');
     const btn = document.querySelector('[data-view="conversation-db"]');
     const editToggle = document.getElementById('nav-edit-toggle');
-    if (!nav || !btn) return;
+    if (!nav || !btn || nav.contains(btn)) return;
     if (editToggle) nav.insertBefore(btn, editToggle);
     else nav.appendChild(btn);
 }

@@ -9,7 +9,7 @@
     <title>總儀表版</title>
     <link rel="stylesheet" href="./styles.css?v=20260909-task-groups" />
     <link rel="stylesheet" href="./channel-summary-ux.css?v=20260916-1" />
-    <link rel="stylesheet" href="./url-builder.css?v=20260923" />
+    <link rel="stylesheet" href="./url-builder.css?v=20260923-2" />
   </head>
   <body>
     <div class="app-shell">
@@ -650,21 +650,15 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
         </section>
 
         <section id="url-builder-view" class="view">
-          <div class="panel url-builder-panel">
-            <h3>URL 拼接</h3>
-            <p class="hint">選擇渠道，填入 AID 與 TOKEN，即可複製完整 PWA 網址。</p>
+          <div class="pwa-workspace">
+            <div class="pwa-heading"><div><span class="pwa-kicker">PWA LINK BUILDER</span><h3>選渠道，快速產生連結</h3><p class="hint">填入 AID 與 TOKEN，完整網址即時生成。</p></div><button id="url-builder-manage" class="secondary-button" type="button">管理渠道 <span id="url-builder-count"></span></button></div>
             <form id="url-builder-form" autocomplete="off">
-              <label for="url-builder-channel">渠道</label>
-              <select id="url-builder-channel" required></select>
-              <p id="url-builder-domain" class="hint"></p>
-              <label for="url-builder-aid">AID</label>
-              <input id="url-builder-aid" type="text" inputmode="numeric" placeholder="例如：135010119" required />
-              <label for="url-builder-token">TOKEN</label>
-              <input id="url-builder-token" type="text" placeholder="貼上 TOKEN" required spellcheck="false" autocapitalize="off" />
-              <label for="url-builder-output">完整網址</label>
-              <textarea id="url-builder-output" rows="3" readonly placeholder="填完後會自動產生網址" spellcheck="false"></textarea>
-              <div><button id="url-builder-copy" class="primary-button" type="submit" disabled>複製網址</button></div>
-              <p id="url-builder-status" class="hint" role="status" aria-live="polite"></p>
+              <div class="pwa-input-card">
+                <div class="pwa-field"><label for="url-builder-channel">渠道</label><select id="url-builder-channel" required></select><p id="url-builder-domain" class="hint"></p></div>
+                <div class="pwa-field"><label for="url-builder-aid">AID <span>數字 ID</span></label><input id="url-builder-aid" type="text" inputmode="numeric" placeholder="例如：135010119" required /></div>
+                <div class="pwa-field pwa-token-field"><label for="url-builder-token">TOKEN</label><input id="url-builder-token" type="text" placeholder="貼上 TOKEN" required spellcheck="false" autocapitalize="off" /></div>
+              </div>
+              <div id="url-builder-result" class="pwa-result-card"><div class="pwa-result-heading"><label for="url-builder-output">完整網址</label><span id="url-builder-result-state">等待輸入</span></div><textarea id="url-builder-output" rows="3" readonly placeholder="選好渠道並填完上方欄位，網址會顯示在這裡。" spellcheck="false"></textarea><div class="pwa-result-actions"><p id="url-builder-status" role="status" aria-live="polite"></p><button id="url-builder-clear" class="ghost-button" type="button">清空輸入</button><button id="url-builder-copy" class="primary-button" type="submit" disabled>複製網址</button></div></div>
             </form>
           </div>
         </section>
@@ -774,8 +768,9 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
     <button id="capture-exit-btn" class="primary-button capture-exit-button" type="button" hidden>返回首頁</button>
 
     <script src="./channel-summary-ux.js?v=20260916-1"></script>
-    <script src="./app.js?v=20260923-url-builder"></script>
-    <script src="./url-builder.js?v=20260923"></script>
+    <script src="./url-builder-model.js?v=20260923-2"></script>
+    <script src="./app.js?v=20260923-editor"></script>
+
     <script src="./poison-monitor.js"></script>
     <script src="./tenjin-monitor.js?v=20260922-freshness"></script>
     <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->
@@ -1206,397 +1201,20 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
         });
       })();
     </script>
-    <!-- 導航列編輯功能腳本 -->
-    <script>
-      (function() {
-        const NAV_CONFIG_KEY = 'dashboardNavConfigV4';
-        let navConfig;
-        let navEditing = false;
 
-        // 構建預設導航設定
-        function buildNavConfig() {
-          const config = {
-            order: [],
-            titles: {},
-            groupOrder: {},
-            hidden: []
-          };
-          const navEl = document.querySelector('.nav');
-          Array.from(navEl.children).forEach((child) => {
-            if (child.classList.contains('nav-group')) {
-              const groupName = child.dataset.group;
-              const groupKey = 'group-' + groupName;
-              config.order.push(groupKey);
-              const toggleEl = child.querySelector('.nav-group-toggle');
-              const titleSpan = toggleEl ? toggleEl.querySelector('span') : null;
-              config.titles[groupKey] = titleSpan ? titleSpan.textContent.trim() : groupName;
-              const submenu = child.querySelector('.nav-submenu');
-              const subBtns = submenu ? Array.from(submenu.querySelectorAll('.nav-button')) : [];
-              config.groupOrder[groupKey] = [];
-              subBtns.forEach((btn) => {
-                const key = btn.dataset.view;
-                config.groupOrder[groupKey].push(key);
-                config.titles[key] = btn.textContent.trim();
-              });
-            } else if (child.classList.contains('nav-button')) {
-              const key = child.dataset.view;
-              config.order.push(key);
-              config.titles[key] = child.textContent.trim();
-            }
-          });
-          localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(config));
-          return config;
-        }
-
-        // 讀取導航設定
-        function loadNavConfig() {
-          const json = localStorage.getItem(NAV_CONFIG_KEY);
-          if (json) {
-            try {
-              const parsed = JSON.parse(json);
-              parsed.order = Array.isArray(parsed.order) ? parsed.order : [];
-              if (!parsed.order.includes('url-builder')) {
-                const toolsIndex = parsed.order.indexOf('tools');
-                parsed.order.splice(toolsIndex >= 0 ? toolsIndex + 1 : parsed.order.length, 0, 'url-builder');
-              }
-              parsed.hidden = Array.isArray(parsed.hidden) ? parsed.hidden : [];
-              parsed.titles = parsed.titles && typeof parsed.titles === 'object' ? parsed.titles : {};
-              parsed.groupOrder = parsed.groupOrder && typeof parsed.groupOrder === 'object' ? parsed.groupOrder : {};
-              const channelKey = 'group-channels';
-              const channelOrder = Array.isArray(parsed.groupOrder[channelKey]) ? parsed.groupOrder[channelKey] : [];
-              if (!channelOrder.includes('poison-monitor')) {
-                const updateIndex = channelOrder.indexOf('update-list');
-                channelOrder.splice(updateIndex >= 0 ? updateIndex + 1 : channelOrder.length, 0, 'poison-monitor');
-              }
-              if (!channelOrder.includes('google-play-monitor')) {
-                const updateIndex = channelOrder.indexOf('update-list');
-                channelOrder.splice(updateIndex >= 0 ? updateIndex + 1 : channelOrder.length, 0, 'google-play-monitor');
-              }
-              parsed.groupOrder[channelKey] = channelOrder;
-              if (!parsed.titles['poison-monitor']) parsed.titles['poison-monitor'] = '報毒控表';
-              parsed.titles['google-play-monitor'] = '每日自動查詢';
-              localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(parsed));
-              return parsed;
-            } catch (e) {
-              console.error('navConfig parse error', e);
-            }
-          }
-          return buildNavConfig();
-        }
-
-        // 儲存導航設定
-        function saveNavConfig(cfg) {
-          localStorage.setItem(NAV_CONFIG_KEY, JSON.stringify(cfg));
-        }
-
-        function applyHiddenState(el, key) {
-          const hidden = Array.isArray(navConfig.hidden) && navConfig.hidden.includes(key);
-          el.classList.toggle('nav-item-hidden', hidden);
-          const button = el.querySelector(':scope > .nav-edit-icons [data-nav-action="visibility"], :scope > .nav-group-toggle .nav-edit-icons [data-nav-action="visibility"]');
-          if (button) {
-            button.textContent = hidden ? '↩' : '◉';
-            button.title = hidden ? '恢復顯示' : '隱藏功能';
-            button.setAttribute('aria-label', button.title);
-          }
-        }
-
-
-        function toggleItemHidden(el) {
-          const key = getNavKey(el);
-          if (!key) return;
-
-          navConfig.hidden = Array.isArray(navConfig.hidden) ? navConfig.hidden : [];
-          const index = navConfig.hidden.indexOf(key);
-          if (index >= 0) navConfig.hidden.splice(index, 1);
-          else navConfig.hidden.push(key);
-          applyHiddenState(el, key);
-          saveNavConfig(navConfig);
-        }
-
-        // 取得元素對應的 key
-      
-  function getNavKey(el) {
-          if (el.classList.contains('nav-group')) {
-            return 'group-' + el.dataset.group;
-          }
-          if (el.classList.contains('nav-button')) {
-            return el.dataset.view;
-          }
-          return null;
-        }
-
-        // 上移元素
-        function moveItemUp(el) {
-          const parent = el.parentElement;
-          const prev = el.previousElementSibling;
-          if (!prev) return;
-          parent.insertBefore(el, prev);
-          // 更新設定
-          const key = getNavKey(el);
-          if (!key) return;
-          if (parent.classList.contains('nav-submenu')) {
-            // 子項目
-            const groupEl = el.closest('.nav-group');
-            const groupKey = 'group-' + groupEl.dataset.group;
-            const arr = navConfig.groupOrder[groupKey];
-            const idx = arr.indexOf(key);
-            if (idx > 0) {
-              arr.splice(idx, 1);
-              arr.splice(idx - 1, 0, key);
-            }
-          } else {
-            // 根層
-            const arr = navConfig.order;
-            const idx = arr.indexOf(key);
-            if (idx > 0) {
-              arr.splice(idx, 1);
-              arr.splice(idx - 1, 0, key);
-            }
-          }
-          saveNavConfig(navConfig);
-        }
-
-        // 下移元素
-        function moveItemDown(el) {
-          const parent = el.parentElement;
-          const next = el.nextElementSibling;
-          if (!next || next.id === 'nav-edit-toggle') return;
-          parent.insertBefore(next, el);
-          const key = getNavKey(el);
-          if (!key) return;
-          if (parent.classList.contains('nav-submenu')) {
-            const groupEl = el.closest('.nav-group');
-            const groupKey = 'group-' + groupEl.dataset.group;
-            const arr = navConfig.groupOrder[groupKey];
-            const idx = arr.indexOf(key);
-            if (idx >= 0 && idx < arr.length - 1) {
-              arr.splice(idx, 1);
-              arr.splice(idx + 1, 0, key);
-            }
-          } else {
-            const arr = navConfig.order;
-            const idx = arr.indexOf(key);
-            if (idx >= 0 && idx < arr.length - 1) {
-              arr.splice(idx, 1);
-              arr.splice(idx + 1, 0, key);
-            }
-          }
-          saveNavConfig(navConfig);
-        }
-
-        // 重新命名元素
-        function renameItem(el) {
-          let key = getNavKey(el);
-          if (!key) return;
-          let currentName;
-          if (el.classList.contains('nav-group')) {
-            const span = el.querySelector('.nav-group-toggle span');
-            currentName = span ? span.textContent.trim() : '';
-            const newName = prompt('輸入新的名稱', currentName);
-            if (newName !== null && newName.trim() !== '') {
-              navConfig.titles[key] = newName.trim();
-              if (span) span.textContent = newName.trim();
-              saveNavConfig(navConfig);
-            }
-          } else if (el.classList.contains('nav-button')) {
-            // 重新命名按鈕，需保留編輯圖示
-            currentName = el.textContent.trim();
-            // 忽略內部編輯圖示文字
-            const icons = el.querySelector('.nav-edit-icons');
-            if (icons) {
-              // 暫時移除圖示以獲取純文字
-              const tmp = icons.cloneNode(true);
-              el.removeChild(icons);
-              currentName = el.textContent.trim();
-              el.appendChild(tmp);
-            }
-            const newName = prompt('輸入新的名稱', currentName);
-            if (newName !== null && newName.trim() !== '') {
-              navConfig.titles[key] = newName.trim();
-              // 移除現有圖示
-              const iconEl = el.querySelector('.nav-edit-icons');
-              let savedIcons = null;
-              if (iconEl) {
-                savedIcons = iconEl;
-                el.removeChild(iconEl);
-              }
-              // 設定新的文字內容
-              el.textContent = newName.trim();
-              // 恢復圖示
-              if (savedIcons) {
-                el.appendChild(savedIcons);
-              }
-              saveNavConfig(navConfig);
-            }
-          }
-        }
-
-        // 為群組或按鈕新增編輯圖示
-        function addEditIconsForElement(el) {
-          // 避免重複添加
-          if (el.querySelector('.nav-edit-icons')) return;
-          const icons = document.createElement('span');
-          icons.className = 'nav-edit-icons';
-          // 上移
-          const upBtn = document.createElement('button');
-          upBtn.type = 'button';
-          upBtn.textContent = '↑';
-          upBtn.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-            // el 是要移動的整體容器
-            if (el.classList.contains('nav-group')) {
-              moveItemUp(el);
-            } else {
-              moveItemUp(el);
-            }
-          });
-          // 下移
-          const downBtn = document.createElement('button');
-          downBtn.type = 'button';
-          downBtn.textContent = '↓';
-          downBtn.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-            if (el.classList.contains('nav-group')) {
-              moveItemDown(el);
-            } else {
-              moveItemDown(el);
-            }
-          });
-          // 重新命名
-          const renameBtn = document.createElement('button');
-          renameBtn.type = 'button';
-          renameBtn.textContent = '✎';
-          renameBtn.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-            renameItem(el);
-          });
-          const visibilityBtn = document.createElement('button');
-          visibilityBtn.type = 'button';
-          visibilityBtn.dataset.navAction = 'visibility';
-          visibilityBtn.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-            toggleItemHidden(el);
-          });
-          icons.appendChild(upBtn);
-          icons.appendChild(downBtn);
-          icons.appendChild(renameBtn);
-          icons.appendChild(visibilityBtn);
-          if (el.classList.contains('nav-group')) {
-            const toggleEl = el.querySelector('.nav-group-toggle');
-            const arrowSpan = toggleEl.querySelector('.nav-group-arrow');
-            if (arrowSpan) {
-              toggleEl.insertBefore(icons, arrowSpan);
-            } else {
-              toggleEl.appendChild(icons);
-            }
-          } else if (el.classList.contains('nav-button')) {
-            el.appendChild(icons);
-          }
-        }
-
-        // 初始化編輯圖示
-        function initEditIcons() {
-          const navEl = document.querySelector('.nav');
-          // 群組和根級按鈕
-          Array.from(navEl.children).forEach((child) => {
-            if (child.classList.contains('nav-group')) {
-              addEditIconsForElement(child);
-              // 子按鈕
-              const submenu = child.querySelector('.nav-submenu');
-              if (submenu) {
-                Array.from(submenu.children).forEach((btn) => {
-                  if (btn.classList.contains('nav-button')) {
-                    addEditIconsForElement(btn);
-                  }
-                });
-              }
-            } else if (child.classList.contains('nav-button')) {
-              addEditIconsForElement(child);
-            }
-          });
-        }
-
-        // 套用設定到現有 DOM
-        function applyNavConfig(cfg) {
-          const navEl = document.querySelector('.nav');
-          // 重排序根項目
-          cfg.order.forEach((key) => {
-            if (key.startsWith('group-')) {
-              const groupName = key.substring(6);
-              const groupEl = navEl.querySelector('.nav-group[data-group="' + groupName + '"]');
-              if (groupEl) navEl.appendChild(groupEl);
-              // 排序子項目
-              const subOrder = cfg.groupOrder[key];
-              const submenu = groupEl ? groupEl.querySelector('.nav-submenu') : null;
-              if (submenu && Array.isArray(subOrder)) {
-                subOrder.forEach((subKey) => {
-                  const btn = submenu.querySelector('.nav-button[data-view="' + subKey + '"]');
-                  if (btn) submenu.appendChild(btn);
-                  if (btn && cfg.titles[subKey]) {
-                    btn.textContent = cfg.titles[subKey];
-                  }
-                });
-              }
-              // 更新群組標題
-              if (groupEl && cfg.titles[key]) {
-                const titleSpan = groupEl.querySelector('.nav-group-toggle span');
-                if (titleSpan) titleSpan.textContent = cfg.titles[key];
-              }
-            } else {
-              const btn = navEl.querySelector('.nav-button[data-view="' + key + '"]');
-              if (btn) navEl.appendChild(btn);
-              if (btn && cfg.titles[key]) {
-                btn.textContent = cfg.titles[key];
-              }
-            }
-          });
-          navEl.querySelectorAll('.nav-group, .nav-button').forEach((el) => {
-            const key = getNavKey(el);
-            if (key) applyHiddenState(el, key);
-          });
-          // 編輯按鈕不屬於可排序項目，永遠固定在功能列最下方。
-          const editToggle = document.getElementById('nav-edit-toggle');
-          if (editToggle) navEl.appendChild(editToggle);
-        }
-
-        // 切換編輯模式
-        function toggleNavEdit() {
-          const navEl = document.querySelector('.nav');
-          navEditing = !navEditing;
-          navEl.classList.toggle('is-editing', navEditing);
-          const toggleBtn = document.getElementById('nav-edit-toggle');
-          if (toggleBtn) toggleBtn.textContent = navEditing ? '完成' : '編輯功能列';
-        }
-
-        function initializeNavEditor() {
-          navConfig = loadNavConfig();
-          applyNavConfig(navConfig);
-          initEditIcons();
-          const currentNav = document.querySelector('.nav');
-          currentNav.querySelectorAll('.nav-group, .nav-button').forEach((el) => {
-            const key = getNavKey(el);
-            if (key) applyHiddenState(el, key);
-          });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-          const editToggleBtn = document.getElementById('nav-edit-toggle');
-          if (editToggleBtn) {
-            editToggleBtn.addEventListener('click', (e) => {
-              e.preventDefault();
-              toggleNavEdit();
-            });
-          }
-          try {
-            initializeNavEditor();
-          } catch (error) {
-            console.error('Navigation editor initialization failed; rebuilding settings.', error);
-            localStorage.removeItem(NAV_CONFIG_KEY);
-            initializeNavEditor();
-          }
-        });
-      })();
-    </script>
+    <dialog id="url-builder-manager" class="workspace-dialog" aria-labelledby="pwa-manager-title">
+      <header class="workspace-dialog-header"><div><h3 id="pwa-manager-title">管理渠道</h3><p>修改渠道名稱或網址，也可以新增渠道。儲存後立即生效。</p></div><button id="url-builder-manager-close" type="button" class="ghost-button" aria-label="關閉渠道管理">✕</button></header>
+      <div class="workspace-dialog-body"><div class="pwa-channel-columns"><span>#</span><span>渠道名稱</span><span>渠道網址</span><span></span></div><div id="url-builder-rows"></div><button id="url-builder-add" type="button" class="secondary-button">＋ 新增渠道</button><p class="workspace-storage-note">設定儲存在目前瀏覽器，並包含在主儀表板的 JSON 備份中。</p></div>
+      <footer class="workspace-dialog-footer"><p id="url-builder-manager-error" role="status" aria-live="polite"></p><button id="url-builder-manager-cancel" type="button" class="secondary-button">取消</button><button id="url-builder-manager-save" type="button" class="primary-button">儲存渠道</button></footer>
+    </dialog>
+    <dialog id="nav-manager" class="workspace-dialog nav-manager-dialog" aria-labelledby="nav-manager-title">
+      <header class="workspace-dialog-header"><div><h3 id="nav-manager-title">整理功能列</h3><p>所有功能與群組皆可拖曳；拖入群組、移回最外層，或直接選擇所屬群組。</p></div><button id="nav-manager-close" type="button" class="ghost-button" aria-label="關閉功能列整理">✕</button></header>
+      <div class="nav-manager-toolbar"><span>拖曳排序 · 直接改名 · 自由分組</span><button id="nav-manager-add" type="button" class="secondary-button">＋ 新增群組</button></div>
+      <div class="workspace-dialog-body"><div class="nav-organizer-columns"><span></span><span>顯示名稱</span><span>所屬群組</span><span>可見</span><span>調整</span></div><div id="nav-manager-tree"></div></div>
+      <footer class="workspace-dialog-footer"><p id="nav-manager-status" role="status" aria-live="polite"></p><button id="nav-manager-cancel" type="button" class="secondary-button">取消</button><button id="nav-manager-save" type="button" class="primary-button">儲存設定</button></footer>
+    </dialog>
+    <script src="./url-builder.js?v=20260923-2"></script>
+    <script src="./nav-editor.js?v=20260923-2"></script>
   </body>
 </html>
 
