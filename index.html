@@ -9,7 +9,7 @@
     <title>總儀表版</title>
     <link rel="stylesheet" href="./styles.css?v=20260909-task-groups" />
     <link rel="stylesheet" href="./channel-summary-ux.css?v=20260916-1" />
-    <link rel="stylesheet" href="./url-builder.css?v=20260923-2" />
+    <link rel="stylesheet" href="./url-builder.css?v=20260923-3" />
   </head>
   <body>
     <div class="app-shell">
@@ -654,9 +654,9 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
             <div class="pwa-heading"><div><span class="pwa-kicker">PWA LINK BUILDER</span><h3>選渠道，快速產生連結</h3><p class="hint">填入 AID 與 TOKEN，完整網址即時生成。</p></div><button id="url-builder-manage" class="secondary-button" type="button">管理渠道 <span id="url-builder-count"></span></button></div>
             <form id="url-builder-form" autocomplete="off">
               <div class="pwa-input-card">
-                <div class="pwa-field"><label for="url-builder-channel">渠道</label><select id="url-builder-channel" required></select><p id="url-builder-domain" class="hint"></p></div>
+                <div class="pwa-field"><div class="pwa-channel-heading"><label for="url-builder-channel">渠道</label><div class="pwa-source-switch" role="group" aria-label="渠道網址來源"><button id="url-builder-source-list" type="button" aria-pressed="true">選擇渠道</button><button id="url-builder-source-manual" type="button" aria-pressed="false">手動網址</button></div></div><select id="url-builder-channel" required></select><input id="url-builder-custom-url" type="text" inputmode="url" placeholder="https://你的渠道網址" aria-label="手動渠道網址" spellcheck="false" autocapitalize="off" hidden disabled /><p id="url-builder-domain" class="hint"></p></div>
                 <div class="pwa-field"><label for="url-builder-aid">AID <span>數字 ID</span></label><input id="url-builder-aid" type="text" inputmode="numeric" placeholder="例如：135010119" required /></div>
-                <div class="pwa-field pwa-token-field"><label for="url-builder-token">TOKEN</label><input id="url-builder-token" type="text" placeholder="貼上 TOKEN" required spellcheck="false" autocapitalize="off" /></div>
+                <div class="pwa-field pwa-token-field"><label for="url-builder-uid">UID <span>查詢 TOKEN</span></label><div class="pwa-uid-query"><input id="url-builder-uid" type="text" inputmode="numeric" placeholder="例如：101025912" autocomplete="off" /><button id="url-builder-query" class="secondary-button" type="button">查詢 TOKEN</button></div><p id="url-builder-query-status" class="hint" role="status" aria-live="polite"></p></div><div class="pwa-field pwa-token-field"><label for="url-builder-token">TOKEN <span>可自動查詢或手動貼上</span></label><input id="url-builder-token" type="text" placeholder="貼上 TOKEN" required spellcheck="false" autocapitalize="off" /></div>
               </div>
               <div id="url-builder-result" class="pwa-result-card"><div class="pwa-result-heading"><label for="url-builder-output">完整網址</label><span id="url-builder-result-state">等待輸入</span></div><textarea id="url-builder-output" rows="3" readonly placeholder="選好渠道並填完上方欄位，網址會顯示在這裡。" spellcheck="false"></textarea><div class="pwa-result-actions"><p id="url-builder-status" role="status" aria-live="polite"></p><button id="url-builder-clear" class="ghost-button" type="button">清空輸入</button><button id="url-builder-copy" class="primary-button" type="submit" disabled>複製網址</button></div></div>
             </form>
@@ -1213,7 +1213,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
       <div class="workspace-dialog-body"><div class="nav-organizer-columns"><span></span><span>顯示名稱</span><span>所屬群組</span><span>可見</span><span>調整</span></div><div id="nav-manager-tree"></div></div>
       <footer class="workspace-dialog-footer"><p id="nav-manager-status" role="status" aria-live="polite"></p><button id="nav-manager-cancel" type="button" class="secondary-button">取消</button><button id="nav-manager-save" type="button" class="primary-button">儲存設定</button></footer>
     </dialog>
-    <script src="./url-builder.js?v=20260923-2"></script>
+    <script src="./url-builder.js?v=20260923-3"></script>
     <script src="./nav-editor.js?v=20260923-2"></script>
   </body>
 </html>
