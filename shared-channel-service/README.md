@@ -1,3 +1,5 @@
+> Legacy implementation. The active login and data service is documented in [basic-login/README.md](basic-login/README.md). Do not redeploy this USER_ACCESSING data service as the current login.
+
 # PWA 共用渠道
 
 共用表：1q0fj4U4wxAyQNyZA_U9Gldz5ffz7e0K_rh5YDMs2NAE
