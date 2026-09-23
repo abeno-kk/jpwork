@@ -55,12 +55,8 @@ function access_(ticket){
 }
 function assertEditor_(ticket){const access=access_(ticket);if(!access.canEdit)throw new Error('你只有檢視權限，修改渠道需要指定資料夾及共用表的編輯權限。');return access.email;}
 function loadEditor(ticket){const access=access_(ticket);return Object.assign(readChannels_(),access);}
-function lookupToken(uid,ticket){
- access_(ticket);uid=String(uid||'').trim();if(!/^\d+$/.test(uid))throw new Error('UID 必須是純數字。');
- const response=UrlFetchApp.fetch('https://cchttps.twelvepacks.top/?func=uid_token&form=csv&uid='+encodeURIComponent(uid),{muteHttpExceptions:true});
- if(response.getResponseCode()!==200)throw new Error('TOKEN 查詢服務暫時無法使用。');
- const values=response.getContentText().split(/\r?\n/).map(line=>line.trim().match(/^#?\s*(\d+)\s*[:,：]\s*([a-fA-F0-9]{32})\s*$/)).filter(row=>row&&row[1]===uid).map(row=>row[2]);
- const unique=[...new Set(values)];if(unique.length!==1)throw new Error('查不到唯一有效 TOKEN，請確認 UID。');return {uid:uid,token:unique[0]};
+function authorizeTokenQuery(uid,ticket){
+ access_(ticket);uid=String(uid||'').trim();if(!/^\d+$/.test(uid))throw new Error('UID 必須是純數字。');return {uid:uid};
 }
 function saveChannels(rows,expectedRevision,ticket){
  assertEditor_(ticket);const next=validate_(rows),lock=LockService.getScriptLock();lock.waitLock(10000);
@@ -79,4 +75,17 @@ function authorizeBackend_(){
  const response=UrlFetchApp.fetch("https://www.googleapis.com/drive/v3/files/"+FOLDER_ID+"?fields=id",{headers:{Authorization:"Bearer "+ScriptApp.getOAuthToken()},muteHttpExceptions:true});
  if(response.getResponseCode()!==200)throw new Error("管理者無法讀取指定資料夾。");
  return "管理者服務已啟用";
+}
+
+function doPost(e){
+ let result;
+ try{const body=JSON.parse(e.postData.contents);if(!body||typeof body!=='object')throw new Error('請求格式不正確。');
+ const args=body.args||[];let data;
+ if(body.action==='loadEditor')data=loadEditor(args[0]);
+ else if(body.action==='authorizeTokenQuery')data=authorizeTokenQuery(args[0],args[1]);
+ else if(body.action==='saveChannels')data=saveChannels(args[0],args[1],args[2]);
+ else throw new Error('不支援此操作。');
+ result={ok:true,data:data};
+ }catch(error){result={ok:false,error:String(error.message||error)};}
+ return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }

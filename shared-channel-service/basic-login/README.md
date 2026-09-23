@@ -12,3 +12,9 @@ Backend project: 1tLWnocve1fBP1eY-eGSb5wsKfe1QmR4yqiloyYOBmS7OhqG8aZG_NMXf
 Gateway project: 1pF8YnlhOo50QcCfJk-9II3WtqyT7D51vwI0xoDE7EaFrA6vmhmKW5OhK
 
 Tests: identity-test.cjs covers missing/forged/expired/wrong-audience sessions, revoked and expired shares, read-only accounts, edit conflicts and 16 channels; identity-ui-test.cjs covers URL assembly, UID lookup, manual URLs, editing, and responsive layout using isolated mocks. Owner activated the backend. Live read-only checks verified all 16 channels including pwa-17/pwa-18, anonymous rejection and outside-folder rejection. Authorized backend verification used an owner test session; the complete interactive Google consent flow has not been exercised with a colleague account. No shared data was written during verification.
+
+## Dashboard-native workspace
+
+The gateway now returns to the dashboard with a short-lived fragment ticket. The dashboard clears the fragment immediately and keeps the ticket only in memory (no localStorage/sessionStorage). Its shadow-DOM workspace calls the authenticated doPost action allowlist. Every read, save, and token-query authorization independently verifies the signature, expiry and current folder/sheet permissions. Default Apps Script framing protection remains enabled; no ALLOWALL is used. Reloading requires login again.
+
+TOKEN lookup runs from the browser after access authorization because the same upstream query fails from Apps Script but returns HTTP 200 in the browser. Exact UID matching, unique 32-hex token validation, request-generation checks, and a 15-second timeout prevent stale or mismatched results. Tokens are never persisted. Live read-only verification confirmed the reported UID query, 16 shared channels, URL assembly and logout in the dashboard.

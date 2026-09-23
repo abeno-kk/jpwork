@@ -6,6 +6,6 @@ function doGet(){
  const now=Math.floor(Date.now()/1000),claims={aud:'jpwork-channels-v1',email:email,iat:now,exp:now+3600,nonce:Utilities.getUuid()};
  const payload=Utilities.base64EncodeWebSafe(JSON.stringify(claims));
  const ticket=payload+'.'+Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload,SESSION_KEY));
- const html=HtmlService.createTemplateFromFile('Login');html.email=email;html.destination=BACKEND_URL+'#'+ticket;
+ const html=HtmlService.createTemplateFromFile('Login');html.email=email;html.destination='https://abeno-kk.github.io/jpwork/#pwa-session='+encodeURIComponent(ticket);
  return html.evaluate().setTitle('PWA Google 登入').addMetaTag('viewport','width=device-width, initial-scale=1');
 }
