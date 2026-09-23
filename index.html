@@ -9,7 +9,7 @@
     <title>總儀表版</title>
     <link rel="stylesheet" href="./styles.css?v=20260909-task-groups" />
     <link rel="stylesheet" href="./channel-summary-ux.css?v=20260916-1" />
-    <link rel="stylesheet" href="./url-builder.css?v=20260923-3" />
+    <link rel="stylesheet" href="./url-builder.css?v=20260923-folder" />
   </head>
   <body>
     <div class="app-shell">
@@ -650,7 +650,8 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
         </section>
 
         <section id="url-builder-view" class="view">
-          <div class="pwa-workspace">
+          <div class="pwa-shared-gate panel"><h3>共用渠道 · Google 登入</h3><p>使用指定 Drive 資料夾的權限讀取共用渠道；有編輯權限的同事可新增或修改。</p><p>渠道 17、18 已加入共用清單。之後網站編輯與 Google Sheet 修改會同步到同一份資料。</p><div class="pwa-shared-actions"><a class="primary-button" href="https://script.google.com/macros/s/AKfycbymNE1aBeQ-eVFV-fkpLLt6N7LDpfCAMNuMcJCN43nAE2y-CyPFVv_7uTAeIsRuBtLoKA/exec" target="_blank" rel="noopener">Google 登入共用版 ↗</a><a class="secondary-button" href="https://docs.google.com/spreadsheets/d/1q0fj4U4wxAyQNyZA_U9Gldz5ffz7e0K_rh5YDMs2NAE/edit" target="_blank" rel="noopener">開啟共用 Google Sheet ↗</a><button id="url-builder-local-toggle" type="button" class="ghost-button" aria-expanded="false">使用本機模式</button></div><p class="hint">第一次登入可能需要 Google 授權。共用版支援 UID 查詢、手動網址與渠道管理；本機模式的變更僅限此瀏覽器。</p></div>
+          <div class="pwa-workspace" id="url-builder-local-workspace" hidden>
             <div class="pwa-heading"><div><span class="pwa-kicker">PWA LINK BUILDER</span><h3>選渠道，快速產生連結</h3><p class="hint">填入 AID 與 TOKEN，完整網址即時生成。</p></div><button id="url-builder-manage" class="secondary-button" type="button">管理渠道 <span id="url-builder-count"></span></button></div>
             <form id="url-builder-form" autocomplete="off">
               <div class="pwa-input-card">
@@ -1213,7 +1214,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
       <div class="workspace-dialog-body"><div class="nav-organizer-columns"><span></span><span>顯示名稱</span><span>所屬群組</span><span>可見</span><span>調整</span></div><div id="nav-manager-tree"></div></div>
       <footer class="workspace-dialog-footer"><p id="nav-manager-status" role="status" aria-live="polite"></p><button id="nav-manager-cancel" type="button" class="secondary-button">取消</button><button id="nav-manager-save" type="button" class="primary-button">儲存設定</button></footer>
     </dialog>
-    <script src="./url-builder.js?v=20260923-3"></script>
+    <script src="./url-builder.js?v=20260923-folder"></script>
     <script src="./nav-editor.js?v=20260923-2"></script>
   </body>
 </html>

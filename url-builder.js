@@ -105,3 +105,4 @@
   window.refreshPwaUrlBuilder=refresh;
   refresh();
 })();
+document.getElementById('url-builder-local-toggle').addEventListener('click',event=>{const workspace=document.getElementById('url-builder-local-workspace');workspace.hidden=!workspace.hidden;event.currentTarget.setAttribute('aria-expanded',String(!workspace.hidden));event.currentTarget.textContent=workspace.hidden?'使用本機模式':'收起本機模式';});

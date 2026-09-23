@@ -105,3 +105,5 @@
 #url-builder-query:disabled { opacity: .6; cursor: wait; }
 #url-builder-query-status { font-size: 12px; margin: 8px 0 0; }
 #url-builder-form [hidden] { display: none !important; }
+
+.pwa-shared-gate{max-width:1180px;margin:10px auto 24px;padding:28px}.pwa-shared-gate h3{font-size:24px;margin:0 0 14px}.pwa-shared-gate p{line-height:1.7;color:var(--muted)}.pwa-shared-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:22px 0}.pwa-shared-actions a{text-decoration:none;display:inline-block}.pwa-shared-actions .primary-button{color:white;background:var(--brand)}#url-builder-local-workspace[hidden]{display:none!important}
