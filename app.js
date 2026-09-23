@@ -1022,6 +1022,8 @@ function renderNavigation() {
         ? '渠道統整表'
       : state.view === 'channels'
         ? '渠道儀表版'
+      : state.view === 'url-builder'
+        ? 'URL 拼接'
       : state.view === 'tools'
         ? '資料工具'
       : state.view === 'orders'

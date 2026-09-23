@@ -9,6 +9,7 @@
     <title>總儀表版</title>
     <link rel="stylesheet" href="./styles.css?v=20260909-task-groups" />
     <link rel="stylesheet" href="./channel-summary-ux.css?v=20260916-1" />
+    <link rel="stylesheet" href="./url-builder.css?v=20260923" />
   </head>
   <body>
     <div class="app-shell">
@@ -49,6 +50,7 @@
           </div>
 
           <button class="nav-button nav-button-standalone" data-view="tools">資料工具</button>
+          <button class="nav-button nav-button-standalone" data-view="url-builder" type="button">URL 拼接</button>
           <!-- 新增發單解析功能列，可自訂欄位、排序與篩選 -->
           <button class="nav-button nav-button-standalone" data-view="orders">發單解析</button>
           <button class="nav-button nav-button-standalone dialog-db-nav-btn" data-view="conversation-db" type="button">對話資料庫</button>
@@ -647,6 +649,25 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
           </dialog>
         </section>
 
+        <section id="url-builder-view" class="view">
+          <div class="panel url-builder-panel">
+            <h3>URL 拼接</h3>
+            <p class="hint">選擇渠道，填入 AID 與 TOKEN，即可複製完整 PWA 網址。</p>
+            <form id="url-builder-form" autocomplete="off">
+              <label for="url-builder-channel">渠道</label>
+              <select id="url-builder-channel" required></select>
+              <p id="url-builder-domain" class="hint"></p>
+              <label for="url-builder-aid">AID</label>
+              <input id="url-builder-aid" type="text" inputmode="numeric" placeholder="例如：135010119" required />
+              <label for="url-builder-token">TOKEN</label>
+              <input id="url-builder-token" type="text" placeholder="貼上 TOKEN" required spellcheck="false" autocapitalize="off" />
+              <label for="url-builder-output">完整網址</label>
+              <textarea id="url-builder-output" rows="3" readonly placeholder="填完後會自動產生網址" spellcheck="false"></textarea>
+              <div><button id="url-builder-copy" class="primary-button" type="submit" disabled>複製網址</button></div>
+              <p id="url-builder-status" class="hint" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -753,7 +774,8 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
     <button id="capture-exit-btn" class="primary-button capture-exit-button" type="button" hidden>返回首頁</button>
 
     <script src="./channel-summary-ux.js?v=20260916-1"></script>
-    <script src="./app.js?v=20260922-data-safety"></script>
+    <script src="./app.js?v=20260923-url-builder"></script>
+    <script src="./url-builder.js?v=20260923"></script>
     <script src="./poison-monitor.js"></script>
     <script src="./tenjin-monitor.js?v=20260922-freshness"></script>
     <!-- 發單解析：自訂欄位、排序與篩選的互動腳本 -->
@@ -1233,6 +1255,10 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
             try {
               const parsed = JSON.parse(json);
               parsed.order = Array.isArray(parsed.order) ? parsed.order : [];
+              if (!parsed.order.includes('url-builder')) {
+                const toolsIndex = parsed.order.indexOf('tools');
+                parsed.order.splice(toolsIndex >= 0 ? toolsIndex + 1 : parsed.order.length, 0, 'url-builder');
+              }
               parsed.hidden = Array.isArray(parsed.hidden) ? parsed.hidden : [];
               parsed.titles = parsed.titles && typeof parsed.titles === 'object' ? parsed.titles : {};
               parsed.groupOrder = parsed.groupOrder && typeof parsed.groupOrder === 'object' ? parsed.groupOrder : {};

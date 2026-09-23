@@ -1,0 +1,10 @@
+#url-builder-view .url-builder-panel { max-width: 960px; }
+#url-builder-view h3 { margin-bottom: 12px; }
+#url-builder-form { display: grid; gap: 12px; margin-top: 24px; }
+#url-builder-form label { font-weight: 700; }
+#url-builder-form input, #url-builder-form select, #url-builder-form textarea { width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); font: inherit; }
+#url-builder-form textarea { resize: vertical; overflow-wrap: anywhere; }
+#url-builder-form input:focus, #url-builder-form select:focus, #url-builder-form textarea:focus { outline: 2px solid var(--brand); outline-offset: 2px; }
+#url-builder-domain { overflow-wrap: anywhere; margin-bottom: 8px; }
+#url-builder-copy:disabled { opacity: .5; cursor: not-allowed; }
+#url-builder-status { min-height: 1.5em; }
