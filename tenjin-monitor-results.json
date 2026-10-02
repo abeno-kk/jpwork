@@ -1,6 +1,6 @@
 {
     "ok":  true,
-    "runOk":  true,
+    "runOk":  false,
     "version":  1,
     "appIds":  [
                    "135010225"
@@ -1512,13 +1512,24 @@
                        "start":  "2026-09-30",
                        "end":  "2026-10-01",
                        "error":  ""
+                   },
+                   {
+                       "appId":  "135010225",
+                       "date":  "2026-10-02",
+                       "slot":  "10:00",
+                       "count":  null,
+                       "c4EnterOptCount":  null,
+                       "checkedAt":  "2026-10-02T02:00:04.1453272Z",
+                       "start":  "2026-10-01",
+                       "end":  "2026-10-02",
+                       "error":  "远程服务器返回错误: (403) 已禁止。"
                    }
                ],
-    "date":  "2026-10-01",
+    "date":  "2026-10-02",
     "timezone":  "Asia/Shanghai",
     "slots":  [
                   "10:00",
                   "15:00"
               ],
-    "updatedAt":  "2026-10-01T07:00:05.3760515Z"
+    "updatedAt":  "2026-10-02T02:00:04.8036134Z"
 }
