@@ -1018,6 +1018,8 @@ function renderNavigation() {
         ? '渠道統整表'
       : state.view === 'channels'
         ? '渠道儀表版'
+      : state.view === 'time-converter'
+        ? '時間轉換'
       : state.view === 'url-builder'
         ? 'URL 拼接'
       : state.view === 'tools'

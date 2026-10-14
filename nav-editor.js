@@ -7,9 +7,9 @@
   for(const [key,el] of groups)defaultTitles[key]=el.querySelector('.nav-group-toggle span').textContent.trim();
   const defaults={order:[...nav.children].filter(el=>el.matches('.nav-group,.nav-button')).map(el=>el.dataset.view || 'group-'+el.dataset.group),groupOrder:{},titles:defaultTitles,hidden:[],schemaVersion:5};
   for(const [key,el] of groups)defaults.groupOrder[key]=[...el.querySelectorAll('.nav-button')].map(el=>el.dataset.view);
-  defaults.groupOrder['group-tools']=['tools','url-builder'];
+  defaults.groupOrder['group-tools']=['tools','url-builder','time-converter'];
   const toolIndex=defaults.order.indexOf('tools');
-  defaults.order=defaults.order.filter(key=>!['tools','url-builder'].includes(key));defaults.order.splice(toolIndex,0,'group-tools');
+  defaults.order=defaults.order.filter(key=>!['tools','url-builder','time-converter'].includes(key));defaults.order.splice(toolIndex,0,'group-tools');
   defaults.titles['group-tools']='資料工具';defaults.titles.tools='數值轉換器';
   const isGroup=key=>key.startsWith('group-');
   const safeGroup=key=>/^group-[a-zA-Z0-9-]+$/.test(key);

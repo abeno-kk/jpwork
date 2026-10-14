@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="./styles.css?v=20260909-task-groups" />
     <link rel="stylesheet" href="./channel-summary-ux.css?v=20260916-1" />
     <link rel="stylesheet" href="./url-builder.css?v=20260923-folder" />
+    <link rel="stylesheet" href="./time-converter.css?v=20261014-1" />
   </head>
   <body>
     <div class="app-shell">
@@ -51,6 +52,7 @@
 
           <button class="nav-button nav-button-standalone" data-view="tools">資料工具</button>
           <button class="nav-button nav-button-standalone" data-view="url-builder" type="button">URL 拼接</button>
+          <button class="nav-button nav-button-standalone" data-view="time-converter" type="button">時間轉換</button>
           <!-- 新增發單解析功能列，可自訂欄位、排序與篩選 -->
           <button class="nav-button nav-button-standalone" data-view="orders">發單解析</button>
           <button class="nav-button nav-button-standalone dialog-db-nav-btn" data-view="conversation-db" type="button">對話資料庫</button>
@@ -649,6 +651,33 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
           </dialog>
         </section>
 
+        <section id="time-converter-view" class="view">
+          <div class="panel tc-panel">
+            <h3>時間轉換</h3>
+            <p class="hint">印度與台灣時間互轉，精確到秒。優先採用輸入中的時區；若與目標相同，會自動切換目標，避免重複顯示。</p>
+            <form id="tc-form" autocomplete="off">
+              <div class="tc-settings">
+                <label>未標時區時，來源時間<select id="tc-source"><option value="330">印度 UTC+05:30</option><option value="480">台灣 UTC+08:00</option><option value="0">UTC+00:00</option></select></label>
+                <button id="tc-swap" class="secondary-button" type="button">交換來源／目標</button>
+                <label>目標時間<select id="tc-target"><option value="480">台灣 UTC+08:00</option><option value="330">印度 UTC+05:30</option><option value="0">UTC+00:00</option></select></label>
+                <label>非年開頭的日期<select id="tc-order"><option value="auto">自動辨識；歧義時提示</option><option value="dmy">日／月／年</option><option value="mdy">月／日／年</option></select></label>
+              </div>
+              <label for="tc-input">輸入日期與時間</label>
+              <input id="tc-input" type="text" spellcheck="false" placeholder="例如：2026-10-11 21:13:08+08" aria-describedby="tc-status" />
+              <div class="tc-actions"><button class="primary-button" type="submit">轉換</button><button class="secondary-button" type="button" id="tc-now">現在</button><button class="secondary-button" type="button" id="tc-clear">清除</button></div>
+            </form>
+            <p id="tc-status" role="status" aria-live="polite"></p>
+            <div class="tc-results">
+              <article><h4 id="tc-from-label">來源時間</h4><div class="tc-clock" id="tc-from-time">—</div><p id="tc-from-date">—</p><button id="tc-copy-source" class="secondary-button" type="button" disabled>複製來源時間</button></article>
+              <article><h4 id="tc-to-label">轉換結果</h4><div class="tc-clock" id="tc-to-time">—</div><p id="tc-to-date">—</p><button id="tc-copy-target" class="secondary-button" type="button" disabled>複製目標時間</button></article>
+            </div>
+            <p id="tc-diff" class="hint"></p>
+            <div class="tc-actions" id="tc-adjust"><span>調整時間</span><button type="button" class="secondary-button" data-tc-step="-86400">−1 日</button><button type="button" class="secondary-button" data-tc-step="-3600">−1 時</button><button type="button" class="secondary-button" data-tc-step="-60">−1 分</button><button type="button" class="secondary-button" data-tc-step="-1">−1 秒</button><button type="button" class="secondary-button" data-tc-step="1">＋1 秒</button><button type="button" class="secondary-button" data-tc-step="60">＋1 分</button><button type="button" class="secondary-button" data-tc-step="3600">＋1 時</button><button type="button" class="secondary-button" data-tc-step="86400">＋1 日</button></div>
+            <details class="tc-help"><summary>支援哪些輸入格式？</summary>
+              <ul><li>一般日期：2026-10-11 21:13:08、2026/10/11 21:13:08、2026.10.11 21:13:08</li><li>空格分隔：2026 10 11 21 13 08；月、日、時、分、秒可省略前導零</li><li>ISO／時區：2026-10-11T21:13:08+08:00、2026-10-11 21:13:08+08、2026-10-11T13:13:08Z；也支援 +0800、UTC+8、GMT+05:30</li><li>中文：2026年10月11日 21時13分08秒，或 2026年10月11日 下午9:13:08</li><li>連續數字：20261011211308、20261011 211308</li><li>12 小時制：2026/10/11 9:13:08 PM；也支援 AM、上午、下午</li><li>Unix 時間戳：10 位秒數（可帶小數），或 13 位毫秒數</li><li>省略秒時補 00；只有日期時採用 00:00:00，並顯示提示。只有時間則需補日期。</li><li>11/10/2026 21:13:08 等非年開頭格式，可選日／月／年或月／日／年。自動模式只在無歧義時判讀。</li><li>支援全形數字與標點、毫秒（最多 3 位）。拒絕不存在的日期及超出範圍的時間；不猜測 CST／IST 等有歧義的時區縮寫。</li></ul>
+            </details>
+          </div>
+        </section>
         <section id="url-builder-view" class="view">
           <div class="pwa-shared-gate panel"><h3>共用渠道 · Google 登入</h3><p>使用指定 Drive 資料夾的權限讀取共用渠道；有編輯權限的同事可新增或修改。</p><p>渠道 17、18 已加入共用清單。之後網站編輯與 Google Sheet 修改會同步到同一份資料。</p><div class="pwa-shared-actions"><a id="pwa-shared-login" class="primary-button" href="https://script.google.com/macros/s/AKfycbz17TUuHO9JhEnrdumGqo_9bpeYX0zs64STPeQPdGOdTt9izgBY2-9KpbF-hJDnhYY_/exec" target="_self" rel="noopener">Google 登入共用版</a><a class="secondary-button" href="https://docs.google.com/spreadsheets/d/1q0fj4U4wxAyQNyZA_U9Gldz5ffz7e0K_rh5YDMs2NAE/edit" target="_blank" rel="noopener">開啟共用 Google Sheet ↗</a></div><p class="hint">登入只確認 Google 電子郵件，不要求存取你的 Drive 或試算表。請使用直接加入指定資料夾分享名單的帳號；檢視者可使用，編輯者可管理渠道。</p></div>
         <div id="pwa-embedded-workspace" hidden></div>
@@ -760,7 +789,8 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
 
     <script src="./channel-summary-ux.js?v=20260916-1"></script>
     <script src="./url-builder-model.js?v=20260923-2"></script>
-    <script src="./app.js?v=20260923-editor"></script>
+    <script src="./app.js?v=20261014-time"></script>
+    <script src="./time-converter.js?v=20261014-auto-target"></script>
 
     <script src="./poison-monitor.js"></script>
     <script src="./tenjin-monitor.js?v=20260922-freshness"></script>
@@ -1199,7 +1229,7 @@ y-en-btn" class="secondary-button" type="button">複製英文</button>
       <div class="workspace-dialog-body"><div class="nav-organizer-columns"><span></span><span>顯示名稱</span><span>所屬群組</span><span>可見</span><span>調整</span></div><div id="nav-manager-tree"></div></div>
       <footer class="workspace-dialog-footer"><p id="nav-manager-status" role="status" aria-live="polite"></p><button id="nav-manager-cancel" type="button" class="secondary-button">取消</button><button id="nav-manager-save" type="button" class="primary-button">儲存設定</button></footer>
     </dialog>
-    <script src="./nav-editor.js?v=20260923-2"></script>
+    <script src="./nav-editor.js?v=20261014-time"></script>
   <script src="./shared-url-workspace.js?v=20260928-manual"></script>
   </body>
 </html>
